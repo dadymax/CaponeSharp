@@ -37,6 +37,14 @@ public class OriginalMaps
         public Vector2I Dimensions;
         public List<Vector3I> BlockPlacement { get; } = new();
         public List<Vector2I> StartPoints { get; } = new();
+        /// <summary>Problems found while reading the file.</summary>
+        public List<string> Errors { get; } = new();
+
+        private void Error(string message)
+        {
+            Errors.Add($"{FileName}: {message}");
+            GD.PrintErr("OriginalMaps: ", FileName, ": ", message);
+        }
 
         public static Map Create(string path)
         {
@@ -51,11 +59,13 @@ public class OriginalMaps
             using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
             if (file == null)
             {
-                GD.PrintErr("OriginalMaps: failed to open ", path);
+                Error("failed to open " + path);
                 return;
             }
 
-            Ver = file.GetLine();
+            Ver = file.GetLine().Trim();
+            if (Ver is not ("VER01" or "VER02"))
+                Error($"unknown version '{Ver}'");
 
             var xdim = ToInt(GetParts(SkipEmpty(file)), 1);
             var ydim = ToInt(GetParts(SkipEmpty(file)), 1);
@@ -63,7 +73,7 @@ public class OriginalMaps
 
             var line = SkipEmpty(file);
             if (line.Trim() != "BLOCKS")
-                GD.PrintErr($"OriginalMaps: {FileName}: expected BLOCKS, got '{line}'");
+                Error($"expected BLOCKS, got '{line}'");
             while (!file.EofReached())
             {
                 var parts = GetParts(SkipEmpty(file));
@@ -75,7 +85,7 @@ public class OriginalMaps
 
             line = SkipEmpty(file);
             if (line.Trim() != "STARTPOINTS")
-                GD.PrintErr($"OriginalMaps: {FileName}: expected STARTPOINTS, got '{line}'");
+                Error($"expected STARTPOINTS, got '{line}'");
             while (!file.EofReached())
             {
                 var parts = GetParts(SkipEmpty(file));

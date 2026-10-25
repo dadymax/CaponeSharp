@@ -4,7 +4,7 @@ using Godot;
 
 namespace Capone;
 
-/// <summary>Animation set of one unit type for one owner, built from Chicago.tile records found by comment.</summary>
+/// <summary>Animation set of one unit type for one owner, built from Chicago.tile records (see OriginalTiles.ResolveTile).</summary>
 public class OriginalUnitSprites
 {
     // Member names double as animation names, so they stay lower-case.
@@ -13,6 +13,9 @@ public class OriginalUnitSprites
 
     public static readonly Dictionary<SpriteLayersEnum, StringName> SpriteLayersDict = new();
     public static readonly List<StringName> SpriteLayers = new();
+
+    /// <summary>Tile references that did not resolve, for the smoke test.</summary>
+    public static HashSet<string> MissingReferences { get; } = new();
 
     static OriginalUnitSprites()
     {
@@ -24,7 +27,7 @@ public class OriginalUnitSprites
         }
     }
 
-    /// <summary>Animation layer name → Chicago.tile comment to search.</summary>
+    /// <summary>Animation layer name → Chicago.tile reference. Empty references mean "no such animation".</summary>
     public Dictionary<StringName, string> SearchLineDict { get; set; } = new();
 
     public static StringName IdleName => SpriteLayersDict[SpriteLayersEnum.idle];
@@ -37,22 +40,63 @@ public class OriginalUnitSprites
         return result;
     }
 
+    /// <summary>Checks every reference and returns the unresolved ones.</summary>
+    public IEnumerable<string> Validate()
+    {
+        foreach (var reference in SearchLineDict.Values)
+            if (!string.IsNullOrEmpty(reference) && OriginalData.Instance.Tiles.ResolveTile(reference) == null)
+                yield return reference;
+    }
+
     public void FillSpriteFrames(SpriteFrames sf)
     {
+        var loaded = new Dictionary<StringName, List<Texture2D>>();
         foreach (var layer in SpriteLayers)
         {
-            if (!SearchLineDict.TryGetValue(layer, out var comment))
+            if (!SearchLineDict.TryGetValue(layer, out var reference) || string.IsNullOrEmpty(reference))
                 continue;
-            sf.RemoveAnimation(layer);
-            sf.AddAnimation(layer);
-            var tile = OriginalData.Instance.Tiles.GetRecordWithComment(comment);
+            var tile = OriginalData.Instance.Tiles.ResolveTile(reference);
             if (tile == null)
             {
-                GD.PrintErr("OriginalUnitSprites: no tile with comment: ", comment);
+                if (MissingReferences.Add(reference))
+                    GD.PrintErr("OriginalUnitSprites: no tile for: ", reference);
                 continue;
             }
+            var frames = new List<Texture2D>();
             foreach (var image in OriginalData.Instance.GetImageForTile(tile))
-                sf.AddFrame(layer, ImageTexture.CreateFromImage(image));
+                frames.Add(ImageTexture.CreateFromImage(image));
+            loaded[layer] = frames;
         }
+
+        // Every layer must exist so Play() never fails: fill gaps from the closest animation the original has.
+        foreach (var layer in SpriteLayers)
+        {
+            var frames = loaded.GetValueOrDefault(layer) ?? Fallback(layer, loaded);
+            if (sf.HasAnimation(layer))
+                sf.RemoveAnimation(layer);
+            sf.AddAnimation(layer);
+            if (frames == null)
+                continue;
+            foreach (var texture in frames)
+                sf.AddFrame(layer, texture);
+        }
+    }
+
+    private static List<Texture2D> Fallback(StringName layer, Dictionary<StringName, List<Texture2D>> loaded)
+    {
+        var name = layer.ToString();
+        var direction = name.Length > 2 ? name[^2..] : "SE";
+        string[] order = name switch
+        {
+            _ when name.StartsWith("move") => new[] { "idle" },
+            _ when name.StartsWith("attack") => new[] { "idle", "move" + direction },
+            "idle" => new[] { "moveSE", "moveSW", "moveNE", "moveNW" },
+            "killed2" => new[] { "killed" },
+            _ => Array.Empty<string>(),
+        };
+        foreach (var candidate in order)
+            if (loaded.TryGetValue(candidate, out var frames))
+                return frames;
+        return null;
     }
 }

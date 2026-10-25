@@ -32,6 +32,14 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     private CollectorAI _collectorAI;
 
     public UnitCommon UnitData => _unitInstance;
+
+    /// <summary>Personal name from the episode file (e.g. "Аль Капоне"); empty for ordinary units.</summary>
+    public string PersonalName { get; set; } = "";
+    /// <summary>Name to show: the personal name, or the unit type's name from Capone.EXE.</summary>
+    public string DisplayName => string.IsNullOrEmpty(PersonalName) ? _unitInstance?.UnitName ?? "" : PersonalName;
+    /// <summary>Raw 5th and 6th numbers of the .epi UNIT line (see Scenario.EpiStartingUnit).</summary>
+    public int EpiFlagA { get; set; }
+    public int EpiFlagB { get; set; }
     public UnitCommon.UnitType UnitType { get; private set; }
     public UnitCommon.UnitOwner UnitOwner => _unitOwner;
 
@@ -50,7 +58,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         _unitInstance = new UnitCommon(type) { OwnerType = _unitOwner };
         AddChild(_unitInstance);
 
-        if (type is UnitCommon.UnitType.Collector or UnitCommon.UnitType.CollectorWithMoney && _collectorAI == null)
+        if (type == UnitCommon.UnitType.Collector && _collectorAI == null)
         {
             _collectorAI = new CollectorAI();
             AddChild(_collectorAI);

@@ -4,11 +4,17 @@ using Godot;
 namespace Capone;
 
 /// <summary>
-/// Tile-block layouts. For now read from the hand-made bldngs_parsed.txt;
-/// eventually they must be extracted from Capone.EXE.
+/// City-block layouts ("tile blocks"), read from Capone.EXE. A .map file places these blocks by number.
+/// Table at 0x47C830, used by fnBuildingPlacementOnMapByNumber (0x420312): 38 records of 16 bytes:
+/// +0 word width, +2 word height, +4 dword first Chicago.tile index, +8 dword category, +12 dword → array of row-string pointers.
+/// Row characters: R road, S sidewalk, F non-walkable, B/C/M/H buildings, P police, D/G placeholders, I park.
 /// </summary>
 public class OriginalBlocks
 {
+    public const uint TableAddress = 0x47C830;
+    public const int RecordSize = 16;
+    public const int BlockCount = 38;
+
     private static OriginalBlocks _instance;
     public static OriginalBlocks Instance => _instance ??= new OriginalBlocks();
 
@@ -16,49 +22,50 @@ public class OriginalBlocks
 
     private OriginalBlocks()
     {
-        using var file = FileAccess.Open("res://bldngs_parsed.txt", FileAccess.ModeFlags.Read);
-        if (file == null)
-        {
-            GD.PrintErr("OriginalBlocks: failed to open res://bldngs_parsed.txt");
+        var exe = OriginalExe.Instance;
+        if (!exe.IsLoaded)
             return;
-        }
-        var block = new Block();
-        while (block.ProcessLine(file))
+
+        for (var i = 0; i < BlockCount; i++)
         {
+            var va = TableAddress + (uint)(i * RecordSize);
+            var block = new Block
+            {
+                Number = i,
+                X = exe.ReadU16(va),
+                Y = exe.ReadU16(va + 2),
+                Pos = exe.ReadI32(va + 4),
+                Category = exe.ReadI32(va + 8),
+            };
+            var rows = exe.ReadU32(va + 12);
+            if (block.X is <= 0 or > 64 || block.Y is <= 0 or > 64 || !exe.IsValidAddress(rows))
+            {
+                GD.PrintErr($"OriginalBlocks: bad record {i} at 0x{va:X}");
+                break;
+            }
+            for (var y = 0; y < block.Y; y++)
+            {
+                var row = exe.ReadStringPointer(rows + (uint)(y * 4));
+                if (row.Length != block.X)
+                    GD.PrintErr($"OriginalBlocks: block {i} row {y} has length {row.Length}, expected {block.X}");
+                block.BlockLines.Add(row);
+            }
             Blocks.Add(block);
-            block = new Block();
         }
     }
 
     public class Block
     {
+        public int Number;
+        /// <summary>Width in tiles.</summary>
         public int X;
+        /// <summary>Height in tiles.</summary>
         public int Y;
-        /// <summary>First line index in Chicago.tile.</summary>
+        /// <summary>First tile index in Chicago.tile; the block's tiles follow in column order.</summary>
         public int Pos;
-        public string[] Sixnumbers;
-        public int ThirdNumber;
+        /// <summary>Unknown category value (1 or 2 seen).</summary>
+        public int Category;
+        /// <summary>Y rows of X characters, top row first.</summary>
         public List<string> BlockLines { get; } = new();
-
-        /// <summary>Reads header "W H tileLine A B C D E F offset" (hex) and H layout rows.</summary>
-        public bool ProcessLine(FileAccess file)
-        {
-            while (!file.EofReached())
-            {
-                var line = file.GetLine();
-                if (line.Length == 0)
-                    continue;
-                var parts = line.Split(' ');
-                X = parts[0].HexToInt();
-                Y = parts[1].HexToInt();
-                Pos = parts[2].HexToInt();
-                Sixnumbers = parts[3..];
-                ThirdNumber = parts[5].HexToInt();
-                for (var i = 0; i < Y; i++)
-                    BlockLines.Add(file.GetLine());
-                return true;
-            }
-            return false;
-        }
     }
 }

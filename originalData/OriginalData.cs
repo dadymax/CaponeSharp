@@ -8,6 +8,9 @@ public class OriginalData
 {
     public static readonly Vector2I StandartTile = new(40, 19);
 
+    /// <summary>Language of texts taken from Capone.EXE (the Russian edition's .epi files are Russian only).</summary>
+    public static OriginalExe.Language TextLanguage { get; set; } = OriginalExe.Language.Russian;
+
     private static OriginalData _instance;
     public static OriginalData Instance => _instance ??= new OriginalData();
 
@@ -17,6 +20,8 @@ public class OriginalData
     public OriginalMaps Maps => OriginalMaps.Instance;
     public OriginalBmps Bmps => OriginalBmps.Instance;
     public OriginalBlocks BuildingBlocks => OriginalBlocks.Instance;
+    public OriginalExe Exe => OriginalExe.Instance;
+    public OriginalUnitTable UnitTable => OriginalUnitTable.Instance;
 
     private OriginalData()
     {

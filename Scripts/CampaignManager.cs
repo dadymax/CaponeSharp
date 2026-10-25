@@ -1,9 +1,13 @@
 using System.Collections.Generic;
+using System.IO;
 using Godot;
 
 namespace Capone;
 
-/// <summary>Loads a campaign, starts its scenarios and spawns their players and units.</summary>
+/// <summary>
+/// Loads the original campaign (original_game/episode/ep1.epi, ep2.epi, … in order), starts its scenarios
+/// and spawns their players and units.
+/// </summary>
 public partial class CampaignManager : Node
 {
     public static CampaignManager Instance { get; private set; }
@@ -11,53 +15,53 @@ public partial class CampaignManager : Node
     public Campaign CurrentCampaign { get; private set; } = new();
     public Scenario CurrentScenario { get; private set; }
 
-    public string CampaignDirectory { get; set; } = "res://campaigns/";
-
     /// <summary>Main scene node that units are added to.</summary>
     public Node2D MainScene { get; private set; }
     /// <summary>Map used to convert scenario cell coordinates to positions.</summary>
     public TileMapLayer TileMap { get; set; }
 
-    private static readonly Color[] PlayerColors = { Colors.Green, Colors.Red, Colors.Blue, Colors.Yellow };
+    /// <summary>Team colours in PLAYER order (episodes use up to 8 players).</summary>
+    private static readonly Color[] PlayerColors =
+    {
+        Colors.Green, Colors.Red, Colors.Blue, Colors.Yellow, Colors.Cyan, Colors.Magenta, Colors.Orange, Colors.White,
+    };
+
+    private const int CadillacPassengers = 4;
 
     public override void _Ready() => Instance = this;
 
-    /// <summary>Campaign file: one .epi file name per line.</summary>
-    public void LoadCampaign(string campaignFilePath)
+    /// <summary>Folder with the original episode files.</summary>
+    public static string EpisodeDirectory => OriginalData.Instance.OriginalGameDirectory + "/episode";
+
+    /// <summary>ep1.epi, ep2.epi, … until the first missing number (the Russian edition has 21).</summary>
+    public static List<string> FindEpisodeFiles()
     {
-        CurrentCampaign = new Campaign();
-
-        using var file = FileAccess.Open(campaignFilePath, FileAccess.ModeFlags.Read);
-        if (file == null)
+        var files = new List<string>();
+        for (var n = 1; n < 100; n++)
         {
-            GD.PrintErr("CampaignManager: failed to open campaign file: ", campaignFilePath);
-            return;
+            var path = $"{EpisodeDirectory}/ep{n}.epi";
+            if (!File.Exists(path))
+                break;
+            files.Add(path);
         }
-
-        var epiFiles = new List<string>();
-        while (!file.EofReached())
-        {
-            var line = file.GetLine().Trim();
-            if (line.Length > 0)
-                epiFiles.Add(line);
-        }
-
-        var parser = new EpiParser();
-        foreach (var epiFile in epiFiles)
-        {
-            var scenario = parser.Parse(CampaignDirectory + epiFile);
-            if (scenario != null)
-                CurrentCampaign.AddScenario(scenario);
-        }
-
-        CurrentScenario = CurrentCampaign.LoadScenario(0);
-        GD.Print("CampaignManager: loaded campaign with ", CurrentCampaign.GetScenarioCount(), " scenarios");
+        return files;
     }
 
-    /// <summary>Sets up players, alliances and victory conditions for the current scenario.</summary>
-    public Scenario StartScenario(Node2D mainSceneRef, TileMapLayer tileMapRef = null)
+    public void LoadOriginalCampaign()
     {
-        CurrentScenario = CurrentCampaign.GetCurrentScenario();
+        CurrentCampaign = new Campaign { CampaignName = "Capone" };
+        var parser = new EpiParser();
+        foreach (var path in FindEpisodeFiles())
+            CurrentCampaign.AddScenario(parser.Parse(path));
+        if (CurrentCampaign.GetScenarioCount() == 0)
+            GD.PrintErr("CampaignManager: no episodes found in ", EpisodeDirectory);
+        GD.Print("CampaignManager: loaded campaign with ", CurrentCampaign.GetScenarioCount(), " episodes");
+    }
+
+    /// <summary>Sets up players, alliances, bribes and victory conditions for the scenario at <paramref name="index"/>.</summary>
+    public Scenario StartScenario(Node2D mainSceneRef, int index = 0)
+    {
+        CurrentScenario = CurrentCampaign.LoadScenario(index);
         if (CurrentScenario == null)
         {
             GD.PrintErr("CampaignManager: no scenario to start");
@@ -65,16 +69,90 @@ public partial class CampaignManager : Node
         }
 
         MainScene = mainSceneRef;
-        if (tileMapRef != null)
-            TileMap = tileMapRef;
-
         InitPlayersFromScenario();
         InitAlliancesFromScenario();
+        InitBribeAdvances();
         InitVictoryConditions();
 
-        GD.Print($"CampaignManager: starting scenario '{CurrentScenario.ScenarioName}' on map '{CurrentScenario.MapFile}' with {CurrentScenario.Players.Count} players");
+        GD.Print($"CampaignManager: starting episode {CurrentScenario.EpisodeNumber} '{CurrentScenario.ScenarioName}' on map '{CurrentScenario.MapFile}' with {CurrentScenario.Players.Count} players");
         return CurrentScenario;
     }
+
+    /// <summary>Number of HQs the map has to provide.</summary>
+    public int BaseCount()
+    {
+        var count = 0;
+        if (CurrentScenario != null)
+            foreach (var p in CurrentScenario.Players)
+                if (p.HasBase)
+                    count++;
+        return count;
+    }
+
+    /// <summary>Hands the map's HQs (in start-point order) to the players that have a base, in PLAYER order.</summary>
+    public void AssignBases()
+    {
+        if (CurrentScenario == null || TileMap == null || !TileMap.HasMeta(TileMapGenerator.MetaNameBases))
+            return;
+        var bases = TileMap.GetMeta(TileMapGenerator.MetaNameBases).AsGodotArray();
+        var next = 0;
+        foreach (var player in CurrentScenario.Players)
+        {
+            if (!player.HasBase)
+                continue;
+            var team = Teams.GetTeamByPlayerId(player.Id);
+            if (next >= bases.Count)
+            {
+                GD.PrintErr($"CampaignManager: no start point left for player {player.Id} '{player.Name}'");
+                continue;
+            }
+            var entry = bases[next++].AsGodotArray();
+            team.HqCoords = entry[0].AsVector2I();
+            team.HqCompany = entry[1].AsGodotObject() as Company;
+            SpawnBaseSquad(team);
+        }
+    }
+
+    /// <summary>
+    /// Every player with a base starts with a Thug and a Pistol man next to the HQ
+    /// (EXE base setup sub_404098: unit types 0 and 1 on free cells found by sub_43B955).
+    /// </summary>
+    private void SpawnBaseSquad(Team team)
+    {
+        var unitScene = GD.Load<PackedScene>("res://Units/Unit.tscn");
+        var blocked = new HashSet<Vector2I>(TileMap.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>());
+        var used = new HashSet<Vector2I>(TileMap.GetUsedCells());
+        var free = new List<Vector2I>();
+        for (var radius = 1; radius <= 4 && free.Count < 2; radius++)
+            for (var dx = -radius; dx <= radius; dx++)
+                for (var dy = -radius; dy <= radius; dy++)
+                {
+                    var cell = team.HqCoords + new Vector2I(dx, dy);
+                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) == radius && used.Contains(cell) && !blocked.Contains(cell)
+                        && free.Count < 2)
+                        free.Add(cell);
+                }
+
+        UnitCommon.UnitType[] squad = { UnitCommon.UnitType.Thug, UnitCommon.UnitType.Pistol };
+        for (var i = 0; i < squad.Length; i++)
+        {
+            var unit = unitScene.Instantiate<Unit>();
+            unit.SetType(squad[i]);
+            unit.TeamColor = team.TeamColor;
+            unit.SetOwner(OwnerFor(team));
+            unit.Position = TileMap.MapToLocal(i < free.Count ? free[i] : team.HqCoords);
+            MainScene.AddChild(unit);
+        }
+        GD.Print($"CampaignManager: base of player {team.PlayerId} '{team.PlayerName}' at {team.HqCoords} with a Thug and a Pistol man");
+    }
+
+    private static UnitCommon.UnitOwner OwnerFor(Team team) =>
+        Teams.GetCurrentPlayerTeam()?.GetTargetRelation(team.TeamColor) switch
+        {
+            Teams.TeamRelation.Self => UnitCommon.UnitOwner.Player,
+            Teams.TeamRelation.Friend => UnitCommon.UnitOwner.Teammate,
+            _ => UnitCommon.UnitOwner.Enemy,
+        };
 
     /// <summary>Call after the map exists.</summary>
     public void SpawnStartingUnits()
@@ -91,63 +169,76 @@ public partial class CampaignManager : Node
         var spawned = 0;
         foreach (var sUnit in CurrentScenario.StartingUnits)
         {
-            var unit = unitScene.Instantiate<Unit>();
-            unit.SetType(sUnit.UnitType);
-
-            var playerTeam = Teams.GetTeamByPlayerId(sUnit.PlayerId);
-            if (playerTeam != null)
+            if (sUnit.UnitType == null)
             {
-                unit.TeamColor = playerTeam.TeamColor;
-                var currentTeam = Teams.GetCurrentPlayerTeam();
-                if (currentTeam != null)
-                {
-                    unit.SetOwner(currentTeam.GetTargetRelation(playerTeam.TeamColor) switch
-                    {
-                        Teams.TeamRelation.Self => UnitCommon.UnitOwner.Player,
-                        Teams.TeamRelation.Friend => UnitCommon.UnitOwner.Teammate,
-                        _ => UnitCommon.UnitOwner.Enemy,
-                    });
-                }
+                GD.PrintErr($"CampaignManager: skipping unit of unknown type {sUnit.OriginalType}");
+                continue;
             }
-            else
-            {
-                GD.PrintErr("CampaignManager: player team not found for ID: ", sUnit.PlayerId);
-                unit.SetOwner(UnitCommon.UnitOwner.Player);
-            }
-
-            unit.Position = TileMap.MapToLocal(sUnit.Position);
-            MainScene.AddChild(unit);
+            var unit = SpawnUnit(unitScene, sUnit.UnitType.Value, sUnit);
             spawned++;
-            GD.Print($"CampaignManager: spawned {sUnit.UnitType} for player {sUnit.PlayerId} at {sUnit.Position}");
+
+            // A Cadillac starts with Thompson men inside (EXE loop at 0x467F7A).
+            // There is no transport yet, so they stand on the car's cell.
+            if (sUnit.UnitType == UnitCommon.UnitType.Cadillac)
+                for (var i = 0; i < CadillacPassengers; i++, spawned++)
+                    SpawnUnit(unitScene, UnitCommon.UnitType.Thompson, sUnit, unnamed: true);
+
+            GD.Print($"CampaignManager: spawned {unit.DisplayName} ({sUnit.UnitType}) for player {sUnit.PlayerId} at {sUnit.Position}");
         }
         GD.Print("CampaignManager: spawned ", spawned, " starting units");
     }
 
-    /// <summary>One team per player (colours in order); the first player is the human.</summary>
+    private Unit SpawnUnit(PackedScene unitScene, UnitCommon.UnitType type, Scenario.EpiStartingUnit sUnit, bool unnamed = false)
+    {
+        var unit = unitScene.Instantiate<Unit>();
+        unit.SetType(type);
+        unit.PersonalName = unnamed ? "" : sUnit.Name;
+        unit.EpiFlagA = sUnit.FlagA;
+        unit.EpiFlagB = sUnit.FlagB;
+
+        var playerTeam = Teams.GetTeamByPlayerId(sUnit.PlayerId);
+        if (playerTeam != null)
+        {
+            unit.TeamColor = playerTeam.TeamColor;
+            unit.SetOwner(OwnerFor(playerTeam));
+        }
+        else
+        {
+            GD.PrintErr("CampaignManager: player team not found for ID: ", sUnit.PlayerId);
+            unit.SetOwner(UnitCommon.UnitOwner.Neutral);
+        }
+
+        unit.Position = TileMap.MapToLocal(MapTileMath.FromOriginal(TileMap, sUnit.Position));
+        MainScene.AddChild(unit);
+        return unit;
+    }
+
+    /// <summary>One team per PLAYER line. The human is the player with kind 0. FUNDS goes to every player.</summary>
     private void InitPlayersFromScenario()
     {
         Teams.TeamsInGame.Clear();
         Teams.PlayerMoney.Clear();
 
+        var humanIndex = CurrentScenario.Players.FindIndex(p => p.IsHuman);
+        if (humanIndex < 0)
+        {
+            GD.PrintErr("CampaignManager: episode has no human player (kind 0); using the first player");
+            humanIndex = 0;
+        }
+
         for (var i = 0; i < CurrentScenario.Players.Count; i++)
         {
             var pData = CurrentScenario.Players[i];
             var team = Teams.GetOrAddTeam(PlayerColors[i % PlayerColors.Length]);
-            team.PlayerId = pData.Order;
+            team.PlayerId = pData.Id;
+            team.Kind = pData.Kind;
             team.PlayerName = pData.Name;
             team.HasBase = pData.HasBase;
-            if (i == 0)
-                team.IsCurrentPlayerColor = true;
-
-            // Starting funds go to the first player.
-            if (pData.Order == 0)
-            {
-                team.PlayerMoney = CurrentScenario.Funds;
-                Teams.SetPlayerMoney(pData.Order, CurrentScenario.Funds);
-                GD.Print($"CampaignManager: player '{pData.Name}' gets funds: {CurrentScenario.Funds}");
-            }
+            team.IsCurrentPlayerColor = i == humanIndex;
+            team.PlayerMoney = CurrentScenario.Funds;
+            Teams.SetPlayerMoney(pData.Id, CurrentScenario.Funds);
         }
-        GD.Print("CampaignManager: initialized ", Teams.TeamsInGame.Count, " teams");
+        GD.Print($"CampaignManager: initialized {Teams.TeamsInGame.Count} teams, funds {CurrentScenario.Funds} each");
     }
 
     private void InitAlliancesFromScenario()
@@ -157,14 +248,24 @@ public partial class CampaignManager : Node
             var fromTeam = Teams.GetTeamByPlayerId(alliance.FromPlayer);
             var toTeam = Teams.GetTeamByPlayerId(alliance.ToPlayer);
             if (fromTeam != null && toTeam != null)
-            {
                 fromTeam.SetTargetRelation(toTeam.TeamColor, Teams.TeamRelation.Friend);
-                GD.Print($"CampaignManager: alliance from '{fromTeam.PlayerName}' to '{toTeam.PlayerName}'");
-            }
             else
-            {
                 GD.PrintErr($"CampaignManager: alliance team not found: {alliance.FromPlayer} -> {alliance.ToPlayer}");
+        }
+    }
+
+    private void InitBribeAdvances()
+    {
+        foreach (var bribe in CurrentScenario.BribeAdvances)
+        {
+            var team = Teams.GetTeamByPlayerId(bribe.PlayerId);
+            if (team == null)
+            {
+                GD.PrintErr("CampaignManager: Invalid player id in bribeadvance desc: ", bribe.PlayerId);
+                continue;
             }
+            team.AuthorityFavour[bribe.Authority] = bribe.Points;
+            team.AuthorityMoney[bribe.Authority] = bribe.Money;
         }
     }
 
@@ -173,7 +274,6 @@ public partial class CampaignManager : Node
         var victoryManager = new VictoryManager();
         AddChild(victoryManager);
         victoryManager.InitFromScenario(CurrentScenario);
-        GD.Print("CampaignManager: initialized victory conditions");
     }
 
     /// <summary>Scenario won: move to the next one if there is one.</summary>

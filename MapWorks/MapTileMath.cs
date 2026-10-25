@@ -16,6 +16,9 @@ public static class MapTileMath
     private static readonly Vector2 DownNormalised = Down.Normalized();
     private static readonly Vector2 UpNormalised = -DownNormalised;
 
+    /// <summary>Pixel distance between the centres of two neighbouring cells.</summary>
+    public static readonly float TileStepLength = Right.Length();
+
     /// <summary>The current game map; set by Main after the map is built.</summary>
     public static TileMapLayer Tilemap { get; set; }
 
@@ -25,6 +28,17 @@ public static class MapTileMath
         var pixels = map.MapToLocal(from);
         var offset = Right * add.X + Down * add.Y;
         return map.LocalToMap(pixels + offset);
+    }
+
+    /// <summary>Map cell of an original-game coordinate (as used in .map STARTPOINTS and .epi UNIT/VCOND lines).</summary>
+    public static Vector2I FromOriginal(TileMapLayer map, Vector2I original) => Add(map, Vector2I.Zero, original);
+
+    /// <summary>Exact distance in map cells between two nodes.</summary>
+    public static float GetDistanceExact(Node2D node1, Node2D node2)
+    {
+        var pos1 = Tilemap.LocalToMap(node1.Position);
+        var pos2 = Tilemap.LocalToMap(node2.Position);
+        return ((Vector2)(pos2 - pos1)).Length();
     }
 
     public static Directions GetDirection(Vector2 velocity)

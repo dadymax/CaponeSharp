@@ -55,14 +55,32 @@ public class OriginalTiles
         }
     }
 
-    /// <summary>First tile whose comment equals the given text (case-insensitive), or null.</summary>
-    public SingleTileLine GetRecordWithComment(string comment)
+    /// <summary>The <paramref name="occurrence"/>-th tile (0-based) whose comment equals the text (case-insensitive), or null.</summary>
+    public SingleTileLine GetRecordWithComment(string comment, int occurrence = 0)
     {
-        var search = comment.ToUpperInvariant();
+        var search = comment.Trim().ToUpperInvariant();
         foreach (var tile in Tiles)
-            if (tile.Comment == search)
+            if (tile.Comment == search && occurrence-- == 0)
                 return tile;
         return null;
+    }
+
+    /// <summary>
+    /// Finds a tile from a reference used in the JSON files:
+    /// "#123" = tile index, "name" = first tile with that comment, "name@2" = third tile with that comment
+    /// (Chicago.tile repeats some names, e.g. "Own Thompson man idle" is used for own, enemy and ally).
+    /// </summary>
+    public SingleTileLine ResolveTile(string reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+            return null;
+        reference = reference.Trim();
+        if (reference.StartsWith('#'))
+            return int.TryParse(reference[1..], out var index) ? GetTileByIndex(index) : null;
+        var at = reference.LastIndexOf('@');
+        if (at > 0 && int.TryParse(reference[(at + 1)..], out var occurrence))
+            return GetRecordWithComment(reference[..at], occurrence);
+        return GetRecordWithComment(reference);
     }
 
     /// <summary>Tile by 0-based array index, or null.</summary>

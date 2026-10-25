@@ -80,9 +80,16 @@ public class Team
 
     // Player data from the scenario
     public int PlayerId { get; set; } = -1;
+    /// <summary>PLAYER kind: 0 = human, other values = computer player types.</summary>
+    public int Kind { get; set; }
     public string PlayerName { get; set; } = "";
     public int PlayerMoney { get; set; }
     public bool HasBase { get; set; }
+
+    /// <summary>Favour points per authority (1–4), starting from BRIBEADVANCE.</summary>
+    public Dictionary<int, float> AuthorityFavour { get; } = new();
+    /// <summary>Money value per authority from BRIBEADVANCE (meaning not decoded yet).</summary>
+    public Dictionary<int, long> AuthorityMoney { get; } = new();
 
     public Team(Color teamColor) => TeamColor = teamColor;
 

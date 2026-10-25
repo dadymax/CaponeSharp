@@ -2,7 +2,7 @@ using Godot;
 
 namespace Capone;
 
-/// <summary>Avatar of the selected unit or company, from its AvatarTileIndex in Chicago.tile.</summary>
+/// <summary>Avatar of the selected unit or company: a Chicago.tile portrait (see OriginalTiles.ResolveTile).</summary>
 public partial class SelectionIcon : TextureRect
 {
     public Node2D SelectedNode { get; private set; }
@@ -17,25 +17,22 @@ public partial class SelectionIcon : TextureRect
         if (node == null)
             return;
 
-        var avatarIndex = node switch
+        var tiles = OriginalData.Instance.Tiles;
+        var tile = node switch
         {
-            Unit unit => unit.UnitData?.AvatarTileIndex ?? -1,
-            Company company => company.CompanyData?.AvatarTileIndex ?? -1,
-            _ => -1,
+            Unit unit => tiles.ResolveTile(unit.UnitData?.Avatar),
+            Company { CompanyData.AvatarTileIndex: >= 0 } company => tiles.GetTileByIndex(company.CompanyData.AvatarTileIndex),
+            _ => null,
         };
-        if (avatarIndex < 0)
+        if (tile == null)
         {
-            GD.PrintErr("SelectionIcon: no AvatarTileIndex for ", node.Name);
+            GD.PrintErr("SelectionIcon: no avatar for ", node.Name);
             return;
         }
-
-        var tile = OriginalData.Instance.Tiles.GetTileByIndex(avatarIndex);
-        if (tile == null)
-            return;
         var images = OriginalData.Instance.GetImageForTile(tile);
         if (images.Count == 0)
         {
-            GD.PrintErr("SelectionIcon: no images for tile index: ", avatarIndex);
+            GD.PrintErr("SelectionIcon: avatar tile has no frames for ", node.Name);
             return;
         }
         Texture = ImageTexture.CreateFromImage(images[0]);

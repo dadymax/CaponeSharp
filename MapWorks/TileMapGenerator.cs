@@ -52,6 +52,11 @@ public static class TileMapGenerator
         foreach (var vec in map.BlockPlacement)
         {
             var blockPosition = new Vector2I(vec.X, vec.Y);
+            if (vec.Z < 0 || vec.Z >= cb.Blocks.Count)
+            {
+                GD.PrintErr($"TileMapGenerator: {map.FileName} uses unknown block {vec.Z}");
+                continue;
+            }
             var block = cb.Blocks[vec.Z];
 
             // Tallest tile in the block decides the atlas row height.
@@ -152,19 +157,11 @@ public static class TileMapGenerator
             bldngCounter++;
         }
 
-        var startPoints = new List<Vector2I>();
-        foreach (var oldCoord in map.StartPoints)
-            startPoints.Add(MapTileMath.Add(tileMap, Vector2I.Zero, oldCoord));
-        if (randomBases)
-            Shuffle(startPoints);
+        var bases = PlaceBases(tileMap, map, baseCount, randomBases, companyScene);
 
-        var basePlacedCount = 0;
-        var bases = new Godot.Collections.Array();
         var nonWalkableMap = new Godot.Collections.Array<Vector2I>();
-
-        foreach (var cell in tileMap.GetUsedCells())
+        foreach (var coords in tileMap.GetUsedCells())
         {
-            var coords = cell;
             var td = tileMap.GetCellTileData(coords);
             if (td == null)
                 continue;
@@ -172,56 +169,81 @@ public static class TileMapGenerator
                 nonWalkableMap.Add(coords);
 
             var company = GetCompany(td);
-            if (startPoints.Contains(coords) && basePlacedCount < baseCount)
-            {
-                if (company == null)
-                {
-                    // Start point is not on a company: take a neighbouring base-grade one.
-                    var found = false;
-                    foreach (var tryX in new[] { 1, 0, -1 })
-                    {
-                        foreach (var tryY in new[] { 1, 0, -1 })
-                        {
-                            var tryCoords = coords + new Vector2I(tryX, tryY);
-                            var tryTd = tileMap.GetCellTileData(tryCoords);
-                            var tryCompany = tryTd == null ? null : GetCompany(tryTd);
-                            if (tryCompany != null && tryCompany.CompanyGrade == CompanyCommon.CompanyBldngGrade.Base)
-                            {
-                                coords = tryCoords;
-                                company = tryCompany;
-                                td = tryTd;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (found)
-                            break;
-                    }
-                }
-
-                // TODO: HQ placement fix (no base company near the start point)
-                company ??= companyScene.Instantiate<Company>();
-
-                company.SetType(CompanyCommon.CompanyType.HQ);
-                company.SetOwner(CompanyCommon.CompanyOwner.Player);
-                td.SetCustomData(CompanyLayerName, company);
-                basePlacedCount++;
-                bases.Add(new Godot.Collections.Array { coords, company });
-            }
-
-            if (company != null)
-            {
-                if (company.GetParent() == null)
-                    (parent ?? (Node)tileMap).AddChild(company);
-                company.Position = tileMap.MapToLocal(coords);
-                company.ZIndex = 999;
-            }
+            if (company == null)
+                continue;
+            if (company.GetParent() == null)
+                (parent ?? (Node)tileMap).AddChild(company);
+            company.Position = tileMap.MapToLocal(coords);
+            company.ZIndex = 999;
         }
 
         tileMap.SetMeta(TileNonWalkable, nonWalkableMap);
         tileMap.SetMeta(MetaNameBases, bases);
         return tileMap;
     }
+
+    /// <summary>
+    /// Turns the companies at the first <paramref name="baseCount"/> start points (in file order, or shuffled for RANDOM 1)
+    /// into HQs. Returns [cell, company] pairs in that order; the caller hands them to the players that have a base.
+    /// </summary>
+    private static Godot.Collections.Array PlaceBases(TileMapLayer tileMap, OriginalMaps.Map map, int baseCount,
+        bool randomBases, PackedScene companyScene)
+    {
+        var startPoints = new List<Vector2I>();
+        foreach (var original in map.StartPoints)
+            startPoints.Add(MapTileMath.FromOriginal(tileMap, original));
+        if (randomBases)
+            Shuffle(startPoints);
+        if (baseCount > startPoints.Count)
+            GD.PrintErr($"TileMapGenerator: {map.FileName} has {startPoints.Count} start points, {baseCount} bases needed");
+
+        var bases = new Godot.Collections.Array();
+        foreach (var startPoint in startPoints)
+        {
+            if (bases.Count >= baseCount)
+                break;
+            var coords = startPoint;
+            var td = tileMap.GetCellTileData(coords);
+            if (td == null)
+            {
+                GD.PrintErr($"TileMapGenerator: start point {coords} is outside the map");
+                continue;
+            }
+
+            var company = GetCompany(td);
+            if (company == null)
+            {
+                // Start point is not on a company: take a neighbouring base-grade one.
+                foreach (var offset in NeighbourOffsets)
+                {
+                    var tryTd = tileMap.GetCellTileData(coords + offset);
+                    var tryCompany = tryTd == null ? null : GetCompany(tryTd);
+                    if (tryCompany != null && tryCompany.CompanyGrade == CompanyCommon.CompanyBldngGrade.Base)
+                    {
+                        coords += offset;
+                        company = tryCompany;
+                        td = tryTd;
+                        break;
+                    }
+                }
+            }
+
+            if (company == null)
+            {
+                // TODO: HQ placement fix (no base company near the start point)
+                company = companyScene.Instantiate<Company>();
+                td.SetCustomData(CompanyLayerName, company);
+            }
+            company.SetType(CompanyCommon.CompanyType.HQ);
+            bases.Add(new Godot.Collections.Array { coords, company });
+        }
+        return bases;
+    }
+
+    private static readonly Vector2I[] NeighbourOffsets =
+    {
+        new(1, 1), new(1, 0), new(1, -1), new(0, 1), new(0, -1), new(-1, 1), new(-1, 0), new(-1, -1),
+    };
 
     public static Vector2[] GetStandartTileVertices(Vector2 margin)
     {

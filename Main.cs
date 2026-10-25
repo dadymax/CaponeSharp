@@ -6,41 +6,51 @@ namespace Capone;
 /// <summary>Main scene: loads the campaign, builds the map, handles selection and orders.</summary>
 public partial class Main : Node2D
 {
-	private const string DefaultMap = "BigEight.map";
-
 	public TileMapLayer Map { get; private set; }
 
 	private readonly List<ISelectable> _selected = new();
 	private bool _isMouseDrag;
 	private Vector2 _dragStartGlobal;
 
+	/// <summary>
+	/// Command line (after "--"): --episode=N starts episode N (default 1);
+	/// --smoke-test checks all original data and quits with exit code 0/1.
+	/// </summary>
 	public override void _Ready()
 	{
+		var args = OS.GetCmdlineUserArgs();
+		if (System.Array.IndexOf(args, "--smoke-test") >= 0)
+		{
+			var failures = SmokeTest.Run();
+			GetTree().Quit(failures == 0 ? 0 : 1);
+			return;
+		}
+		var episode = 1;
+		foreach (var arg in args)
+			if (arg.StartsWith("--episode=") && int.TryParse(arg["--episode=".Length..], out var n))
+				episode = n;
+
 		YSortEnabled = true;
 		SetupGui();
 
 		var campaignManager = new CampaignManager();
 		AddChild(campaignManager);
-		campaignManager.LoadCampaign("res://campaigns/campaign1.txt");
-		var scenario = campaignManager.StartScenario(this);
+		campaignManager.LoadOriginalCampaign();
+		var scenario = campaignManager.StartScenario(this, episode - 1);
+		if (scenario == null)
+			return;
 
-		const int teamCount = 2;
-		var randomBases = scenario?.RandomBases ?? true;
-		var mapName = string.IsNullOrEmpty(scenario?.MapFile) ? DefaultMap : scenario.MapFile;
-
-		Map = TileMapGenerator.CreateTileMap(mapName, teamCount, this, randomBases);
+		Map = TileMapGenerator.CreateTileMap(scenario.MapFile, campaignManager.BaseCount(), this, scenario.RandomBases);
 		if (Map == null)
 			return;
 		Map.Name = "Map";
 		MapTileMath.Tilemap = Map;
 		AddChild(Map);
 
-		if (scenario != null)
-		{
-			campaignManager.TileMap = Map;
-			campaignManager.SpawnStartingUnits();
-			GD.Print($"Main: scenario loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
-		}
+		campaignManager.TileMap = Map;
+		campaignManager.AssignBases();
+		campaignManager.SpawnStartingUnits();
+		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
 	}
 
 	public override void _Input(InputEvent @event)

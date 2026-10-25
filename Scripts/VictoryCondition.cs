@@ -1,125 +1,115 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using Godot;
 
 namespace Capone;
 
-/// <summary>One victory condition for one player.</summary>
+/// <summary>
+/// One victory condition for one player, from a VCOND line. Field layouts follow the EXE's per-type readers
+/// (sub_4670A5, 0x4678EA…0x467BFA); the meaning of some values is still a guess and marked so.
+/// </summary>
 public class VictoryCondition
 {
     public enum ConditionType
     {
-        Money,            // VCOND 1: earn N money
-        CompanyCount,     // VCOND 2: create N companies of a type
-        UnitType,         // VCOND 4: create a unit of a type
-        CaptureArea,      // VCOND 8: capture N companies in a rectangle
-        MarketShare,      // VCOND 5: capture X % of the market
-        CompanyCountType, // VCOND 6: capture N companies of a type
-        UnitReach,        // VCOND 7: a unit reaches a point
-        UnitKill,         // VCOND 3: kill N units of a type
+        Money = 1,            // VCOND 1 p money
+        CompanyCount = 2,     // VCOND 2 p companyType count (guess: "2 1 4 4")
+        UnitKill = 3,         // VCOND 3 p unitType (12 = the enemy boss)
+        UnitCreate = 4,       // VCOND 4 p unitType
+        MarketShare = 5,      // VCOND 5 p share companyType
+        CompanyCountType = 6, // VCOND 6 p count
+        UnitReach = 7,        // VCOND 7 p x y size unitType
+        CaptureArea = 8,      // VCOND 8 p x1 y1 x2 y2 companyType count
+        Unknown9 = 9,         // VCOND 9 p a b (not used by the episodes)
     }
 
-    /// <summary>Maps the VCOND number from the .epi file to ConditionType.</summary>
-    public static ConditionType? FromEpiType(int epiType) => epiType switch
-    {
-        1 => ConditionType.Money,
-        2 => ConditionType.CompanyCount,
-        3 => ConditionType.UnitKill,
-        4 => ConditionType.UnitType,
-        5 => ConditionType.MarketShare,
-        6 => ConditionType.CompanyCountType,
-        7 => ConditionType.UnitReach,
-        8 => ConditionType.CaptureArea,
-        _ => null,
-    };
+    public static ConditionType? FromEpiType(int epiType) =>
+        Enum.IsDefined(typeof(ConditionType), epiType) ? (ConditionType)epiType : null;
 
     public ConditionType Type { get; }
     /// <summary>Player the condition applies to.</summary>
     public int TargetPlayer { get; }
-    /// <summary>Raw parameters from the .epi file.</summary>
-    public List<string> Parameters { get; }
+    public Scenario.EpiVictoryCondition Source { get; }
 
     public bool IsCompleted { get; private set; }
+    public long CurrentProgress { get; private set; }
+    public long RequiredProgress { get; private set; }
 
-    public int CurrentProgress { get; private set; }
-    public int RequiredProgress { get; private set; }
-
-    public int MoneyTarget { get; private set; }
-    public CompanyCommon.CompanyType CompanyType { get; private set; } = CompanyCommon.CompanyType.Free;
-    public UnitCommon.UnitType UnitType { get; private set; } = UnitCommon.UnitType.Bat;
+    public long MoneyTarget { get; private set; }
+    /// <summary>Raw company/business type number (meaning not decoded yet).</summary>
+    public int CompanyType { get; private set; }
+    /// <summary>Raw unit type number; see UnitType for the decoded value.</summary>
+    public int OriginalUnitType { get; private set; } = -1;
+    /// <summary>Null when the number is not a unit type (VCOND 7 uses 13, probably "any unit").</summary>
+    public UnitCommon.UnitType? UnitType { get; private set; }
+    /// <summary>Original map coordinates.</summary>
     public Vector2I TopLeft { get; private set; }
     public Vector2I BottomRight { get; private set; }
-    public float TargetPercentage { get; private set; }
     public Vector2I TargetCoords { get; private set; }
-    public UnitCommon.UnitType TargetUnitType { get; private set; } = UnitCommon.UnitType.Bat;
-    public int RequiredKills { get; private set; } = 1;
-    public int CurrentKills { get; private set; }
+    /// <summary>VCOND 7 third value (13, 5 or 3 seen): size of the target area, probably.</summary>
+    public int TargetSize { get; private set; }
+    public float TargetShare { get; private set; }
 
     /// <summary>Called once when the condition completes.</summary>
     public Action OnUpdate { get; set; }
 
-    public VictoryCondition(ConditionType type, int targetPlayer, List<string> parameters)
+    public VictoryCondition(Scenario.EpiVictoryCondition source)
     {
-        Type = type;
-        TargetPlayer = targetPlayer;
-        Parameters = parameters ?? new List<string>();
-        ParseParameters();
+        Source = source;
+        Type = (ConditionType)source.ConditionType;
+        TargetPlayer = source.TargetPlayer;
+        ParseValues(source);
     }
 
-    private void ParseParameters()
+    private void ParseValues(Scenario.EpiVictoryCondition s)
     {
-        var p = Parameters;
-        if (p.Count == 0)
-            return;
-
+        int V(int i) => i < s.Values.Count ? (int)s.Values[i] : 0;
         switch (Type)
         {
-            case ConditionType.Money: // VCOND 1 player amount
-                MoneyTarget = ToInt(p[0]);
+            case ConditionType.Money:
+                MoneyTarget = s.Values.Count > 0 ? s.Values[0] : 0;
                 RequiredProgress = MoneyTarget;
                 break;
-            case ConditionType.CompanyCount: // VCOND 2 player companyType count
-            case ConditionType.MarketShare: // VCOND 5 player companyType percentage
-            case ConditionType.CompanyCountType: // VCOND 6 player companyType count
-                if (p.Count >= 2)
-                    RequiredProgress = ToInt(p[1]);
+            case ConditionType.CompanyCount:
+                CompanyType = V(0);
+                RequiredProgress = V(1);
                 break;
-            case ConditionType.UnitType: // VCOND 4 player unitType
-                if (Enum.TryParse<UnitCommon.UnitType>(p[0], out var unitType))
-                    UnitType = unitType;
+            case ConditionType.UnitKill:
+            case ConditionType.UnitCreate:
+                SetUnitType(V(0));
+                RequiredProgress = 1;
                 break;
-            case ConditionType.CaptureArea: // VCOND 8 player count x1 y1 x2 y2
-                if (p.Count >= 5)
-                {
-                    RequiredProgress = ToInt(p[0]);
-                    TopLeft = new Vector2I(ToInt(p[1]), ToInt(p[2]));
-                    BottomRight = new Vector2I(ToInt(p[3]), ToInt(p[4]));
-                }
+            case ConditionType.MarketShare:
+                TargetShare = s.Share;
+                CompanyType = V(0);
                 break;
-            case ConditionType.UnitReach: // VCOND 7 player unitType x y
-                if (p.Count >= 3)
-                {
-                    if (Enum.TryParse<UnitCommon.UnitType>(p[0], out var reachType))
-                        UnitType = reachType;
-                    TargetCoords = new Vector2I(ToInt(p[1]), ToInt(p[2]));
-                }
+            case ConditionType.CompanyCountType:
+                RequiredProgress = V(0);
                 break;
-            case ConditionType.UnitKill: // VCOND 3 player unitType [count]
-                if (Enum.TryParse<UnitCommon.UnitType>(p[0], out var killType))
-                    TargetUnitType = killType;
-                RequiredKills = p.Count >= 2 ? ToInt(p[1]) : 1;
+            case ConditionType.UnitReach:
+                TargetCoords = new Vector2I(V(0), V(1));
+                TargetSize = V(2);
+                SetUnitType(V(3));
+                RequiredProgress = 1;
+                break;
+            case ConditionType.CaptureArea:
+                TopLeft = new Vector2I(V(0), V(1));
+                BottomRight = new Vector2I(V(2), V(3));
+                CompanyType = V(4);
+                RequiredProgress = V(5);
                 break;
         }
     }
 
-    /// <summary>
-    /// True if completed. Progress is pushed in through the Update* methods;
-    /// the per-type checks below are still stubs (see plan.md, phase 8).
-    /// </summary>
+    private void SetUnitType(int original)
+    {
+        OriginalUnitType = original;
+        UnitType = UnitCommon.FromOriginalId(original);
+    }
+
+    /// <summary>True if completed. Progress is pushed in through the Update* methods (checks for most types are not written yet).</summary>
     public bool Check() => IsCompleted;
 
-    public void UpdateMoneyProgress(int currentMoney)
+    public void UpdateMoneyProgress(long currentMoney)
     {
         if (Type != ConditionType.Money)
             return;
@@ -130,7 +120,7 @@ public class VictoryCondition
 
     public void UpdateCompanyCountProgress(int count)
     {
-        if (Type != ConditionType.CompanyCount)
+        if (Type is not (ConditionType.CompanyCount or ConditionType.CompanyCountType))
             return;
         CurrentProgress = count;
         if (count >= RequiredProgress)
@@ -139,11 +129,10 @@ public class VictoryCondition
 
     public void UpdateKillProgress(UnitCommon.UnitType killedUnitType, int killedPlayerId)
     {
-        if (Type != ConditionType.UnitKill || killedUnitType != TargetUnitType)
+        if (Type != ConditionType.UnitKill || killedUnitType != UnitType)
             return;
-        CurrentKills++;
-        CurrentProgress = CurrentKills;
-        if (CurrentKills >= RequiredKills)
+        CurrentProgress++;
+        if (CurrentProgress >= RequiredProgress)
             Complete();
     }
 
@@ -157,23 +146,20 @@ public class VictoryCondition
         OnUpdate?.Invoke();
     }
 
+    /// <summary>Debug description. The player-facing objective is the episode's OBJECTIVETEXT.</summary>
     public string GetDescription() => Type switch
     {
-        ConditionType.Money => $"Заработать {MoneyTarget} денег",
-        ConditionType.CompanyCount => $"Создать {RequiredProgress} компаний",
-        ConditionType.UnitType => $"Создать юнита {UnitType}",
-        ConditionType.CaptureArea => $"Захватить {RequiredProgress} компаний в области",
-        ConditionType.MarketShare => $"Захватить {RequiredProgress}% рынка",
-        ConditionType.CompanyCountType => $"Захватить {RequiredProgress} компаний",
-        ConditionType.UnitReach => $"Довести {UnitType} до точки",
-        ConditionType.UnitKill => $"Убить {RequiredKills} {TargetUnitType}",
-        _ => "Unknown condition",
+        ConditionType.Money => $"Money {MoneyTarget}",
+        ConditionType.CompanyCount => $"{RequiredProgress} companies of type {CompanyType}",
+        ConditionType.UnitKill => $"Kill {UnitType?.ToString() ?? OriginalUnitType.ToString()}",
+        ConditionType.UnitCreate => $"Create {UnitType?.ToString() ?? OriginalUnitType.ToString()}",
+        ConditionType.MarketShare => $"{TargetShare:P0} market share of type {CompanyType}",
+        ConditionType.CompanyCountType => $"{RequiredProgress} companies",
+        ConditionType.UnitReach => $"{UnitType?.ToString() ?? OriginalUnitType.ToString()} reaches {TargetCoords} (size {TargetSize})",
+        ConditionType.CaptureArea => $"{RequiredProgress} companies of type {CompanyType} in {TopLeft}-{BottomRight}",
+        _ => $"VCOND {(int)Type}",
     };
 
-    /// <summary>Progress in percent (0-100).</summary>
     public float GetProgressPercent() =>
         RequiredProgress <= 0 ? 100.0f : Mathf.Clamp((float)CurrentProgress / RequiredProgress * 100.0f, 0.0f, 100.0f);
-
-    private static int ToInt(string s) =>
-        int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 0;
 }

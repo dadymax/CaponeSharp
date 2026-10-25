@@ -24,13 +24,12 @@ public partial class VictoryManager : Node
 
         foreach (var vc in scenario.VictoryConditions)
         {
-            var type = VictoryCondition.FromEpiType(vc.ConditionType);
-            if (type == null)
+            if (VictoryCondition.FromEpiType(vc.ConditionType) == null)
             {
                 GD.PrintErr("VictoryManager: unknown VCOND type ", vc.ConditionType);
                 continue;
             }
-            Conditions.Add(new VictoryCondition(type.Value, vc.TargetPlayer, vc.Parameters));
+            Conditions.Add(new VictoryCondition(vc));
         }
         GD.Print("VictoryManager: initialized ", Conditions.Count, " victory conditions");
     }
@@ -64,7 +63,7 @@ public partial class VictoryManager : Node
         return any;
     }
 
-    public void UpdateMoneyProgress(int playerId, int amount)
+    public void UpdateMoneyProgress(int playerId, long amount)
     {
         foreach (var vc in Conditions)
             if (vc.TargetPlayer == playerId)

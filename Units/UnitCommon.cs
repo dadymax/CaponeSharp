@@ -4,12 +4,37 @@ using Godot;
 
 namespace Capone;
 
-/// <summary>Per-type unit data from units.json plus the unit's component nodes.</summary>
+/// <summary>
+/// Per-type unit data plus the unit's component nodes.
+/// Stats come from Capone.EXE (OriginalUnitTable); units.json adds sprites, avatar and the values not found in the EXE yet.
+/// </summary>
 public partial class UnitCommon : Node
 {
-    /// <summary>Must stay in sync with the keys of units.json.</summary>
-    public enum UnitType { Bat, Pistol, Sniper, Raid, Hitman, Thief, Bomb, Thompson, Collector, CollectorWithMoney, Cadillac }
+    /// <summary>Original unit type numbers: index into the EXE unit table and the type field of .epi UNIT lines.</summary>
+    public enum UnitType
+    {
+        Thug = 0,
+        Pistol = 1,
+        Thompson = 2,
+        Terrorist = 3,
+        Sniper = 4,
+        Cadillac = 5,
+        /// <summary>Not confirmed: 600 HP, fastest unit; Chicago.tile has "Police car" sprites.</summary>
+        PoliceCar = 6,
+        Collector = 7,
+        Shotgun = 8,
+        Hitman = 9,
+        Thief = 10,
+        /// <summary>Not confirmed: the EXE names a "Sergeant"; Chicago.tile has "Police Batman".</summary>
+        Policeman = 11,
+        /// <summary>Named bosses in the episodes (Аль Капоне, Джонни Торрио…).</summary>
+        Godfather = 12,
+    }
+
     public enum UnitOwner { Neutral, Player, Teammate, Enemy }
+
+    /// <summary>Assumed speed of the original game clock, used to turn "ticks per tile" into pixels per second.</summary>
+    public const float OriginalTicksPerSecond = 60f;
 
     private const string DictNameSprites = "Sprites";
 
@@ -27,13 +52,14 @@ public partial class UnitCommon : Node
         var json = JsonUtil.LoadDictionary("res://Units/units.json");
         foreach (var type in Enum.GetValues<UnitType>())
         {
-            if (!json.TryGetValue(type.ToString(), out var typeVariant))
-                continue; // e.g. CollectorWithMoney has no record
-            var typeDict = typeVariant.AsGodotDictionary();
             var record = new TypeRecord();
             TypeRecords[type] = record;
-
-            foreach (var (keyVariant, value) in typeDict)
+            if (!json.TryGetValue(type.ToString(), out var typeVariant))
+            {
+                GD.PrintErr("UnitCommon: no units.json record for ", type);
+                continue;
+            }
+            foreach (var (keyVariant, value) in typeVariant.AsGodotDictionary())
             {
                 var key = keyVariant.AsString();
                 switch (key)
@@ -55,7 +81,7 @@ public partial class UnitCommon : Node
         }
     }
 
-    /// <summary>Owner → array of tile comments (one per animation layer), or owner → name of another owner to copy.</summary>
+    /// <summary>Owner → array of tile references (one per animation layer), or owner → name of another owner to copy.</summary>
     private static void ReadSprites(Godot.Collections.Dictionary sprites, Dictionary<UnitOwner, OriginalUnitSprites> result)
     {
         var aliases = new List<(UnitOwner owner, UnitOwner source)>();
@@ -83,16 +109,39 @@ public partial class UnitCommon : Node
                 result[owner] = ous;
     }
 
+    /// <summary>Unit type for an original type number, or null if it is not a known type.</summary>
+    public static UnitType? FromOriginalId(int id) =>
+        Enum.IsDefined(typeof(UnitType), id) ? (UnitType)id : null;
+
+    /// <summary>Sprite references of every type and owner that don't resolve in Chicago.tile.</summary>
+    public static IEnumerable<string> ValidateSprites()
+    {
+        foreach (var (type, record) in TypeRecords)
+        {
+            foreach (var (owner, sprites) in record.Sprites)
+                foreach (var missing in sprites.Validate())
+                    yield return $"{type}/{owner}: {missing}";
+            if (record.Properties.TryGetValue("Avatar", out var avatar)
+                && OriginalData.Instance.Tiles.ResolveTile(avatar.AsString()) == null)
+                yield return $"{type}/Avatar: {avatar.AsString()}";
+        }
+    }
+
     public UnitType Type { get; private set; }
     public UnitOwner OwnerType { get; set; }
 
-    public int AvatarTileIndex { get; set; } = -1;
+    /// <summary>Chicago.tile reference of the portrait shown in the bottom panel.</summary>
+    public string Avatar { get; set; } = "";
     public string UnitName { get; set; } = "";
     public int Cost { get; set; }
     public int ArmyFavor { get; set; }
     public int Salary { get; set; } = 20000;
-    public int MoveSpeed { get; set; } = 40;
+    /// <summary>Pixels per second.</summary>
+    public float MoveSpeed { get; set; } = 40;
     public int VisionRadius { get; set; } = 10;
+    /// <summary>Largest vision radius (the sniper's after standing still).</summary>
+    public int VisionRadiusMax { get; set; } = 10;
+    public OriginalUnitTable.Stats Stats { get; private set; }
 
     public CanAttack CanAttack { get; private set; }
     public CanBeAttacked CanBeAttacked { get; private set; }
@@ -106,25 +155,38 @@ public partial class UnitCommon : Node
     public UnitCommon(UnitType type)
     {
         Type = type;
-        if (!TypeRecords.TryGetValue(type, out var record))
-        {
-            GD.PrintErr("UnitCommon: no units.json record for ", type);
-            record = new TypeRecord();
-        }
+        var record = TypeRecords.GetValueOrDefault(type) ?? new TypeRecord();
+        Stats = OriginalUnitTable.Instance.Get((int)type);
+        if (Stats == null)
+            GD.PrintErr("UnitCommon: no Capone.EXE stats for ", type);
 
+        ApplyOriginalStats();
         foreach (var (key, value) in record.Properties)
             ApplyProperty(key, value);
         foreach (var (owner, sprites) in record.Sprites)
             _spriteFrameDict[owner] = sprites;
 
-        if (record.Components.TryGetValue(CanAttack.JsonKey, out var ca))
-            CanAttack = JsonUtil.FillFromJson(new CanAttack(), ca);
-        else
-            CanAttack = new CanAttack(); // default, as in the GDScript version
-        if (record.Components.TryGetValue(CanBeAttacked.JsonKey, out var cba))
-            CanBeAttacked = JsonUtil.FillFromJson(new CanBeAttacked(), cba);
-        else
-            CanBeAttacked = new CanBeAttacked();
+        // Units without damage in the original table don't attack.
+        var attacks = Stats == null ? record.Components.ContainsKey(CanAttack.JsonKey) : Stats.DamageMax > 0;
+        if (attacks)
+        {
+            CanAttack = record.Components.TryGetValue(CanAttack.JsonKey, out var ca)
+                ? JsonUtil.FillFromJson(new CanAttack(), ca)
+                : new CanAttack();
+            if (CanAttack != null && Stats != null)
+                CanAttack.ApplyOriginalStats(Stats);
+        }
+
+        CanBeAttacked = record.Components.TryGetValue(CanBeAttacked.JsonKey, out var cba)
+            ? JsonUtil.FillFromJson(new CanBeAttacked(), cba)
+            : new CanBeAttacked();
+        if (CanBeAttacked != null && Stats != null)
+        {
+            CanBeAttacked.MaxHP = Stats.MaxHP;
+            // The original has no evasion: the attacker's hit chance decides.
+            CanBeAttacked.EvasionFactor = 0;
+        }
+
         if (record.Components.TryGetValue(CanHoldMoney.JsonKey, out var chm))
             CanHoldMoney = JsonUtil.FillFromJson(new CanHoldMoney(), chm);
 
@@ -139,17 +201,25 @@ public partial class UnitCommon : Node
             AddChild(CanHoldMoney);
     }
 
+    private void ApplyOriginalStats()
+    {
+        UnitName = OriginalUnitTable.GetName((int)Type, OriginalData.TextLanguage);
+        if (Stats == null)
+            return;
+        Cost = Stats.Cost;
+        VisionRadius = Stats.Vision;
+        VisionRadiusMax = Mathf.Max(Stats.Vision, Stats.VisionMax);
+        if (Stats.TicksPerTile > 0)
+            MoveSpeed = MapTileMath.TileStepLength * OriginalTicksPerSecond / Stats.TicksPerTile;
+    }
+
     private void ApplyProperty(string key, Variant value)
     {
         switch (key)
         {
-            case "Name": UnitName = value.AsString(); break;
-            case "Cost": Cost = JsonUtil.ToInt(value); break;
             case "ArmyFavor": ArmyFavor = JsonUtil.ToInt(value); break;
             case "Salary": Salary = JsonUtil.ToInt(value); break;
-            case "MoveSpeed": MoveSpeed = JsonUtil.ToInt(value); break;
-            case "AvatarTileIndex": AvatarTileIndex = JsonUtil.ToInt(value); break;
-            case "visionRadius": VisionRadius = JsonUtil.ToInt(value); break;
+            case "Avatar": Avatar = value.AsString(); break;
             default: GD.PushWarning($"UnitCommon: unknown json key '{key}'"); break;
         }
     }

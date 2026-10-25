@@ -10,6 +10,25 @@ C# port of the GDScript project in `../godottry/GodotCapone` (Godot 4.7, GL Comp
 
 Build without the editor: `dotnet build CaponeSharp.csproj`
 Run headless: `<Godot .NET exe> --headless --path . --quit-after 300`
+Start a given episode: `<Godot .NET exe> --path . -- --episode=4` (default 1)
+Check all original data (EXE tables, 29 maps, 21 episodes, sprites): `<Godot .NET exe> --headless --path . -- --smoke-test` (exit code 0 = ok)
+
+## Original data only
+
+The goal is a 1:1 recreation that runs on the original game files, so the repository contains no game content.
+Everything is read at runtime from the folder in `original.cfg`:
+
+| Data | Source | Reader |
+|---|---|---|
+| Executable tables and texts | `Capone.EXE` (by virtual address, see `disassembled/Capone.EXE.lst`) | `OriginalExe` |
+| City-block layouts (38) | EXE table 0x47C830 | `OriginalBlocks` |
+| Unit stats and names (13 types) | EXE table 0x484030, name tables 0x494EEC / 0x4952F4 | `OriginalUnitTable` |
+| Tiles, sprites, portraits | `Chicago.tile` + `PICS/*.bmp` (XOR 0xCD) | `OriginalTiles`, `OriginalBmps` |
+| Maps | `Maps/*.map` (VER01/VER02) | `OriginalMaps` |
+| Campaign | `episode/ep1..ep21.epi` (CP1251) | `EpiParser`, `CampaignManager` |
+
+`units.json` / `companies*.json` only hold what isn't located in the EXE yet (sprite names as Chicago.tile references, army favour, attack rate, company incomes).
+Unit type numbers are the original ones (`UnitCommon.UnitType`: 0 Thug … 12 Godfather), the same numbers .epi UNIT lines use.
 
 ## Layout (GDScript → C#)
 
@@ -50,6 +69,7 @@ These were bugs in the GDScript code that C#'s static typing either exposed or m
 - Units and companies join the groups `units` / `companies`, which Raid area damage and the collector AI query.
 - Collector AI walks to companies/HQ, collects from player companies and pays into the player's account (GDScript referenced non-existent members).
 - Selection: all previously selected objects are deselected; rectangle selection uses global coordinates and the rectangle centre (TODO.md "group select not working").
-- Sniper damage multiplier uses float division.
+- Sniper: the invented ×2 distance damage multiplier is gone; the sniper does the EXE's flat 200–250 damage.
+- Combat uses the EXE table: damage ranges against units and against buildings, hit chance instead of evasion, fractional attack range.
 - BMP transparency keys are replaced on the raw RGBA buffer (much faster than per-pixel calls).
 - Companies dropped by the 3-in-4 random roll are freed instead of leaking.
