@@ -1,0 +1,472 @@
+{
+	"Bat": {
+		"Name": "Вышибала",
+		"Cost": 20000,
+		"ArmyFavor": 0,
+		"MoveSpeed": 100,
+		"can_attack": { "attackDamage": "5", "attackRange": 1, "attackRate": 1.0, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 10, "EvasionFactor": 8 },
+		"AvatarTileIndex": 3503,
+		"Sprites": {
+			"Player": [
+				"Own bat man idle",
+				"Own Bat SE",
+				"Own Bat NE",
+				"Own Bat NW",
+				"Own Bat SW",
+				"Own bat man attack SE",
+				"Own bat man attack NE",
+				"Own bat man attack NW",
+				"Own bat man attack SW",
+				"Own Thug killed NW"
+			],
+			"Enemy": [
+				"Enemy bat man idle",
+				"Enemy Bat SE",
+				"Enemy Bat NE",
+				"Enemy Bat NW",
+				"Enemy Bat SW",
+				"Enemy bat man attack SE",
+				"Enemy bat man attack NE",
+				"Enemy bat man attack NW",
+				"Enemy bat man attack SW",
+				"Enemy Thug killed NW"
+			],
+			"Teammate": [
+				"Ally bat man idle",
+				"Ally Bat SE",
+				"Ally Bat NE",
+				"Ally Bat NW",
+				"Ally Bat SW",
+				"Ally bat man attack SE",
+				"Ally bat man attack NE",
+				"Ally bat man attack NW",
+				"Ally bat man attack SW",
+				"Ally Thug killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Pistol": {
+		"Name": "Стрелок",
+		"Cost": 60000,
+		"ArmyFavor": 1,
+		"MoveSpeed": 80,
+		"can_attack": { "attackDamage": "10", "attackRange": 5, "attackRate": 1.0, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 20, "EvasionFactor": 6 },
+		"AvatarTileIndex": 3504,
+		"Sprites": {
+			"Player": [
+				"Own Pistol man idle",
+				"Own Pistol SE",
+				"Own Pistol NE",
+				"Own Pistol NW",
+				"Own Pistol SW",
+				"Own Pistol man attack SE",
+				"Own Pistol man attack NE",
+				"Own Pistol man attack NW",
+				"Own Pistol man attack SW",
+				"Own Pistol man killed NW"
+			],
+			"Enemy": [
+				"Enemy Pistol man idle",
+				"Enemy Pistol SE",
+				"Enemy Pistol NE",
+				"Enemy Pistol NW",
+				"Enemy Pistol SW",
+				"Enemy Pistol man attack SE",
+				"Enemy Pistol man attack NE",
+				"Enemy Pistol man attack NW",
+				"Enemy Pistol man attack SW",
+				"Enemy Pistol man killed NW"
+			],
+			"Teammate": [
+				"Ally Pistol man idle",
+				"Ally Pistol SE",
+				"Ally Pistol NE",
+				"Ally Pistol NW",
+				"Ally Pistol SW",
+				"Ally Pistol man attack SE",
+				"Ally Pistol man attack NE",
+				"Ally Pistol man attack NW",
+				"Ally Pistol man attack SW",
+				"Ally Pistol man killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Sniper": {
+		"Name": "Снайпер",
+		"Cost": 110000,
+		"ArmyFavor": 6,
+		"MoveSpeed": 60,
+		"can_attack": { "attackDamage": "25", "attackRange": 10, "attackRate": 3.0, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 8, "EvasionFactor": 10 },
+		"AvatarTileIndex": 3505,
+		"Sprites": {
+			"Player": [
+				"Own Sniper idle",
+				"Own Sniper SE",
+				"Own Sniper NE",
+				"Own Sniper NW",
+				"Own Sniper SW",
+				"Own Sniper attack SE",
+				"Own Sniper attack NE",
+				"Own Sniper attack NW",
+				"Own Sniper attack SW",
+				"Own Sniper killed NW"
+			],
+			"Enemy": [
+				"Enemy Sniper idle",
+				"Enemy Sniper SE",
+				"Enemy Sniper NE",
+				"Enemy Sniper NW",
+				"Enemy Sniper SW",
+				"Enemy Sniper attack SE",
+				"Enemy Sniper attack NE",
+				"Enemy Sniper attack NW",
+				"Enemy Sniper attack SW",
+				"Enemy Sniper killed NW"
+			],
+			"Teammate": [
+				"Ally Sniper idle",
+				"Ally Sniper SE",
+				"Ally Sniper NE",
+				"Ally Sniper NW",
+				"Ally Sniper SW",
+				"Ally Sniper attack SE",
+				"Ally Sniper attack NE",
+				"Ally Sniper attack NW",
+				"Ally Sniper attack SW",
+				"Ally Sniper killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Raid": {
+		"Name": "Налётчик",
+		"Cost": 90000,
+		"ArmyFavor": 20,
+		"MoveSpeed": 90,
+		"can_attack": { "attackDamage": "12", "attackRange": 2, "attackRate": 1.5, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 30, "EvasionFactor": 4 },
+		"AvatarTileIndex": 3506,
+		"Sprites": {
+			"Player": [
+				"Own Raid man idle",
+				"Own Raid SE",
+				"Own Raid NE",
+				"Own Raid NW",
+				"Own Raid SW",
+				"Own Raid man attack SE",
+				"Own Raid man attack NE",
+				"Own Raid man attack NW",
+				"Own Raid man attack SW",
+				"Own Raid man killed NW"
+			],
+			"Enemy": [
+				"Enemy Raid man idle",
+				"Enemy Raid SE",
+				"Enemy Raid NE",
+				"Enemy Raid NW",
+				"Enemy Raid SW",
+				"Enemy Raid man attack SE",
+				"Enemy Raid man attack NE",
+				"Enemy Raid man attack NW",
+				"Enemy Raid man attack SW",
+				"Enemy Raid man killed NW"
+			],
+			"Teammate": [
+				"Ally Raid man idle",
+				"Ally Raid SE",
+				"Ally Raid NE",
+				"Ally Raid NW",
+				"Ally Raid SW",
+				"Ally Raid man attack SE",
+				"Ally Raid man attack NE",
+				"Ally Raid man attack NW",
+				"Ally Raid man attack SW",
+				"Ally Raid man killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Hitman": {
+		"Name": "Убийца",
+		"Cost": 100000,
+		"ArmyFavor": 30,
+		"MoveSpeed": 70,
+		"can_attack": { "attackDamage": "15", "attackRange": 1, "attackRate": 1.0, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 25, "EvasionFactor": 5 },
+		"AvatarTileIndex": 3507,
+		"Sprites": {
+			"Player": [
+				"Own Hitman idle",
+				"Own Hitman SE",
+				"Own Hitman NE",
+				"Own Hitman NW",
+				"Own Hitman SW",
+				"Own Hitman attack SE",
+				"Own Hitman attack NE",
+				"Own Hitman attack NW",
+				"Own Hitman attack SW",
+				"Own Hitman killed NW"
+			],
+			"Enemy": [
+				"Enemy Hitman idle",
+				"Enemy Hitman SE",
+				"Enemy Hitman NE",
+				"Enemy Hitman NW",
+				"Enemy Hitman SW",
+				"Enemy Hitman attack SE",
+				"Enemy Hitman attack NE",
+				"Enemy Hitman attack NW",
+				"Enemy Hitman attack SW",
+				"Enemy Hitman killed NW"
+			],
+			"Teammate": [
+				"Ally Hitman idle",
+				"Ally Hitman SE",
+				"Ally Hitman NE",
+				"Ally Hitman NW",
+				"Ally Hitman SW",
+				"Ally Hitman attack SE",
+				"Ally Hitman attack NE",
+				"Ally Hitman attack NW",
+				"Ally Hitman attack SW",
+				"Ally Hitman killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Thief": {
+		"Name": "Вор",
+		"Cost": 150000,
+		"ArmyFavor": 1,
+		"MoveSpeed": 120,
+		"can_hold_money": true,
+		"AvatarTileIndex": 3508,
+		"Sprites": {
+			"Player": [
+				"Own Thief idle",
+				"Own Thief SE",
+				"Own Thief NE",
+				"Own Thief NW",
+				"Own Thief SW",
+				"Own Thief attack SE",
+				"Own Thief attack NE",
+				"Own Thief attack NW",
+				"Own Thief attack SW",
+				"Own Thief killed NW"
+			],
+			"Enemy": [
+				"Enemy Thief idle",
+				"Enemy Thief SE",
+				"Enemy Thief NE",
+				"Enemy Thief NW",
+				"Enemy Thief SW",
+				"Enemy Thief attack SE",
+				"Enemy Thief attack NE",
+				"Enemy Thief attack NW",
+				"Enemy Thief attack SW",
+				"Enemy Thief killed NW"
+			],
+			"Teammate": [
+				"Ally Thief idle",
+				"Ally Thief SE",
+				"Ally Thief NE",
+				"Ally Thief NW",
+				"Ally Thief SW",
+				"Ally Thief attack SE",
+				"Ally Thief attack NE",
+				"Ally Thief attack NW",
+				"Ally Thief attack SW",
+				"Ally Thief killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Bomb": {
+		"Name": "Террорист",
+		"Cost": 90000,
+		"ArmyFavor": 30,
+		"MoveSpeed": 75,
+		"can_attack": { "attackDamage": "50", "attackRange": 1, "attackRate": 1.0, "can_capture_neutral": false, "missChance": 0.0 },
+		"can_be_attacked": { "maxHP": 25, "EvasionFactor": 5 },
+		"AvatarTileIndex": 3509,
+		"Sprites": {
+			"Player": [
+				"Own Bomb man idle",
+				"Own Bomb SE",
+				"Own Bomb NE",
+				"Own Bomb NW",
+				"Own Bomb SW",
+				"Own Bomb man attack SE",
+				"Own Bomb man attack NE",
+				"Own Bomb man attack NW",
+				"Own Bomb man attack SW",
+				"Own Bomb man killed NW"
+			],
+			"Enemy": [
+				"Enemy Bomb man idle",
+				"Enemy Bomb SE",
+				"Enemy Bomb NE",
+				"Enemy Bomb NW",
+				"Enemy Bomb SW",
+				"Enemy Bomb man attack SE",
+				"Enemy Bomb man attack NE",
+				"Enemy Bomb man attack NW",
+				"Enemy Bomb man attack SW",
+				"Enemy Bomb man killed NW"
+			],
+			"Teammate": [
+				"Ally Bomb man idle",
+				"Ally Bomb SE",
+				"Ally Bomb NE",
+				"Ally Bomb NW",
+				"Ally Bomb SW",
+				"Ally Bomb man attack SE",
+				"Ally Bomb man attack NE",
+				"Ally Bomb man attack NW",
+				"Ally Bomb man attack SW",
+				"Ally Bomb man killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Thompson": {
+		"Name": "Гробовщик",
+		"Cost": 130000,
+		"ArmyFavor": 40,
+		"MoveSpeed": 60,
+		"can_attack": { "attackDamage": "18", "attackRange": 4, "attackRate": 1.0, "missChance": 0.02 },
+		"can_be_attacked": { "maxHP": 30, "EvasionFactor": 4 },
+		"AvatarTileIndex": 3510,
+		"Sprites": {
+			"Player": [
+				"Own Thompson man idle",
+				"Own Thompson SE",
+				"Own Thompson NE",
+				"Own Thompson NW",
+				"Own Thompson SW",
+				"Own Thompson man attack SE",
+				"Own Thompson man attack NE",
+				"Own Thompson man attack NW",
+				"Own Thompson man attack SW",
+				"Own Thompson man killed NW"
+			],
+			"Enemy": [
+				"Enemy Thompson man idle",
+				"Enemy Thompson SE",
+				"Enemy Thompson NE",
+				"Enemy Thompson NW",
+				"Enemy Thompson SW",
+				"Enemy Thompson man attack SE",
+				"Enemy Thompson man attack NE",
+				"Enemy Thompson man attack NW",
+				"Enemy Thompson man attack SW",
+				"Enemy Thompson man killed NW"
+			],
+			"Teammate": [
+				"Ally Thompson man idle",
+				"Ally Thompson SE",
+				"Ally Thompson NE",
+				"Ally Thompson NW",
+				"Ally Thompson SW",
+				"Ally Thompson man attack SE",
+				"Ally Thompson man attack NE",
+				"Ally Thompson man attack NW",
+				"Ally Thompson man attack SW",
+				"Ally Thompson man killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Collector": {
+		"Name": "Сборщик",
+		"Cost": 5000,
+		"ArmyFavor": 0,
+		"MoveSpeed": 60,
+		"can_hold_money": true,
+		"visionRadius": 2,
+		"AvatarTileIndex": 3502,
+		"Sprites": {
+			"Player": [
+				"Own Collector no money SE",
+				"Own Collector no money SE",
+				"Own Collector no money NE",
+				"Own Collector no money NW",
+				"Own Collector no money SW",
+				"Own Collector SE",
+				"Own Collector NE",
+				"Own Collector NW",
+				"Own Collector SW",
+				"Own Collector no money killed",
+				"Own Collector killed"
+			],
+			"Enemy": [
+				"Enemy Collector no money SE",
+				"Enemy Collector no money SE",
+				"Enemy Collector no money NE",
+				"Enemy Collector no money NW",
+				"Enemy Collector no money SW",
+				"Enemy Collector SE",
+				"Enemy Collector NE",
+				"Enemy Collector NW",
+				"Enemy Collector SW",
+				"Enemy Collector no money killed",
+				"Enemy Collector money killed"
+			],
+			"Teammate": [
+				"Ally Collector no money SE",
+				"Ally Collector no money SE",
+				"Ally Collector no money NE",
+				"Ally Collector no money NW",
+				"Ally Collector no money SW",
+				"Ally Collector SE",
+				"Ally Collector NE",
+				"Ally Collector NW",
+				"Ally Collector SW",
+				"Ally Collector no money killed",
+				"Ally Collector money killed"
+			],
+			"Neutral": "Enemy"
+		}
+	},
+	"Cadillac": {
+		"Name": "Кадиллак",
+		"Cost": 200000,
+		"ArmyFavor": 50,
+		"MoveSpeed": 80,
+		"can_hold_money": true,
+		"visionRadius": 9,
+		"AvatarTileIndex": 3511,
+		"Sprites": {
+			"Player": [
+				"Own Cadillac idle",
+				"Own Cadillac SE",
+				"Own Cadillac NE",
+				"Own Cadillac NW",
+				"Own Cadillac SW",
+				"Own Cadillac killed NW"
+			],
+			"Enemy": [
+				"Enemy Cadillac idle",
+				"Enemy Cadillac SE",
+				"Enemy Cadillac NE",
+				"Enemy Cadillac NW",
+				"Enemy Cadillac SW",
+				"Enemy Cadillac killed NW"
+			],
+			"Teammate": [
+				"Ally Cadillac idle",
+				"Ally Cadillac SE",
+				"Ally Cadillac NE",
+				"Ally Cadillac NW",
+				"Ally Cadillac SW",
+				"Ally Cadillac killed NW"
+			],
+			"Neutral": "Enemy"
+		}
+	}
+}

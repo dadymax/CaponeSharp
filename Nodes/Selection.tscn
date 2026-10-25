@@ -1,0 +1,36 @@
+[gd_scene load_steps=6 format=3 uid="uid://cwpnqg8svbixn"]
+
+[ext_resource type="Script" path="res://Nodes/Selection.cs" id="1_sel"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a5lmq"]
+region = Rect2(0, 51, 120, 51)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_r7amj"]
+region = Rect2(120, 51, 120, 51)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_846yv"]
+region = Rect2(240, 51, 120, 51)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_2bi06"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a5lmq")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_r7amj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_846yv")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[node name="Selection" type="Node2D"]
+modulate = Color(1, 1, 1, 0.784314)
+script = ExtResource("1_sel")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_2bi06")

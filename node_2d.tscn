@@ -1,0 +1,74 @@
+[gd_scene format=3 uid="uid://c31trqibgadb0"]
+
+[ext_resource type="Script" path="res://Main.cs" id="1_8anve"]
+[ext_resource type="Script" path="res://CameraController.cs" id="2_hfaa1"]
+[ext_resource type="Script" path="res://Scripts/GuiGameback.cs" id="3_dc30l"]
+[ext_resource type="Script" path="res://Scripts/CenterButtons.cs" id="5_3twrx"]
+
+[node name="Node2D" type="Node2D" unique_id=1764888089]
+position = Vector2(395, 251)
+
+[node name="Node2D" type="Node2D" parent="." unique_id=753497962]
+position = Vector2(2, 1)
+script = ExtResource("1_8anve")
+
+[node name="Camera2D" type="Camera2D" parent="Node2D" unique_id=895706050]
+script = ExtResource("2_hfaa1")
+
+[node name="CanvasLayerGUI" type="CanvasLayer" parent="." unique_id=278514318]
+
+[node name="GUIGameback" type="TextureRect" parent="CanvasLayerGUI" unique_id=1383274281]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -220.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 4
+size_flags_vertical = 4
+localize_numeral_system = false
+mouse_filter = 0
+mouse_force_pass_scroll_events = false
+script = ExtResource("3_dc30l")
+
+[node name="CenterButtons" type="Node" parent="CanvasLayerGUI/GUIGameback" unique_id=77667424]
+script = ExtResource("5_3twrx")
+
+[node name="BtnMain1" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=55742842]
+offset_left = 232.0
+offset_top = 506.0
+offset_right = 271.0
+offset_bottom = 545.0
+
+[node name="BtnMain2" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=222310726]
+offset_left = 275.0
+offset_top = 505.0
+offset_right = 314.0
+offset_bottom = 544.0
+
+[node name="BtnMain3" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=1181798040]
+offset_left = 318.0
+offset_top = 506.0
+offset_right = 357.0
+offset_bottom = 545.0
+
+[node name="BtnMain4" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=602764752]
+offset_left = 361.0
+offset_top = 505.0
+offset_right = 400.0
+offset_bottom = 544.0
+
+[node name="BtnMain5" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=1139239485]
+offset_left = 404.0
+offset_top = 506.0
+offset_right = 443.0
+offset_bottom = 545.0
+
+[node name="BtnMain6" type="TextureButton" parent="CanvasLayerGUI/GUIGameback/CenterButtons" unique_id=1761648869]
+offset_left = 447.0
+offset_top = 506.0
+offset_right = 486.0
+offset_bottom = 545.0
+
+[connection signal="gui_input" from="CanvasLayerGUI/GUIGameback" to="Node2D" method="OnGuiGamebackGuiInput"]

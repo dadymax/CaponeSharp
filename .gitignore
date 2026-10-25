@@ -1,0 +1,62 @@
+# --- Godot 4 ---
+.godot/
+.import/
+*.import
+*.uid
+export.cfg
+export_presets.cfg
+export_credentials.cfg
+*.translation
+# Exported builds
+builds/
+*.pck
+*.zip
+
+# --- .NET / C# ---
+bin/
+obj/
+.mono/
+data_*/
+mono_crash.*.json
+*.user
+*.suo
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+.idea/
+*.DotSettings.user
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Logs / temp ---
+*.log
+*.tmp
+*.bak
+*~
+
+# --- Project specific ---
+# Machine-specific path to the original game files
+originalData/original.cfg
+# Original game data: never commit (copyrighted, referenced by absolute path)
+original_game/
+*.EXE
+*.exe
+Capone.EXE.lst
+# Standalone Godot editor, if placed next to the project
+godot/

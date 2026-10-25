@@ -1,0 +1,86 @@
+{
+	"Free": {
+		"Sprites": {
+			"Neutral": "Russian open sign",
+			"Disabled": "Russian open sign"
+		}
+	},
+	"HQ": {
+		"Sprites": {
+			"Player": "Russian own Hq",
+			"Teammate": "Russian ally Hq",
+			"Enemy": "Russian enemy Hq",
+			"Disabled": "Russian ally Hq"
+		}
+	},
+	"Occupied": {
+		"Sprites": {
+			"Player": "Own protected business",
+			"Teammate": "Ally protected business",
+			"Enemy": "Enemy protected business",
+			"Disabled": "Power off % sign"
+		}
+	},
+	"Bootlegging": {
+		"Sprites": {
+			"Player": "Own Bootlegging sign",
+			"Teammate": "Ally Bootlegging sign",
+			"Enemy": "Enemy Bootlegging sign",
+			"Disabled": "Power off Bootlegging sign"
+		}
+	},
+	"Entertainment": {
+		"Sprites": {
+			"Player": "Own Entertainment sign",
+			"Teammate": "Ally Entertainment sign",
+			"Enemy": "Enemy Entertainment sign",
+			"Disabled": "Power off Entertainment sign"
+		}
+	},
+	"Gambling": {
+		"Sprites": {
+			"Player": "Own Gambling sign",
+			"Teammate": "Ally Gambling sign",
+			"Enemy": "Enemy Gambling sign",
+			"Disabled": "Power off Gambling sign"
+		}
+	},
+	"Troubleshooting": {
+		"Sprites": {
+			"Player": "Own Troubleshooting sign",
+			"Teammate": "Ally Troubleshooting sign",
+			"Enemy": "Enemy Troubleshooting sign",
+			"Disabled": "Power off Troubleshooting sign"
+		}
+	},
+	"SupportFire": {
+		"Sprites": {
+			"Player": "Own Troubleshooting sign",
+			"Teammate": "Ally Troubleshooting sign",
+			"Enemy": "Enemy Troubleshooting sign",
+			"Disabled": "Power off Troubleshooting sign"
+		}
+	},
+	"SupportMoney": {
+		"Sprites": {
+			"Player": "Own collection center sign",
+			"Teammate": "Ally collection center sign",
+			"Enemy": "Enemy collection center sign",
+			"Disabled": "Power off collection center sign"
+		}
+	},
+	"SupportTraining": {
+		"Sprites": {
+			"Player": "Own training center sign",
+			"Teammate": "Ally training center sign",
+			"Enemy": "Enemy training center sign",
+			"Disabled": "Power off training center sign"
+		}
+	},
+	"NonInteractive": {
+		"isInteractive": false,
+		"Sprites": {
+
+		}
+	}
+}

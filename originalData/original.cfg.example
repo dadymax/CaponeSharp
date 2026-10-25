@@ -1,0 +1,6 @@
+; Copy this file to original.cfg and set the absolute path to the original Capone game folder
+; (the one containing Capone.EXE, Chicago.tile, Maps/, PICS/). Use forward slashes.
+; original.cfg is machine-specific and ignored by git.
+
+[directory]
+originalGameDirectory="C:/Games/Capone"

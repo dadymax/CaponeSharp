@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bh65hmccwce3e"]
+
+[node name="AnimatedButton" type="Button"]
+self_modulate = Color(1, 1, 1, 0)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]

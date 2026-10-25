@@ -1,0 +1,23 @@
+[gd_scene load_steps=5 format=3 uid="uid://q6ojiduclhs0"]
+
+[ext_resource type="Script" path="res://Units/Unit.cs" id="1_m7f0w"]
+[ext_resource type="PackedScene" path="res://Nodes/Selection.tscn" id="2_0fg2d"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_6a4ts"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_aje14"]
+
+[node name="Unit" type="CharacterBody2D"]
+script = ExtResource("1_m7f0w")
+
+[node name="Selection" parent="." instance=ExtResource("2_0fg2d")]
+position = Vector2(0, -14)
+
+[node name="Animation" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -14)
+sprite_frames = SubResource("SpriteFrames_6a4ts")
+
+[node name="Shape" type="CollisionShape2D" parent="."]
+visible = false
+position = Vector2(0, -14)
+shape = SubResource("CapsuleShape2D_aje14")

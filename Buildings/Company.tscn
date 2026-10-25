@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://cbquj18ab103e"]
+
+[ext_resource type="Script" path="res://Buildings/Company.cs" id="1_tqrgx"]
+[ext_resource type="PackedScene" path="res://Nodes/Selection.tscn" id="2_76pon"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_q4nph"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_kxd6b"]
+radius = 20.0
+
+[node name="Company" type="StaticBody2D" unique_id=948675968]
+script = ExtResource("1_tqrgx")
+
+[node name="Animation" type="AnimatedSprite2D" parent="." unique_id=677101047]
+position = Vector2(0, -10)
+sprite_frames = SubResource("SpriteFrames_q4nph")
+
+[node name="Selection" parent="." unique_id=1962416398 instance=ExtResource("2_76pon")]
+position = Vector2(0, -5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1837882994]
+position = Vector2(0, -5)
+shape = SubResource("CircleShape2D_kxd6b")
