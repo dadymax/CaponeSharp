@@ -11,10 +11,14 @@ public partial class Main : Node2D
 	private readonly List<ISelectable> _selected = new();
 	private bool _isMouseDrag;
 	private Vector2 _dragStartGlobal;
+	private CampaignManager _campaignManager;
+
+	/// <summary>Episode (1-based) to start after a scene reload by the end screen; 0 = none.</summary>
+	public static int PendingEpisode;
 
 	/// <summary>
-	/// Command line (after "--"): --episode=N starts episode N (default 1);
-	/// --smoke-test checks all original data and quits with exit code 0/1.
+	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
+	/// --skip-briefing starts the episode at once; --smoke-test checks all original data and quits with exit code 0/1.
 	/// </summary>
 	public override void _Ready()
 	{
@@ -25,17 +29,78 @@ public partial class Main : Node2D
 			GetTree().Quit(failures == 0 ? 0 : 1);
 			return;
 		}
-		var episode = 1;
-		foreach (var arg in args)
-			if (arg.StartsWith("--episode=") && int.TryParse(arg["--episode=".Length..], out var n))
-				episode = n;
+		CampaignProgress.Load();
+		var episode = CampaignProgress.Current;
+		if (PendingEpisode > 0)
+			episode = PendingEpisode;
+		else
+			foreach (var arg in args)
+				if (arg.StartsWith("--episode=") && int.TryParse(arg["--episode=".Length..], out var n))
+					episode = n;
+		var skipBriefing = System.Array.IndexOf(args, "--skip-briefing") >= 0;
+		PendingEpisode = 0;
 
 		YSortEnabled = true;
 		SetupGui();
 
-		var campaignManager = new CampaignManager();
-		AddChild(campaignManager);
-		campaignManager.LoadOriginalCampaign();
+		_campaignManager = new CampaignManager();
+		AddChild(_campaignManager);
+		_campaignManager.LoadOriginalCampaign();
+		var count = _campaignManager.CurrentCampaign.GetScenarioCount();
+		episode = Mathf.Clamp(episode, 1, Mathf.Max(1, count));
+		if (skipBriefing)
+			StartEpisode(episode);
+		else
+			ShowBriefing(episode);
+	}
+
+	private CanvasLayer AddScreenLayer()
+	{
+		var layer = new CanvasLayer { Name = "Screens", Layer = 10, ProcessMode = ProcessModeEnum.Always };
+		AddChild(layer);
+		return layer;
+	}
+
+	private void ShowBriefing(int episode)
+	{
+		var scenarios = _campaignManager.CurrentCampaign.Scenarios;
+		if (episode < 1 || episode > scenarios.Count)
+			return;
+		var layer = AddScreenLayer();
+		var screen = new BriefingScreen(scenarios[episode - 1], episode - 1);
+		screen.Started += () =>
+		{
+			layer.QueueFree();
+			StartEpisode(episode);
+		};
+		// TODO (M7): the main menu (MAINMENU.bmp); for now "Back" leaves the game.
+		screen.Back += () => GetTree().Quit();
+		layer.AddChild(screen);
+	}
+
+	/// <summary>
+	/// The episode ended (sub_43C930): a won episode advances and saves the campaign; the end screen's button reloads the
+	/// scene with the next episode (won) or the same one (lost), starting at its briefing.
+	/// </summary>
+	public void ShowEndScreen(bool won, string text, int episode)
+	{
+		var count = _campaignManager.CurrentCampaign.GetScenarioCount();
+		if (won)
+			CampaignProgress.Won(episode, count);
+		var layer = AddScreenLayer();
+		var screen = new EndScreen(won, text);
+		screen.Closed += () =>
+		{
+			PendingEpisode = won ? Mathf.Min(episode + 1, count) : episode;
+			GetTree().Paused = false;
+			GetTree().ReloadCurrentScene();
+		};
+		layer.AddChild(screen);
+	}
+
+	private void StartEpisode(int episode)
+	{
+		var campaignManager = _campaignManager;
 		var scenario = campaignManager.StartScenario(this, episode - 1);
 		if (scenario == null)
 			return;
@@ -58,7 +123,7 @@ public partial class Main : Node2D
 	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>
 	public override void _UnhandledInput(InputEvent @event)
 	{
-		if (@event is not InputEventMouseButton mouse)
+		if (@event is not InputEventMouseButton mouse || Map == null)
 			return;
 
 		if (mouse.ButtonIndex == MouseButton.Right && mouse.Pressed)

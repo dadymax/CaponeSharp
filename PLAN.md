@@ -61,7 +61,7 @@ From `ep1.epi` and the EXE:
 | R5 | **Business conversion**: which catalogue rows are offered for a given building (grade + type), price, police favour requirement (+18?), legalization, repair cost (+1C?), sell price, freezing. | company methods reading +4/+0C/+10/+18/+1C/+20/+24/+28; the "Upgrade to …" / "Repair ($%ld)" / "Sell for $%ld" message ids. |
 | R6 ✅ | **Money flow** (done: `Organisation` = HQ class 6: Spend/Deposit/UpdateStats/interest; salaries sub_42A535. Panel layout still R10): what +14h is (cash), income/expenses totals shown in the panel, unit salaries (`Salary $%ld`), upkeep (negative incomes), when they are charged. | class 6 methods (vtable off_488858, 72 slots), setters of field +14h. |
 | R7 ◐ | **Police** (police order sub_4460C5/sub_4461A4/sub_4462B4 done as `Police`/`PoliceJob`; informers sub_42C503, raids, police car stats open) in episode 1: police station (class 11), "Police Batman"/police car units, arrests of gangsters (`PoliceArrest1-3`), raids. | `fnSetBuildingPolice` class methods, unit types 6/11. |
-| R8 | **Episode end**: confirm VCOND 1 value; how often conditions are checked; failure conditions; success/failure screens and what happens next. | `sub_463610`, callers of the VCOND list, `GameWin*` / `GAMEOVER*` bitmap loading. |
+| R8 ◐ | **Episode end** (done: briefing sub_464AE0/sub_4644A1, end sub_43C930/sub_43CAB5, result sub_43C1B2, progress save; open: statistics chart sub_43CCD0, GameWinA animation, music/sounds): confirm VCOND 1 value; how often conditions are checked; failure conditions; success/failure screens and what happens next. | `sub_463610`, callers of the VCOND list, `GameWin*` / `GAMEOVER*` bitmap loading. |
 | R9 | **Recruit**: training time (unit table +24h?), price, army favour (episode 1: none needed for Thug/Pistol?), spawn point, progress bar. | "Recruit … ($%s and %1.0f Army favour points)" message users, `Recruit.bmp`/`Blood.bmp` users. |
 | R10 ◐ | **Panel layout and texts** (done: info column sub_40A997, finance block sub_40A245, text routine sub_40F126, fonts, HP bar → `PanelInfo`; open: action buttons, recruit bars, Expenses chart): positions of money/income/expenses, info texts (Salary/Income/Uncollected/Extort/Owner), action buttons. | `fnMainLoadBMPs` (0x40FA16) surface object, message tables (`fnMessagePrep`). |
 
@@ -95,7 +95,7 @@ From `ep1.epi` and the EXE:
 - Action buttons for a selected own company (Chicago.tile button tiles): upgrade to a business variant
   (price, police favour check), sell, repair. New income/upkeep from the catalogue.
 
-**M7 — Episode flow** (after R8)
+**M7 — Episode flow** ◐ (briefing → episode → end screen → next/same episode, progress in user://campaign.cfg; MCP-tested ep 1 → ep 2)
 - Briefing (`ScenDisp.bmp`, SCENARIONAME/STORYTEXT/OBJECTIVETEXT/TIPTEXT), victory checks (VCOND 1 ✅ hourly on net income),
   success/failure screens (`GameWin*`, `GAMEOVER*`), next episode / replay.
 - Camera starts on the player's HQ.

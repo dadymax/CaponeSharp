@@ -14,7 +14,8 @@ Addresses below are virtual addresses in `Capone.EXE.lst`. Grep for them; never 
 
 MCP test hooks: `Scripts/DebugCommands.cs` at `/root/Node2D/Node2D/Debug` (the main scene root is `Node2D`, not
 `Main`): `Status()`, `Speed(f)`, `AutoExtort(bool)`, `ExtortNearest(i)`, `CallCops(i)`, `Give(amount)`, `Companies(n)`.
-Wait ~200 frames after `run_project` before the first `game_eval` (map loading); a failed eval breaks into the
+The game opens on the briefing: click "Начать игру" at (252, 544) with `game_click` (or run with `-- --skip-briefing`),
+then wait ~200 frames before the first `game_eval` (map loading); a failed eval breaks into the
 debugger and freezes the game — restart it.
 
 Result on episode 1 at speed 16 with `AutoExtort(true)`: 2 starting units took 29 slum businesses in 10 days
@@ -49,6 +50,25 @@ Still to do from this brick:
 
 Also fixed: a win now pauses the scene tree (units acted in physics frames after the clock stopped); units created in
 code (base squad) get random personal names like `Unit::Unit`.
+
+## Episode flow — R8/M7 (2026-10-27)
+
+`Scripts/EpisodeScreens.cs` (`BriefingScreen`, `EndScreen`, `CampaignProgress`), `Scripts/OriginalFonts.cs`, `Main`:
+- Briefing `sub_464AE0` (texts read by `sub_4644A1` into 76-byte records at 0x4E3A2C: +0 SCENARIONAME, +4 14 STORYTEXT
+  lines, +3Ch 3 OBJECTIVETEXT lines, +48h MAP name): ScenDisp.bmp; title centred (410, 70) font 4 yellow; story
+  (183, 109 + 15i) and objective (183, 357 + 15i) font 3 green, width 525; map name (179, 421) font 2 green; one
+  7-px mark per finished episode on the bar at x 734 (from ScenDisp 734,412–771,419, upwards from y 405); buttons
+  from ScenDiBu.bmp (200×42; rows: start hover 0, start pressed 42, back hover 84, back pressed 126, start normal 168)
+  at (152, 523) and (500, 523). `fnPrintText_0(hdc, text, x, y, width, font, colour)`: font ≥ 100 = centred;
+  colours 0 green, 1 red, 2 yellow, 3 blue, 4/5 brown (5 without shadow).
+- Result `sub_43C1B2`: the first met VCOND ends the episode; SUCCESSTEXT if it is the local player's, else FAILURETEXT,
+  posted as message kind 3 / 2 (`sub_408A70` → `sub_41D3E0`). `sub_43C930`: on a campaign win episode + 1, furthest
+  episode = max, `fnWriteConfig`; music `sub_408BE2(0 win / 4 loss)`, sound 24/25; end screen `sub_43CAB5`:
+  GameWin/GAMEOVER.bmp, button sheet GameWinB/GameOvBu (283×42 "Back to menu" at 259, 527: row 0 hover, row 1 normal;
+  rows 2–4 = tabs Income/Money/People), animation GameWinA/GameOvAn.
+- Open: the statistics chart in the end screen's box (`sub_43CCD0`; our box shows the result text for now), the
+  animations, music, the main menu (briefing "Back" quits), story scrolling past 13 lines (`sub_406D24` scroller).
+- Command line: `--skip-briefing` starts the episode at once (MCP tests); `--episode=N` overrides the saved progress.
 
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).

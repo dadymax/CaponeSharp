@@ -16,25 +16,12 @@ public partial class PanelInfo : Control
     private const int InfoX = 0x140, InfoWidth = 0xA5;
     private const int FinanceX = 0x258, FinanceWidth = 0x69;
 
-    /// <summary>sub_40F126 colours 0–4: green, red, yellow (default), light green, brown.</summary>
-    private static readonly Color[] TextColors =
-    {
-        Color.Color8(0, 255, 0), Color.Color8(214, 74, 74), Color.Color8(255, 247, 123),
-        Color.Color8(140, 239, 198), Color.Color8(82, 66, 24),
-    };
-    private static readonly Color ShadowColor = Color.Color8(16, 16, 16);
-
-    /// <summary>Window fonts (sub_41A0xx, all Arial): cell heights 14, 16, 24, 16, 28 at weights 400, 500, 700, 700, 700.</summary>
-    private static readonly (int Height, int Weight)[] FontSpecs = { (14, 400), (16, 500), (24, 700), (16, 700), (28, 700) };
-    private readonly Font[] _fonts = new Font[FontSpecs.Length];
     private double _refresh;
 
     public override void _Ready()
     {
         MouseFilter = MouseFilterEnum.Ignore;
         SetAnchorsPreset(LayoutPreset.FullRect);
-        for (var i = 0; i < FontSpecs.Length; i++)
-            _fonts[i] = new SystemFont { FontNames = new[] { "Arial" }, FontWeight = FontSpecs[i].Weight };
     }
 
     public override void _Process(double delta)
@@ -46,22 +33,9 @@ public partial class PanelInfo : Control
         QueueRedraw();
     }
 
-    // Godot sizes fonts by em; a Windows cell height is ascent + descent ≈ em × 2288 / 2048 for Arial.
-    private static int FontSize(int font) => Mathf.RoundToInt(FontSpecs[font].Height * 2048f / 2288f);
-
-    /// <summary>sub_40F126: shadow at +2,+2, then the text; cut to <paramref name="width"/> pixels.</summary>
-    private void Text(string text, int x, int screenY, int width, int font, int color)
-    {
-        if (string.IsNullOrEmpty(text))
-            return;
-        var f = _fonts[font];
-        var size = FontSize(font);
-        while (text.Length > 1 && f.GetStringSize(text, HorizontalAlignment.Left, -1, size).X > width)
-            text = text[..^1];
-        var pos = new Vector2(x, screenY - PanelTop + f.GetAscent(size));
-        DrawString(f, pos + new Vector2(2, 2), text, HorizontalAlignment.Left, -1, size, ShadowColor);
-        DrawString(f, pos, text, HorizontalAlignment.Left, -1, size, TextColors[Mathf.Clamp(color, 0, TextColors.Length - 1)]);
-    }
+    /// <summary>sub_40F126 at an original screen position.</summary>
+    private void Text(string text, int x, int screenY, int width, int font, int color) =>
+        OriginalFonts.DrawPanel(this, text, x, screenY - PanelTop, width, font, color);
 
     private static string T(int index) => OriginalTexts.Instance.Get(5, index);
 

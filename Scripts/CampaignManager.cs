@@ -369,6 +369,8 @@ public partial class CampaignManager : Node
         // Units move and act in physics frames, so the whole world stops (the GUI layer keeps running).
         if (MainScene != null)
             MainScene.GetTree().Paused = true;
+        (MainScene as Main)?.ShowEndScreen(human, human ? CurrentScenario?.SuccessText : CurrentScenario?.FailureText,
+            CurrentScenario?.EpisodeNumber ?? 1);
     }
 
     /// <summary>Scenario won: move to the next one if there is one.</summary>
