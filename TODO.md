@@ -1,5 +1,7 @@
 # TODO — improvement plan for sharptry
 
+> Route for the next milestone (episode 1 complete, 1:1): see [PLAN.md](PLAN.md). This file is the long-term backlog.
+
 How to get from the current C# port to a playable Capone, using what is actually in `godottry/original_game/` and `godottry/disassembled/Capone.EXE.lst`.
 
 **Key finding:** Capone.EXE is the *Legal Crime* engine (Byte Enchanters, 1997; window class `"Legal Crime"`) with a Russian edition on top. Every UI string is stored in **English, Spanish and Russian (CP1251)** in the EXE. The game rules the projectinfo spec left open are there too: Mayor/FBI/police actions, legalization events, business upgrade/repair/sell, recruit costs, police units, the Godfather boss. Most open questions can be answered by reading strings and tables, without reverse-engineering code.
