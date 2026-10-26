@@ -59,7 +59,7 @@ public class Scenario
         public float Share;
     }
 
-    /// <summary>ALLIANCE a b: player a doesn't fight player b (one-way).</summary>
+    /// <summary>ALLIANCE a b: players a and b are allies (the EXE sets the relation in both directions).</summary>
     public class EpiAlliance
     {
         public int FromPlayer;

@@ -136,20 +136,22 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
-- [ ] **Cadillacs take building damage.** `Unit::GetMinDamage`/`GetMaxDamage` (`sub_42C890`/`sub_42C960`) use `DamageMin/Max` only when the target is a unit (class 5) that is not a Cadillac (type 5); buildings **and Cadillacs** get `BuildingDamageMin/Max`. `CanAttack.RollDamage` currently uses unit damage against Cadillacs.
+- [x] **Cadillacs take building damage.** Done: `CanAttack.RollDamage`. `Unit::GetMinDamage`/`GetMaxDamage` (`sub_42C890`/`sub_42C960`) use `DamageMin/Max` only when the target is a unit (class 5) that is not a Cadillac (type 5); buildings **and Cadillacs** get `BuildingDamageMin/Max`. `CanAttack.RollDamage` currently uses unit damage against Cadillacs.
 - [ ] **Hit man special case.** In the same getters a Hit man (type 9) returns a fixed 20 damage after a time check against unit field +0D0h (probably: not disguised / recently revealed); otherwise the table's 161–162. Decode the check and model it with the disguise (§5).
-- [ ] **ALLIANCE is mutual.** The loader calls `a->SetRelation(b, 2)` and `b->SetRelation(a, 2)` (0x467714 / 0x467721). `CampaignManager.InitAlliancesFromScenario` sets only `from → to`; set both directions. (The projectinfo spec calls it one-way — the EXE says otherwise.)
+- [x] **ALLIANCE is mutual.** Done: `CampaignManager` sets both directions. The loader calls `a->SetRelation(b, 2)` and `b->SetRelation(a, 2)` (0x467714 / 0x467721). `CampaignManager.InitAlliancesFromScenario` sets only `from → to`; set both directions. (The projectinfo spec calls it one-way — the EXE says otherwise.)
 - [ ] **Random personal names.** `Unit::Unit` names every unit except the Collector with `fnGetRandomParameters(world, 1, player)` (0x42A27E); the Collector gets text 1Dh/0Dh. Find the name list and give spawned units a personal name (episode names still override via unit vtable +178h `SetName`).
 - [ ] **Unit HP field.** The unit stores its current HP at +20h (set to MaxHP at creation; vtable +0F4h returns it, +1A8h sets it, +1A0h sets 0). Matches `CanBeAttacked.HP`; no change needed, recorded for reference.
 
 ## To remake (found in manual test, 2026-10-26)
 
-- [ ] **MENU button is wrong.** `GuiMenu` uses the whole `GAMEBUTT.bmp` and cuts it in half vertically. The button is only a small part of the bitmap: two "Меню" images side by side, normal and pressed (see `godottry/projectinfo/image-1.png`). Find the exact rectangles (Chicago.tile record or EXE coordinates) instead of guessing. Check the `Menu.bmp` cutting the same way.
-- [ ] **Attack range against companies.** Units shoot companies from their full attack range. In the original, ranged attacks only work against units; a company can only be attacked from a neighbouring tile. Ranged units must walk up to the building.
+- [x] **MENU button is wrong.** Done: button = the 48×14 "Меню" images at (158,42) normal / (210,42) pressed, measured from the bitmap (EXE coordinates still not located); the drop-down shows Menu.bmp cell 0, hover shows cell i, item zones detected from the bitmap. Was: `GuiMenu` uses the whole `GAMEBUTT.bmp` and cuts it in half vertically. The button is only a small part of the bitmap: two "Меню" images side by side, normal and pressed (see `godottry/projectinfo/image-1.png`). Find the exact rectangles (Chicago.tile record or EXE coordinates) instead of guessing. Check the `Menu.bmp` cutting the same way.
+- [x] **Attack range against companies.** Done: `CanAttack.BuildingAttackRange` = 1.5 for companies. Was: Units shoot companies from their full attack range. In the original, ranged attacks only work against units; a company can only be attacked from a neighbouring tile. Ranged units must walk up to the building.
 - [ ] **Company logos are wrong.** The signs shown on companies (`companies.json` sprite names, per owner/type) don't match the original. Rebuild the mapping from Chicago.tile names (e.g. "Russian open sign", "Own protected business", "Own Bootlegging sign", "Power off … sign") and check against the original game.
-- [ ] **`System.ObjectDisposedException: Cannot access a disposed object. Object name: 'Capone.CanBeAttacked'`** during play. Likely cause (not verified): a unit's `CanAttack.Target` still points at the `CanBeAttacked` of a company whose `CompanyCommon` was replaced by `Company.SetType` (capture) and freed, or of a dead unit. Targets need `IsInstanceValid` checks and must be cleared when the component is replaced.
+- [x] **Fixed** (`CanAttack` keeps the target object and looks its health component up on each use; re-checks hostility before attacking): **`System.ObjectDisposedException: Cannot access a disposed object. Object name: 'Capone.CanBeAttacked'`** during play. Likely cause (not verified): a unit's `CanAttack.Target` still points at the `CanBeAttacked` of a company whose `CompanyCommon` was replaced by `Company.SetType` (capture) and freed, or of a dead unit. Targets need `IsInstanceValid` checks and must be cleared when the component is replaced.
 
 ## Known issues (carried over)
+
+- [x] Clicks on GUI controls (menu, bottom panel) no longer select/deselect on the map: `Main` uses `_UnhandledInput`.
 
 - [ ] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
 - [ ] **Avatar tile index**: `AvatarTileIndex` in `companies2.json` is the 0-based tile index (Chicago.tile line − 58).

@@ -248,7 +248,11 @@ public partial class CampaignManager : Node
             var fromTeam = Teams.GetTeamByPlayerId(alliance.FromPlayer);
             var toTeam = Teams.GetTeamByPlayerId(alliance.ToPlayer);
             if (fromTeam != null && toTeam != null)
+            {
+                // Mutual, as in the EXE: a->SetRelation(b, 2) and b->SetRelation(a, 2) (0x467714 / 0x467721).
                 fromTeam.SetTargetRelation(toTeam.TeamColor, Teams.TeamRelation.Friend);
+                toTeam.SetTargetRelation(fromTeam.TeamColor, Teams.TeamRelation.Friend);
+            }
             else
                 GD.PrintErr($"CampaignManager: alliance team not found: {alliance.FromPlayer} -> {alliance.ToPlayer}");
         }

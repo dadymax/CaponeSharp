@@ -3,9 +3,19 @@ using Godot;
 
 namespace Capone;
 
-/// <summary>Top menu: GAMEBUTT.BMP button that opens the Menu.bmp drop-down.</summary>
+/// <summary>
+/// Top menu. The MENU button comes from GAMEBUTT.BMP, the drop-down from Menu.bmp.
+/// <para>GAMEBUTT.BMP (258×100) holds several panel graphics; the button is the pair of "Меню" images
+/// side by side at y = 42: normal on the left, pressed on the right (rectangles measured from the bitmap,
+/// the EXE's own coordinates are not located yet).</para>
+/// <para>Menu.bmp (368×216) is a 4×2 grid of complete menus: cell 0 has nothing highlighted, cell i
+/// highlights item i (1 = Альянсы … 7 = ВЫХОД). Hovering an item shows its cell; the item zones are the
+/// rows where cell i differs from cell 0.</para>
+/// </summary>
 public partial class GuiMenu : Control
 {
+    private static readonly Rect2I ButtonNormalRect = new(158, 42, 48, 14);
+    private static readonly Rect2I ButtonPressedRect = new(210, 42, 48, 14);
     private const int MenuCols = 4;
     private const int MenuRows = 2;
 
@@ -13,159 +23,160 @@ public partial class GuiMenu : Control
 
     public bool IsMenuOpen { get; private set; }
 
-    // Menu.bmp order: alliances, messages, statistics, money, tips, replay, exit (8th cell = nothing)
+    /// <summary>Menu items top to bottom (Menu.bmp cells 1..7).</summary>
     private static readonly string[] MenuItems = { "alliances", "messages", "statistics", "money", "tips", "reroll", "exit" };
 
     private TextureButton _menuButton;
-    private Panel _menuPanel;
-    private TextureRect _menuBackground;
-    private readonly List<TextureRect> _menuHighlights = new();
-    private readonly List<Texture2D> _menuItemTextures = new();
-    private readonly List<Texture2D> _menuItemPressedTextures = new();
-    private Texture2D _menuButtonNormal;
-    private Texture2D _menuButtonPressed;
+    private TextureRect _menuView;
+    /// <summary>Menu.bmp cells: [0] nothing highlighted, [i] item i highlighted.</summary>
+    private readonly List<Texture2D> _menuStates = new();
+    /// <summary>Vertical zone (first row, last row) of each item inside a cell.</summary>
+    private readonly List<Vector2I> _itemBands = new();
+    private int _hoverItem = -1;
 
     public override void _Ready()
     {
         Instance = this;
-
-        // GAMEBUTT.BMP: top half = normal button, bottom half = pressed.
-        if (OriginalData.Instance.Bmps.Bmps.TryGetValue("GAMEBUTT.BMP", out var bmp) && bmp.Body is { } image)
-        {
-            var width = image.GetWidth();
-            var halfHeight = image.GetHeight() / 2;
-            _menuButtonNormal = ImageTexture.CreateFromImage(image.GetRegion(new Rect2I(0, 0, width, halfHeight)));
-            _menuButtonPressed = ImageTexture.CreateFromImage(image.GetRegion(new Rect2I(0, halfHeight, width, halfHeight)));
-        }
+        Position = new Vector2(10, 10);
+        // The root itself never takes clicks; only the button and the open menu do.
+        MouseFilter = MouseFilterEnum.Ignore;
 
         CreateMenuButton();
-        CreateMenuPanel();
-        LoadMenuTextures();
-        CreateMenuItems();
-
-        Position = new Vector2(10, 10);
-        Size = new Vector2(200, 50);
-        MouseFilter = MouseFilterEnum.Stop;
+        LoadMenuStates();
+        CreateMenuView();
     }
 
     private void CreateMenuButton()
     {
-        _menuButton = new TextureButton
+        _menuButton = new TextureButton { ToggleMode = true, MouseFilter = MouseFilterEnum.Stop };
+        if (OriginalData.Instance.Bmps.Bmps.TryGetValue("GAMEBUTT.BMP", out var bmp) && bmp.Body is { } image)
         {
-            TextureNormal = _menuButtonNormal,
-            TexturePressed = _menuButtonPressed,
-            MouseFilter = MouseFilterEnum.Stop,
+            _menuButton.TextureNormal = ImageTexture.CreateFromImage(image.GetRegion(ButtonNormalRect));
+            _menuButton.TexturePressed = ImageTexture.CreateFromImage(image.GetRegion(ButtonPressedRect));
+        }
+        else
+        {
+            GD.PrintErr("GuiMenu: GAMEBUTT.BMP not found");
+        }
+        _menuButton.Toggled += pressed =>
+        {
+            if (pressed)
+                OpenMenu();
+            else
+                CloseMenu();
         };
-        _menuButton.Pressed += OnMenuButtonPressed;
         AddChild(_menuButton);
     }
 
-    private void CreateMenuPanel()
-    {
-        _menuPanel = new Panel
-        {
-            Visible = false,
-            SizeFlagsHorizontal = SizeFlags.ShrinkBegin,
-            SizeFlagsVertical = SizeFlags.ShrinkBegin,
-        };
-        AddChild(_menuPanel);
-
-        _menuBackground = new TextureRect
-        {
-            ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-            StretchMode = TextureRect.StretchModeEnum.KeepAspectCentered,
-            MouseFilter = MouseFilterEnum.Pass,
-        };
-        _menuPanel.AddChild(_menuBackground);
-    }
-
-    /// <summary>Menu.bmp is a 4x2 grid of equally sized pictures.</summary>
-    private void LoadMenuTextures()
+    private void LoadMenuStates()
     {
         if (!OriginalData.Instance.Bmps.Bmps.TryGetValue("MENU.BMP", out var bmp) || bmp.Body is not { } image)
+        {
+            GD.PrintErr("GuiMenu: MENU.BMP not found");
             return;
+        }
 
         var cellWidth = image.GetWidth() / MenuCols;
         var cellHeight = image.GetHeight() / MenuRows;
+        var cells = new List<Image>();
         for (var row = 0; row < MenuRows; row++)
             for (var col = 0; col < MenuCols; col++)
+                cells.Add(image.GetRegion(new Rect2I(col * cellWidth, row * cellHeight, cellWidth, cellHeight)));
+        foreach (var cell in cells)
+            _menuStates.Add(ImageTexture.CreateFromImage(cell));
+
+        for (var item = 1; item <= MenuItems.Length && item < cells.Count; item++)
+            _itemBands.Add(FindChangedRows(cells[0], cells[item]));
+        // Items without a detectable highlight fall back to an even split.
+        for (var i = 0; i < _itemBands.Count; i++)
+            if (_itemBands[i].X < 0)
             {
-                var cell = image.GetRegion(new Rect2I(col * cellWidth, row * cellHeight, cellWidth, cellHeight));
-                var texture = ImageTexture.CreateFromImage(cell);
-                if (row == 0)
-                    _menuItemTextures.Add(texture);
-                else
-                    _menuItemPressedTextures.Add(texture);
+                var h = cellHeight / MenuItems.Length;
+                _itemBands[i] = new Vector2I(i * h, (i + 1) * h - 1);
             }
     }
 
-    private void CreateMenuItems()
+    /// <summary>First and last row where the two images differ, or (-1, -1).</summary>
+    private static Vector2I FindChangedRows(Image a, Image b)
     {
-        if (_menuItemTextures.Count == 0)
-        {
-            GD.PrintErr("GuiMenu: no menu textures loaded");
-            return;
-        }
-
-        var bgSize = _menuBackground.Size;
-        if (bgSize.X <= 0 || bgSize.Y <= 0)
-            bgSize = new Vector2(400, 200); // not laid out yet: use an estimate
-
-        var cellWidth = bgSize.X / MenuCols;
-        var cellHeight = bgSize.Y / MenuRows;
-
-        var count = Mathf.Min(MenuItems.Length, _menuItemTextures.Count);
-        for (var i = 0; i < count; i++)
-        {
-            var index = i;
-            var highlight = new TextureRect
-            {
-                Texture = _menuItemTextures[i],
-                ExpandMode = TextureRect.ExpandModeEnum.IgnoreSize,
-                Size = new Vector2(cellWidth, cellHeight),
-                Position = new Vector2(Mathf.Floor(i % MenuCols * cellWidth), Mathf.Floor(i / MenuCols * cellHeight)),
-                MouseFilter = MouseFilterEnum.Pass,
-                Visible = false,
-            };
-            highlight.MouseEntered += () => HighlightItem(index);
-            highlight.MouseExited += () => HighlightItem(index);
-            highlight.GuiInput += ev => OnItemGuiInput(ev, index);
-            _menuHighlights.Add(highlight);
-            _menuPanel.AddChild(highlight);
-        }
+        int first = -1, last = -1;
+        for (var y = 0; y < a.GetHeight(); y++)
+            for (var x = 0; x < a.GetWidth(); x++)
+                if (a.GetPixel(x, y) != b.GetPixel(x, y))
+                {
+                    if (first < 0)
+                        first = y;
+                    last = y;
+                    break;
+                }
+        return new Vector2I(first, last);
     }
 
-    private void OnMenuButtonPressed()
+    private void CreateMenuView()
     {
-        IsMenuOpen = !IsMenuOpen;
-        _menuPanel.Visible = IsMenuOpen;
-        if (!IsMenuOpen)
-            return;
-        var buttonRect = GetGlobalRect();
-        _menuPanel.Position = new Vector2(buttonRect.Position.X, buttonRect.Position.Y + buttonRect.Size.Y);
-        foreach (var highlight in _menuHighlights)
-            highlight.Visible = false;
-    }
-
-    public void HighlightItem(int index)
-    {
-        for (var i = 0; i < _menuHighlights.Count; i++)
-            _menuHighlights[i].Visible = i == index;
-    }
-
-    private void OnItemGuiInput(InputEvent ev, int index)
-    {
-        if (ev is InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left })
+        _menuView = new TextureRect
         {
-            OnMenuItemSelected(index);
-            CloseMenu();
+            Visible = false,
+            Texture = _menuStates.Count > 0 ? _menuStates[0] : null,
+            MouseFilter = MouseFilterEnum.Stop,
+        };
+        _menuView.GuiInput += OnMenuGuiInput;
+        _menuView.MouseExited += () => SetHover(-1);
+        AddChild(_menuView);
+    }
+
+    private void OpenMenu()
+    {
+        IsMenuOpen = true;
+        _menuView.Position = new Vector2(0, ButtonNormalRect.Size.Y);
+        SetHover(-1);
+        _menuView.Visible = true;
+    }
+
+    public void CloseMenu()
+    {
+        IsMenuOpen = false;
+        _menuView.Visible = false;
+        _menuButton.SetPressedNoSignal(false);
+    }
+
+    private int ItemAt(float y)
+    {
+        for (var i = 0; i < _itemBands.Count; i++)
+            if (y >= _itemBands[i].X && y <= _itemBands[i].Y)
+                return i;
+        return -1;
+    }
+
+    private void SetHover(int item)
+    {
+        _hoverItem = item;
+        var state = item + 1;
+        if (state >= 0 && state < _menuStates.Count)
+            _menuView.Texture = _menuStates[state];
+    }
+
+    private void OnMenuGuiInput(InputEvent ev)
+    {
+        switch (ev)
+        {
+            case InputEventMouseMotion motion:
+                var item = ItemAt(motion.Position.Y);
+                if (item != _hoverItem)
+                    SetHover(item);
+                break;
+            case InputEventMouseButton { Pressed: true, ButtonIndex: MouseButton.Left } click:
+                var selected = ItemAt(click.Position.Y);
+                CloseMenu();
+                if (selected >= 0)
+                    OnMenuItemSelected(selected);
+                AcceptEvent();
+                break;
         }
     }
 
     private void OnMenuItemSelected(int index)
     {
-        if (index >= MenuItems.Length)
-            return;
         switch (MenuItems[index])
         {
             case "alliances": GD.Print("GuiMenu: Alliances — stub"); break;
@@ -179,13 +190,5 @@ public partial class GuiMenu : Control
                 GetTree().Quit();
                 break;
         }
-    }
-
-    public void CloseMenu()
-    {
-        IsMenuOpen = false;
-        _menuPanel.Visible = false;
-        foreach (var highlight in _menuHighlights)
-            highlight.Visible = false;
     }
 }

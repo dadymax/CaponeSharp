@@ -53,7 +53,8 @@ public partial class Main : Node2D
 		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
 	}
 
-	public override void _Input(InputEvent @event)
+	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>
+	public override void _UnhandledInput(InputEvent @event)
 	{
 		if (@event is not InputEventMouseButton mouse)
 			return;

@@ -24,34 +24,41 @@ public partial class CanAttack : Node, IJsonConfigurable
     /// <summary>Chance to miss (0..1). From the original's hit chance: miss = 1 - hit%.</summary>
     [Export] public float MissChance { get; set; } = 0.02f;
 
-    private CanBeAttacked _target;
+    /// <summary>Buildings can only be attacked from a neighbouring tile (diagonal included), whatever the unit's range.</summary>
+    public const float BuildingAttackRange = 1.5f;
+
+    private Node2D _targetParent;
+
+    /// <summary>
+    /// Health component of the current target. It is looked up from the target object each time,
+    /// because a company replaces (and frees) its components when it changes hands.
+    /// </summary>
     public CanBeAttacked Target
     {
-        get => _target;
+        get
+        {
+            var component = (TargetParent as IGameEntity)?.CanBeAttacked;
+            return component != null && IsInstanceValid(component) ? component : null;
+        }
         set
         {
-            _target = value;
-            if (_target == null)
-            {
-                TargetParent = null;
-                return;
-            }
-
-            TargetParent = _target.GetParent()?.GetParent() as Node2D;
-            var targetColor = (TargetParent as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
-            if (targetColor == _thisTeamColor)
-            {
-                Target = null;
-                return;
-            }
-            var relation = Teams.GetOrAddTeam(_thisTeamColor).GetTargetRelation(targetColor);
-            if (relation == Teams.TeamRelation.Friend)
-                Target = null;
-            // Neutral companies stay targetable: attacking them captures them.
+            _targetParent = value != null && IsInstanceValid(value) ? value.GetParent()?.GetParent() as Node2D : null;
+            if (_targetParent != null && !IsHostile(_targetParent))
+                _targetParent = null;
         }
     }
 
-    public Node2D TargetParent { get; private set; }
+    /// <summary>The attacked map object (unit or company), or null if there is none or it was freed.</summary>
+    public Node2D TargetParent => _targetParent != null && IsInstanceValid(_targetParent) ? _targetParent : null;
+
+    /// <summary>Enemies and neutrals can be attacked (attacking a neutral company captures it); self and friends can't.</summary>
+    private bool IsHostile(Node2D target)
+    {
+        var targetColor = (target as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
+        if (targetColor == _thisTeamColor)
+            return false;
+        return Teams.GetOrAddTeam(_thisTeamColor).GetTargetRelation(targetColor) != Teams.TeamRelation.Friend;
+    }
 
     private Node2D _thisParent;
     private Color _thisTeamColor = Teams.NeutralTeamColor;
@@ -90,10 +97,15 @@ public partial class CanAttack : Node, IJsonConfigurable
         MissChance = Mathf.Clamp(1f - stats.HitChance / 100f, 0f, 1f);
     }
 
-    /// <summary>Random damage for the current target: building range against companies, unit range otherwise.</summary>
+    /// <summary>
+    /// Random damage for the current target. Like Unit::GetMinDamage/GetMaxDamage (0x42C890/0x42C960):
+    /// unit damage only against units other than the Cadillac; buildings and Cadillacs take building damage.
+    /// TODO: the Hit man's fixed 20 damage after a time check (see TODO.md).
+    /// </summary>
     public int RollDamage()
     {
-        var (min, max) = TargetParent is Company ? (BuildingDamageMin, BuildingDamageMax) : (DamageMin, DamageMax);
+        var againstUnit = TargetParent is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
+        var (min, max) = againstUnit ? (DamageMin, DamageMax) : (BuildingDamageMin, BuildingDamageMax);
         return max <= min ? min : GD.RandRange(min, max);
     }
 
@@ -118,6 +130,12 @@ public partial class CanAttack : Node, IJsonConfigurable
     {
         if (Target == null)
             return;
+        // The target may have changed hands since it was chosen (e.g. a company this unit just captured).
+        if (!IsHostile(TargetParent))
+        {
+            _targetParent = null;
+            return;
+        }
 
         var unitType = GetUnitType();
         var targetColor = (TargetParent as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
@@ -182,10 +200,13 @@ public partial class CanAttack : Node, IJsonConfigurable
 
     public bool TargetInRange()
     {
-        if (_thisParent == null || TargetParent == null)
+        var target = TargetParent;
+        if (_thisParent == null || target == null)
             return false;
 
-        return MapTileMath.GetDistanceExact(_thisParent, TargetParent) <= AttackRange;
+        // Ranged attacks only work against units; a company has to be attacked from next to it.
+        var range = target is Company ? BuildingAttackRange : AttackRange;
+        return MapTileMath.GetDistanceExact(_thisParent, target) <= range;
     }
 
     public override void _Ready() => Reinit();
