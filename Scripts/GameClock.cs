@@ -108,9 +108,9 @@ public partial class GameClock : Node
         // delta is already multiplied by Engine.TimeScale (= Speed).
         Minutes += delta * MinutesPerRealSecond;
 
-        // Events in time order; each one sees the clock at its own minute, as in the original scheduler.
+        // Events in time order. An event may pause the clock (scenario won), which stops the rest.
         var now = Minute;
-        while (_events.TryPeek(out _, out var when) && when.minute <= now)
+        while (!Paused && _events.TryPeek(out _, out var when) && when.minute <= now)
         {
             var action = _events.Dequeue();
             try

@@ -51,6 +51,7 @@ public partial class Main : Node2D
 		campaignManager.AssignBases();
 		campaignManager.SpawnStartingUnits();
 		campaignManager.StartEconomy();
+		AddChild(new DebugCommands { Name = "Debug" });
 		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
 	}
 

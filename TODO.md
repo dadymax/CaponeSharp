@@ -10,21 +10,25 @@ Addresses below are virtual addresses in `Capone.EXE.lst`. Grep for them; never 
 
 ---
 
-## Next session — savepoint 2026-10-26 (economy brick, PLAN M3/M4/M8)
+## Economy brick — play-tested 2026-10-27 (PLAN M3/M4/M8)
 
-Committed as a savepoint: compiles with 0 warnings, `--smoke-test` green, episode 1 starts with the economy
-("232 businesses in 313 blocks, 2 police stations"). **Not play-tested yet.** Resume here:
+MCP test hooks: `Scripts/DebugCommands.cs` at `/root/Node2D/Node2D/Debug` (the main scene root is `Node2D`, not
+`Main`): `Status()`, `Speed(f)`, `AutoExtort(bool)`, `ExtortNearest(i)`, `CallCops(i)`, `Give(amount)`, `Companies(n)`.
+Wait ~200 frames after `run_project` before the first `game_eval` (map loading); a failed eval breaks into the
+debugger and freezes the game — restart it.
 
-1. Add a small debug node (e.g. `Scripts/DebugCommands.cs`, child of Main) for MCP `game_eval`: `Status()` (clock,
-   cash, net/gross income, owned companies, collectors), `ExtortNearest(i)`, `AutoExtort(on)` (idle player units
-   extort the nearest unowned business).
-2. MCP test episode 1 at `GameClock.Speed = 16`: a business pays → its block spawns a collector at the HQ →
-   collector waits 60 min, visits the owner's companies in row order, delivers to the HQ → `Organisation.Cash`
-   and `NetIncome` grow → VCOND 1 (net income > 500 000) wins. Also check refusals → one hit per hour, cops at
-   attempt 10 (slum), police car chase/arrest/jail, salaries paid daily, resign when broke.
-3. Fix what the test shows, then mark PLAN M3/M4 done and commit.
-4. Add the new RE facts below to `godottry/disassembled/annotate/hand_notes.py`, regenerate the commented listing,
-   and add the time/economy facts to `godottry/CLAUDE.md` and the capone-godot skill.
+Result on episode 1 at speed 16 with `AutoExtort(true)`: 2 starting units took 29 slum businesses in 10 days
+(chance ~94 %, a few refusals with hits), one collector per block, deliveries to the HQ, daily salaries; VCOND 1
+won on day 10 (weekly net 505 400 > 500 000) with the success text. `CallCops(0)`: car from the nearest station,
+arrest, jail, car leaves. `Give(-500000)`: the unpaid Pistol man resigns; interest is refused past the overdraft
+(the original also charges it through Spend, 0x430A8A), so "out of funds" repeats every 1008 min — as in the original.
+Fixed: the clock kept firing events after the win paused it.
+
+Still to do from this brick:
+- Add the RE facts below to `godottry/disassembled/annotate/hand_notes.py`, regenerate the commented listing, and add
+  the time/economy facts to `godottry/CLAUDE.md` and the capone-godot skill.
+- On a win only the clock pauses; units keep walking (end screen is R8/M7).
+- Cops at attempt 10 not seen naturally (slum chance ~94 % rarely refuses 10 times); `CallCops` covers the chase.
 
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).

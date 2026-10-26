@@ -76,13 +76,13 @@ From `ep1.epi` and the EXE:
 - One `GameClock` autoload: ticks/minutes, week, month, year events; pause/speed. Everything time-based
   (income, collectors, salaries, unit speed) uses it.
 
-**M3 — Company economy** ✅ code, ◐ play-tested (savepoint commit; see TODO "Next session")
+**M3 — Company economy** ✅ (MCP play-tested on episode 1: extortion, income, VCOND 1 win on day 10)
 - Company model from the catalogue: catalogue row, grade, type, owner, income, uncollected cash, HP.
 - Extortion of neutral companies as in the original (replaces `CompanyResistance`).
 - Income accrual into "uncollected" per clock rule.
 - Fix company signs/logos (TODO "Company logos are wrong") using the catalogue type + owner.
 
-**M4 — Collector autopilot** ✅ code, ◐ play-tested
+**M4 — Collector autopilot** ✅ (play-tested: one collector per block, row-order pickups, HQ deliveries)
 - City blocks as objects (from `.map` BLOCKS); each block dispatches a collector on the original schedule from
   the HQ (or cash-out business), visits the owner's companies in that block, returns, pays into the account.
 - Replace the current `CollectorAI` (GDScript-era design) with the original rules.
@@ -100,7 +100,7 @@ From `ep1.epi` and the EXE:
   success/failure screens (`GameWin*`, `GAMEOVER*`), next episode / replay.
 - Camera starts on the player's HQ.
 
-**M8 — Police and losses** ◐ (arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
+**M8 — Police and losses** ◐ (play-tested: car dispatch, arrest, jail, resign when unpaid; arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
 - Police station behaviour and arrests needed by episode 1; unit death/removal.
 
 **M9 — Recruit panel** (after R9)
