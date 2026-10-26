@@ -24,9 +24,9 @@ public partial class UnitCommon : Node
         Collector = 7,
         Shotgun = 8,
         Hitman = 9,
-        Thief = 10,
+        Thief = 11,
         /// <summary>Not confirmed: the EXE names a "Sergeant"; Chicago.tile has "Police Batman".</summary>
-        Policeman = 11,
+        Policeman = 10,
         /// <summary>Named bosses in the episodes (Аль Капоне, Джонни Торрио…).</summary>
         Godfather = 12,
     }

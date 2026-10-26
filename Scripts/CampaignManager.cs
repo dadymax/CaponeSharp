@@ -73,6 +73,7 @@ public partial class CampaignManager : Node
         GameClock.Instance?.Reset();
         RandomNames.Reset();
         World.Reset();
+        Training.Reset();
         InitPlayersFromScenario();
         InitAlliancesFromScenario();
         InitBribeAdvances();

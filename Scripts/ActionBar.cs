@@ -15,8 +15,8 @@ public partial class ActionBar : Control
 {
     public const int SlotCount = 6;
     public const int SlotSize = 43;
-    /// <summary>Panel position of slot 0 (screen 232, 505).</summary>
-    public static readonly Vector2 Origin = new(232, 505 - PanelInfo.PanelTop);
+    /// <summary>Panel position of slot 0 (screen 230, 504; table 0x476B18).</summary>
+    public static readonly Vector2 Origin = new(230, 504 - PanelInfo.PanelTop);
 
     private const int IconUpgrade = 0xAD4, IconRepair = 0xAD6, IconTroubleshooting = 0xADA, IconBootlegging = 0xADC,
         IconBack = 0xADE, IconGambling = 0xAE0, IconEntertainment = 0xAE2, IconSupport = 0xAE4, IconSell = 0xD47;

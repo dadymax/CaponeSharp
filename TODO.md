@@ -96,6 +96,27 @@ code (base squad) get random personal names like `Unit::Unit`.
   (items 14h/18h/1Dh, 26h/2Bh/2Fh/32h…), freezing, the original tooltip line (texts probably go to the message bar),
   button hover animation (12 frames).
 
+## Recruiting — R9/M9 (2026-10-27)
+
+`Scripts/Economy/Training.cs`, `Scripts/RecruitPanel.cs`:
+- **Unit type 11 is the Thief, 10 is unused** (panel name switch at 0x40B131, recruit action 8 → type 0Bh); the enum
+  had them swapped. 6 and 10 show "Unknown".
+- Recruit menu sub_431FD3 (HQ vt+ECh), built every frame for the local player (sub_40A660) when the primary training
+  center exists and is idle: actions 0–8 = Thug, Pistol, Thompson, Terrorist, Sniper, Shotgun, Hitman, Cadillac,
+  Thief at slots 6–14 (30×30, x 730 / 760, y 392 + 33k, table 0x476B48; slots 0–5 are 43×43 at (230 + 43i, 504),
+  table 0x476B18); icons Chicago.tile 3Ah/3Ch/3Eh/34h/40h/9B6h/AB2h/AE7h/D8Bh (+1 = down, bitmap 47 = Recruit.bmp);
+  shown if the army service (type → service table 0x483790: Pistol 0, Thompson 6, Terrorist 4, Sniper 1, Cadillac 5,
+  Shotgun 2, Hitman 3, Thief 13h (politician)) is available; texts 20,17–25.
+- Training job (class 16h, sub_427505): time = unit table +24h (600 / 1050 / 1200 min) / (1 + own training centers,
+  sub_431DF3); at the end CanAfford(price) → UseService → Spend(price) → unit (or bare Cadillac) on a free cell next to
+  the center; arrive sound by type. Nothing is paid up front. Primary center sub_431E63: chosen one, else the HQ
+  building (class 9), else an own training-center business (catalogue +28h = 4).
+- Progress: Blood.bmp (6 columns × 60×210, animated) rises over 728..789 × 390..589 by progress × 210; the job's
+  button stays down. Conversions (class 15h) instead show GameButt.bmp's frame + coin bar over the six action slots
+  (frame 0,0–258,43 at (230, 504), fill 0,63 up to 252 px at (233, 507)) — TODO.
+- The recruit-price table 0x4884EC / 0x480E18 differs from 0x484030 for the Collector (15 000 vs 5 000) and type 6.
+- Open: "set as primary training center" (company command 12), the conversion progress bar, Cadillac passengers.
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

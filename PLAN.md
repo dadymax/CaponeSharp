@@ -62,7 +62,7 @@ From `ep1.epi` and the EXE:
 | R6 ✅ | **Money flow** (done: `Organisation` = HQ class 6: Spend/Deposit/UpdateStats/interest; salaries sub_42A535. Panel layout still R10): what +14h is (cash), income/expenses totals shown in the panel, unit salaries (`Salary $%ld`), upkeep (negative incomes), when they are charged. | class 6 methods (vtable off_488858, 72 slots), setters of field +14h. |
 | R7 ◐ | **Police** (police order sub_4460C5/sub_4461A4/sub_4462B4 done as `Police`/`PoliceJob`; informers sub_42C503, raids, police car stats open) in episode 1: police station (class 11), "Police Batman"/police car units, arrests of gangsters (`PoliceArrest1-3`), raids. | `fnSetBuildingPolice` class methods, unit types 6/11. |
 | R8 ◐ | **Episode end** (done: briefing sub_464AE0/sub_4644A1, end sub_43C930/sub_43CAB5, result sub_43C1B2, progress save; open: statistics chart sub_43CCD0, GameWinA animation, music/sounds): confirm VCOND 1 value; how often conditions are checked; failure conditions; success/failure screens and what happens next. | `sub_463610`, callers of the VCOND list, `GameWin*` / `GAMEOVER*` bitmap loading. |
-| R9 | **Recruit**: training time (unit table +24h?), price, army favour (episode 1: none needed for Thug/Pistol?), spawn point, progress bar. | "Recruit … ($%s and %1.0f Army favour points)" message users, `Recruit.bmp`/`Blood.bmp` users. |
+| R9 ✅ | **Recruit** (done: menu sub_431FD3, actions sub_4323F0, training job sub_4274B5/sub_427505, primary center sub_431E63, speed sub_431DF3, blood bar sub_40A660): training time (unit table +24h?), price, army favour (episode 1: none needed for Thug/Pistol?), spawn point, progress bar. | "Recruit … ($%s and %1.0f Army favour points)" message users, `Recruit.bmp`/`Blood.bmp` users. |
 | R10 ◐ | **Panel layout and texts** (done: info column sub_40A997, finance block sub_40A245, text routine sub_40F126, fonts, HP bar → `PanelInfo`; open: action buttons, recruit bars, Expenses chart): positions of money/income/expenses, info texts (Salary/Income/Uncollected/Extort/Owner), action buttons. | `fnMainLoadBMPs` (0x40FA16) surface object, message tables (`fnMessagePrep`). |
 
 ## M. Build (C#) — in order, each step testable in the running game
@@ -103,7 +103,7 @@ From `ep1.epi` and the EXE:
 **M8 — Police and losses** ◐ (play-tested: car dispatch, arrest, jail, resign when unpaid; arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
 - Police station behaviour and arrests needed by episode 1; unit death/removal.
 
-**M9 — Recruit panel** (after R9)
+**M9 — Recruit panel** ✅ (recruit column, training with blood bar, pay on arrival; MCP-tested Thug, army-favour gating)
 - `Recruit.bmp` buttons, price/army favour checks, training progress (`Blood.bmp`), spawn at the base.
 
 **M10 — Sound** for the events above (`Sound/*.wav`, EXE sound table at 0x4779B8).

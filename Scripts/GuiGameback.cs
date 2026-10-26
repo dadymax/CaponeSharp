@@ -42,6 +42,7 @@ public partial class GuiGameback : TextureRect
         AddChild(_selectionIcon);
         AddChild(new PanelInfo { Name = "PanelInfo" });
         AddChild(new ActionBar { Name = "ActionBar" });
+        AddChild(new RecruitPanel { Name = "RecruitPanel" });
     }
 
     public static void UpdateSelectionIcon(Node2D node)
