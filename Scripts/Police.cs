@@ -194,9 +194,8 @@ public partial class PoliceJob : Node
             var org = _gangster.OwnerTeam?.Org;
             if (_lawyersCanHelp && org != null)
                 foreach (var (item, chance) in LawyerItems)
-                    if (org.HasItem(item))
+                    if (org.UseItem(item))
                     {
-                        org.UseItem(item);
                         released = GD.RandRange(0, 99) <= chance;
                         break;
                     }

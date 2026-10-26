@@ -70,6 +70,32 @@ code (base squad) get random personal names like `Unit::Unit`.
   animations, music, the main menu (briefing "Back" quits), story scrolling past 13 lines (`sub_406D24` scroller).
 - Command line: `--skip-briefing` starts the episode at once (MCP tests); `--episode=N` overrides the saved progress.
 
+## Business conversion — R5/M6 (2026-10-27)
+
+`Scripts/Economy/Businesses.cs` (`AuthorityItems`, `BusinessRules`), `Company.StartConversion/SetRow/Sell`,
+`Scripts/ActionBar.cs` (replaces the `CenterButtons` stub and its empty scene buttons, which swallowed clicks):
+- **Authority services** (table 0x488268, 54 × {word authority, dword price, float points}; authorities 1 army,
+  2 FBI, 3 politician, 4 police): player vt+B8h (sub_4310A0) = available when money given to the authority ≥ price and
+  favour ≥ points; vt+BCh (sub_4310F6) uses it, paying the points. This replaced the wrong "items owned" model
+  (`Organisation.CanUseItem/UseItem`; the police lawyers 24h/27h/29h use it).
+- **Tier** sub_4212C2 by row district (+24h) and price: slum < 100 000 / < 200 000, middle < 750 000 / < 1 000 000,
+  center < 1 500 000 / < 2 000 000 → 0/1/2. **Licence** by (district, tier): slum –/23h/28h, middle 25h/2Ah/30h,
+  center 2Eh/33h/1Fh (politician); district 3 needs none. vt+CCh (sub_431244) = licence available; vt+D0h (sub_4313C6)
+  = its points (menu text 30,9/10/11).
+- **Menu** sub_421370 (own company): legal → "Upgrade to … biz" (actions 3–7, icons Chicago.tile 0xADC/0xAE2/0xAE0/
+  0xADA/0xAE4, the next tile = "down"); a type → up to 5 rows (same grade, district 3 or the block's, available),
+  action 1Eh + row, icon 0xAD4; "Back" action 8 icon 0xADE; business: Repair (action 1, icon 0xAD6, cost = missing HP
+  × vt+160h) when damaged, Sell (action 0Bh, icon 0xD47, price × 0.5) when undamaged; "primary training center" for
+  support rows with vt+1A8h = 4. Slots: 43×43 from screen (232, 505).
+- **Conversion job** sub_427050 (object sub_427000, dispatch sub_421CF5): CanAfford(price) else text 25,1; licence
+  UseItem else text 25,0 (support rows exempt); Spend(price); company busy; done after catalogue +1Ch minutes (so +1Ch
+  = build time); rows with +2Ch also use politician service 1Fh; then SetRow.
+- **SetRow** sub_422070: HP to the new max if full; another player opening a row with +20h = 2 → "%s founds a %s."
+  **Sell** sub_421E40 case 11: Deposit(price × 0.5), random legal row of the grade (fnSelectBuildingRandomly), owner none.
+- Open: repair job (sub_4289A0), training center (case 12), raids/demolition/brownout on other players' companies
+  (items 14h/18h/1Dh, 26h/2Bh/2Fh/32h…), freezing, the original tooltip line (texts probably go to the message bar),
+  button hover animation (12 frames).
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

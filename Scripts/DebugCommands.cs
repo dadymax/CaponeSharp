@@ -91,6 +91,35 @@ public partial class DebugCommands : Node
         return node?.ToString() ?? "nothing";
     }
 
+    /// <summary>Rows the player's own company number <paramref name="index"/> could become (type 1–5).</summary>
+    public string Offers(int index, int type)
+    {
+        var company = OwnCompany(index);
+        if (company == null)
+            return "no company";
+        var rows = BusinessRules.Offers(company, (OriginalBusinessTable.BusinessType)type);
+        return company + "\n" + string.Join("\n", rows.Select(r => $"{r.Index} {r.Name} price {r.Price} favour {BusinessRules.FavourNeeded(r)} build {r.Value1C} min"));
+    }
+
+    /// <summary>Converts own company <paramref name="index"/> to its first offer of <paramref name="type"/>.</summary>
+    public string Convert(int index, int type)
+    {
+        var company = OwnCompany(index);
+        var row = company == null ? null : BusinessRules.Offers(company, (OriginalBusinessTable.BusinessType)type).FirstOrDefault();
+        return row == null ? "nothing to build" : $"{company.StartConversion(row)}: {row}";
+    }
+
+    /// <summary>Adds favour points and bribe money with an authority (1 army, 2 FBI, 3 politician, 4 police).</summary>
+    public string Favour(int authority, float points, long money)
+    {
+        Player.Org.Favour[authority] += points;
+        Player.Org.AuthorityMoney[authority] += money;
+        return $"favour {Player.Org.Favour[authority]}, money {Player.Org.AuthorityMoney[authority]}";
+    }
+
+    private Company OwnCompany(int index) =>
+        Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Player && c.IsEconomic).ElementAtOrDefault(index);
+
     public string Speed(float speed)
     {
         GameClock.Instance.Speed = speed;

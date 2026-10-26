@@ -65,17 +65,24 @@ public class Organisation
     public float[] Favour { get; } = new float[TypeCount];
 
     /// <summary>
-    /// HQ items (vt+B8h has / vt+BCh use): services bought from support businesses, e.g. lawyers 0x24 / 0x27 / 0x29
-    /// that can get arrested gangsters out, informers 0x2C / 0x31 / 0x34. Item id → count. Nothing adds items yet (M6).
+    /// vt+B8h (sub_4310A0): an authority service (<see cref="AuthorityItems"/>) is available when the money given to its
+    /// authority reaches the item's price and the favour points cover its cost.
     /// </summary>
-    public Dictionary<int, int> Items { get; } = new();
-
-    public bool HasItem(int item) => Items.TryGetValue(item, out var count) && count > 0;
-
-    public void UseItem(int item)
+    public bool CanUseItem(int item)
     {
-        if (HasItem(item))
-            Items[item]--;
+        var it = AuthorityItems.Get(item);
+        return it != null && it.Authority is > 0 and < TypeCount
+               && AuthorityMoney[it.Authority] >= it.Price && Favour[it.Authority] >= it.Points;
+    }
+
+    /// <summary>vt+BCh (sub_4310F6): uses the service, paying its favour points. Returns whether it was available.</summary>
+    public bool UseItem(int item)
+    {
+        if (!CanUseItem(item))
+            return false;
+        var it = AuthorityItems.Get(item);
+        Favour[it.Authority] -= it.Points;
+        return true;
     }
 
     /// <summary>Raised when a payment can't be made and the net income is negative (original: "You're out of funds.").</summary>

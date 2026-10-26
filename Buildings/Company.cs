@@ -368,6 +368,99 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         Police.Instance?.Respond(this, unit);
     }
 
+    // ---- business conversion (menu sub_421370, job sub_427050, SetRow sub_422070, sell sub_421E40 case 11) ----------
+
+    /// <summary>Row being built by a running conversion job (company vt+9Ch busy), or null.</summary>
+    public OriginalBusinessTable.Entry Building { get; private set; }
+    public bool UnderConstruction => Building != null;
+
+    public enum ConversionResult { Started, NotAllowed, NoMoney, NoFavour }
+
+    /// <summary>
+    /// Conversion job start (sub_427050 event 1): the owner must afford the price ("Not enough money to upgrade
+    /// business.", 25,1) and pay the row's licence favour ("Not enough IOU points…", 25,0; support rows don't need
+    /// it); then the price is paid and the business opens after the row's build time (catalogue +1Ch minutes).
+    /// </summary>
+    public ConversionResult StartConversion(OriginalBusinessTable.Entry row)
+    {
+        var org = OwnerTeam?.Org;
+        if (org == null || !IsEconomic || UnderConstruction || row == null)
+            return ConversionResult.NotAllowed;
+        var local = OwnerTeam.IsCurrentPlayerColor;
+        if (!org.CanAfford(row.Price))
+        {
+            if (local)
+                Messages.Show(OriginalTexts.Instance.Get(25, 1));
+            return ConversionResult.NoMoney;
+        }
+        var licence = BusinessRules.LicenceItem(row);
+        if (licence >= 0 && !org.UseItem(licence) && row.Type != OriginalBusinessTable.BusinessType.Support)
+        {
+            if (local)
+                Messages.Show(OriginalTexts.Instance.Get(25, 0));
+            return ConversionResult.NoFavour;
+        }
+        org.Spend(row.Price);
+        Building = row;
+        var owner = OwnerTeam;
+        GD.Print($"Company {CompanyName}: {owner.PlayerName} builds {row.Name} for {row.Price} ({row.Value1C} min)");
+        GameClock.Instance?.ScheduleIn(row.Value1C, () => FinishConversion(row, owner));
+        return ConversionResult.Started;
+    }
+
+    /// <summary>Job event 3E8h: rows with flag +2Ch also need the politician (service 1Fh); then the row is set.</summary>
+    private void FinishConversion(OriginalBusinessTable.Entry row, Team owner)
+    {
+        if (!IsInstanceValid(this) || Building != row)
+            return;
+        Building = null;
+        if (row.Flag2C != 0 && owner.Org?.UseItem(0x1F) != true)
+            return;
+        SetRow(row);
+    }
+
+    /// <summary>
+    /// sub_422070: becomes catalogue row <paramref name="row"/>. HP rise to the new maximum if they were full (or
+    /// above it); another player opening a row with +20h = 2 is announced ("%s founds a %s.", 30,22).
+    /// </summary>
+    public void SetRow(OriginalBusinessTable.Entry row)
+    {
+        var health = _company?.CanBeAttacked;
+        var wasFull = health == null || health.HP >= health.MaxHP;
+        Entry = row;
+        if (health != null)
+        {
+            health.MaxHP = row.MaxHP;
+            if (wasFull || health.HP > row.MaxHP)
+                health.HP = row.MaxHP;
+        }
+        UpdateSign();
+        if (OwnerTeam != null && !OwnerTeam.IsCurrentPlayerColor && row.Value20 == 2)
+            Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(30, 22), OwnerTeam.PlayerName, row.Name));
+        GD.Print($"Company {CompanyName} is now {row}");
+    }
+
+    public long SellPrice => Entry == null ? 0 : (long)(Entry.Price * BusinessRules.SellFactor);
+
+    /// <summary>Menu "Sell for $%ld" (30,7): an undamaged business of the owner.</summary>
+    public bool CanSell => IsEconomic && OwnerTeam != null && !UnderConstruction
+                           && BusinessType != OriginalBusinessTable.BusinessType.Legal && Hp >= MaxHp;
+
+    /// <summary>
+    /// sub_421E40 case 11: the owner gets half the price (Deposit), the building becomes a random legal company of its
+    /// grade for its district (fnSelectBuildingRandomly) and belongs to nobody.
+    /// </summary>
+    public void Sell()
+    {
+        if (!CanSell)
+            return;
+        OwnerTeam.Org?.Deposit(SellPrice);
+        var legal = OriginalBusinessTable.Instance.RandomLegal(Entry.Grade, Block?.District ?? OriginalBusinessTable.AnyDistrict);
+        if (legal != null)
+            SetRow(legal);
+        SetOwnerTeam(null);
+    }
+
     // ---- ownership (vt+74h, sub_4211F0) ------------------------------------------------------------------------------
 
     /// <summary>Change owner; a neutral company loses its uncollected cash, and the block registers the new owner.</summary>
