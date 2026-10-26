@@ -55,12 +55,12 @@ From `ep1.epi` and the EXE:
 | # | Question | Where to start |
 |---|---|---|
 | R1 ✅ | **Game clock** (done: minutes, 60-min turns, 1 turn per real second; `GameClock`): what one tick is (minute?), how fast it runs per real second, game speed, calendar (week = 10080, "Full year!"). | callers of `sub_402CD0` / `sub_416790`, `sub_43C150` + `fnSetThisToa2` + `sub_402D20` time arithmetic, the main loop in `fnMainWndMsgProcess`. |
-| R2 | **Company economy**: company object fields; how income accrues (per week? per minute × income/10080?); "Uncollected"; "Extort %"; market share. | company vtable off_4803CC slots (+154h, +17Ch, +180h, +184h, +A4h, +A8h…), catalogue field reads at 0x421xxx–0x422xxx. |
-| R3 | **Extortion/capture** of a legal company: what an attack on an "open" company does, refusal chance (sounds `BusinessRefuse1-6` / `BusinessPay1-6`), how ownership and extort % are set; HP of companies (catalogue +14). | company methods that call `fnMessagePrep` with the Pay/Refuse sound ids; replace `CompanyResistance` (a GDScript invention). |
-| R4 | **Collector route**: dispatch interval and condition, start point (HQ or cash-out business, `sub_41FEF0`), which companies it visits (own, same block), pickup, return, deposit into HQ +14h, capacity, what happens if it dies. | `sub_41FF60`, the collector unit's methods (type 7 in Unit vtable paths), class 9 object `sub_415090`. |
+| R2 ✅ | **Company economy** (done: `Company`, event handler sub_420ED5, income sub_422AF4; see TODO §findings): company object fields; how income accrues (per week? per minute × income/10080?); "Uncollected"; "Extort %"; market share. | company vtable off_4803CC slots (+154h, +17Ch, +180h, +184h, +A4h, +A8h…), catalogue field reads at 0x421xxx–0x422xxx. |
+| R3 ✅ | **Extortion/capture** (done: sub_422FB4 + order sub_428C11; cops threshold sub_422F50) of a legal company: what an attack on an "open" company does, refusal chance (sounds `BusinessRefuse1-6` / `BusinessPay1-6`), how ownership and extort % are set; HP of companies (catalogue +14). | company methods that call `fnMessagePrep` with the Pay/Refuse sound ids; replace `CompanyResistance` (a GDScript invention). |
+| R4 ✅ | **Collector route** (done: block sub_41FC15/sub_41FF60, job sub_428D62, next company sub_429146, cash point sub_429221): dispatch interval and condition, start point (HQ or cash-out business, `sub_41FEF0`), which companies it visits (own, same block), pickup, return, deposit into HQ +14h, capacity, what happens if it dies. | `sub_41FF60`, the collector unit's methods (type 7 in Unit vtable paths), class 9 object `sub_415090`. |
 | R5 | **Business conversion**: which catalogue rows are offered for a given building (grade + type), price, police favour requirement (+18?), legalization, repair cost (+1C?), sell price, freezing. | company methods reading +4/+0C/+10/+18/+1C/+20/+24/+28; the "Upgrade to …" / "Repair ($%ld)" / "Sell for $%ld" message ids. |
-| R6 | **Money flow**: what +14h is (cash), income/expenses totals shown in the panel, unit salaries (`Salary $%ld`), upkeep (negative incomes), when they are charged. | class 6 methods (vtable off_488858, 72 slots), setters of field +14h. |
-| R7 | **Police** in episode 1: police station (class 11), "Police Batman"/police car units, arrests of gangsters (`PoliceArrest1-3`), raids. | `fnSetBuildingPolice` class methods, unit types 6/11. |
+| R6 ✅ | **Money flow** (done: `Organisation` = HQ class 6: Spend/Deposit/UpdateStats/interest; salaries sub_42A535. Panel layout still R10): what +14h is (cash), income/expenses totals shown in the panel, unit salaries (`Salary $%ld`), upkeep (negative incomes), when they are charged. | class 6 methods (vtable off_488858, 72 slots), setters of field +14h. |
+| R7 ◐ | **Police** (police order sub_4460C5/sub_4461A4/sub_4462B4 done as `Police`/`PoliceJob`; informers sub_42C503, raids, police car stats open) in episode 1: police station (class 11), "Police Batman"/police car units, arrests of gangsters (`PoliceArrest1-3`), raids. | `fnSetBuildingPolice` class methods, unit types 6/11. |
 | R8 | **Episode end**: confirm VCOND 1 value; how often conditions are checked; failure conditions; success/failure screens and what happens next. | `sub_463610`, callers of the VCOND list, `GameWin*` / `GAMEOVER*` bitmap loading. |
 | R9 | **Recruit**: training time (unit table +24h?), price, army favour (episode 1: none needed for Thug/Pistol?), spawn point, progress bar. | "Recruit … ($%s and %1.0f Army favour points)" message users, `Recruit.bmp`/`Blood.bmp` users. |
 | R10 | **Panel layout and texts**: positions of money/income/expenses, info texts (Salary/Income/Uncollected/Extort/Owner), action buttons. | `fnMainLoadBMPs` (0x40FA16) surface object, message tables (`fnMessagePrep`). |
@@ -76,18 +76,18 @@ From `ep1.epi` and the EXE:
 - One `GameClock` autoload: ticks/minutes, week, month, year events; pause/speed. Everything time-based
   (income, collectors, salaries, unit speed) uses it.
 
-**M3 — Company economy** (after R2/R3)
+**M3 — Company economy** ✅ code, ◐ play-tested (savepoint commit; see TODO "Next session")
 - Company model from the catalogue: catalogue row, grade, type, owner, income, uncollected cash, HP.
 - Extortion of neutral companies as in the original (replaces `CompanyResistance`).
 - Income accrual into "uncollected" per clock rule.
 - Fix company signs/logos (TODO "Company logos are wrong") using the catalogue type + owner.
 
-**M4 — Collector autopilot** (after R4)
+**M4 — Collector autopilot** ✅ code, ◐ play-tested
 - City blocks as objects (from `.map` BLOCKS); each block dispatches a collector on the original schedule from
   the HQ (or cash-out business), visits the owner's companies in that block, returns, pays into the account.
 - Replace the current `CollectorAI` (GDScript-era design) with the original rules.
 
-**M5 — Money and panel** (after R6/R10)
+**M5 — Money and panel** (after R6/R10) ◐ money model done (`Organisation`), panel numbers not shown yet
 - Player account (HQ +14h equivalent), income and expenses; bottom-panel finance block with the original
   texts and positions; company/unit info texts; selection avatar.
 
@@ -96,11 +96,11 @@ From `ep1.epi` and the EXE:
   (price, police favour check), sell, repair. New income/upkeep from the catalogue.
 
 **M7 — Episode flow** (after R8)
-- Briefing (`ScenDisp.bmp`, SCENARIONAME/STORYTEXT/OBJECTIVETEXT/TIPTEXT), victory checks (VCOND 1 first),
+- Briefing (`ScenDisp.bmp`, SCENARIONAME/STORYTEXT/OBJECTIVETEXT/TIPTEXT), victory checks (VCOND 1 ✅ hourly on net income),
   success/failure screens (`GameWin*`, `GAMEOVER*`), next episode / replay.
 - Camera starts on the player's HQ.
 
-**M8 — Police and losses** (after R7)
+**M8 — Police and losses** ◐ (arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
 - Police station behaviour and arrests needed by episode 1; unit death/removal.
 
 **M9 — Recruit panel** (after R9)

@@ -63,6 +63,39 @@ public partial class VictoryManager : Node
         return any;
     }
 
+    /// <summary>Raised once with the winning player's id.</summary>
+    public event System.Action<int> PlayerWon;
+
+    /// <summary>Checks the conditions every game hour, after the players' hourly statistics update.</summary>
+    public void Start(GameClock clock) => clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+
+    private void HourTick(GameClock clock)
+    {
+        if (!IsInstanceValid(this) || AllCompleted)
+            return;
+        foreach (var vc in Conditions)
+        {
+            var team = Teams.GetTeamByPlayerId(vc.TargetPlayer);
+            if (team?.Org == null)
+                continue;
+            switch (vc.Type)
+            {
+                case VictoryCondition.ConditionType.Money:
+                    // VCOND 1 compares the weekly net income (HQ +14h), not the cash.
+                    vc.UpdateMoneyProgress(team.Org.NetIncome);
+                    break;
+            }
+        }
+        var winner = CheckAll();
+        if (winner >= 0)
+        {
+            PlayerWon?.Invoke(winner);
+            CampaignManager.Instance?.OnPlayerWon(winner);
+            return;
+        }
+        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+    }
+
     public void UpdateMoneyProgress(int playerId, long amount)
     {
         foreach (var vc in Conditions)

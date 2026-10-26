@@ -50,6 +50,7 @@ public partial class Main : Node2D
 		campaignManager.TileMap = Map;
 		campaignManager.AssignBases();
 		campaignManager.SpawnStartingUnits();
+		campaignManager.StartEconomy();
 		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
 	}
 
@@ -87,23 +88,28 @@ public partial class Main : Node2D
 			SelectInRect(_dragStartGlobal, dragEndGlobal);
 	}
 
-	/// <summary>Right click: attack/visit the company under the cursor, or walk there.</summary>
+	/// <summary>
+	/// Right click: extort the company under the cursor, attack the unit under it, or walk there.
+	/// Collectors and the police are not under the player's command.
+	/// </summary>
 	private void GiveOrder()
 	{
 		var hit = IntersectPoint(GetGlobalMousePosition());
-		if (hit != null)
-		{
-			if (hit is StaticBody2D structure)
-				foreach (var selected in _selected)
-					if (selected is Unit unit)
-						unit.TargetStructure = structure;
-			return;
-		}
 		var target = GetLocalMousePosition();
 		foreach (var selected in _selected)
-			if (selected is Unit unit)
+		{
+			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
+				continue;
+			if (hit is Company or Unit && hit != unit)
+				unit.TargetStructure = (Node2D)hit;
+			else
 				unit.MoveTo(target);
+		}
 	}
+
+	private static bool IsCommandable(Unit unit) =>
+		!unit.IsDead && !unit.IsArrested && unit.OwnerTeam?.IsCurrentPlayerColor == true
+		&& unit.UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar or UnitCommon.UnitType.Policeman);
 
 	private void SelectAtPoint(Vector2 globalPoint)
 	{

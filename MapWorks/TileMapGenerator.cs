@@ -15,6 +15,7 @@ public static class TileMapGenerator
     public static TileMapLayer CreateTileMap(string mapName, int baseCount = 8, Node2D parent = null, bool randomBases = false)
     {
         GD.Randomize();
+        CityBlock.ClearAll();
         var bmps = OriginalData.Instance.Bmps;
         var ct = OriginalData.Instance.Tiles;
         var cb = OriginalData.Instance.BuildingBlocks;
@@ -48,6 +49,7 @@ public static class TileMapGenerator
             TextureFilter = CanvasItem.TextureFilterEnum.Nearest,
         };
 
+        var businesses = OriginalData.Instance.Businesses;
         var bldngCounter = 0;
         foreach (var vec in map.BlockPlacement)
         {
@@ -96,6 +98,10 @@ public static class TileMapGenerator
 
             tileSet.AddSource(atlas, bldngCounter);
 
+            // The original block object (fnBuildingPlacementOnMapByNumber): district = BlockTable category.
+            var cityBlock = new CityBlock(bldngCounter, vec.Z, block.Category);
+            var cellOf = new Dictionary<Vector2I, Vector2I>();
+
             for (var x = 0; x < block.X; x++)
                 for (var y = 0; y < block.Y; y++)
                 {
@@ -109,6 +115,7 @@ public static class TileMapGenerator
 
                     var actualBlockPosition = MapTileMath.Add(tileMap, Vector2I.Zero, blockPosition);
                     var actual = MapTileMath.Add(tileMap, actualBlockPosition, bldngTilePosition);
+                    cellOf[new Vector2I(x, yInverted)] = actual;
 
                     switch (bldngChar)
                     {
@@ -121,31 +128,26 @@ public static class TileMapGenerator
                         case 'M':
                         case 'H':
                         {
+                            // B: grade 1 and C: grade 2 businesses 3 times in 4 (otherwise a plain building);
+                            // M, H: always grade 3. The kind is a random legal catalogue row of that grade
+                            // (fnSelectBuildingRandomly; every legal row allows any district).
+                            var grade = bldngChar switch { 'B' => 1, 'C' => 2, _ => 3 };
+                            if (grade < 3 && GD.Randi() % 4 == 0)
+                                break;
+                            var entry = businesses.RandomLegal(grade, block.Category);
+                            if (entry == null)
+                                break;
                             var c = companyScene.Instantiate<Company>();
-                            c.SetOwner(CompanyCommon.CompanyOwner.Neutral);
-                            c.SetType(CompanyCommon.CompanyType.Free);
-                            var grade = bldngChar switch
-                            {
-                                'C' => CompanyCommon.CompanyBldngGrade.Middle,
-                                'M' => CompanyCommon.CompanyBldngGrade.MiddleCorner,
-                                'H' => CompanyCommon.CompanyBldngGrade.HighOther,
-                                _ => CompanyCommon.CompanyBldngGrade.Base,
-                            };
-                            c.SetGrade(grade);
-                            c.CompanyData.PropCompanySubType = CompanyCommon.DetermineSubType(tileMap, actual);
-                            // Base buildings always host a company, the others only 3 times in 4.
-                            if (grade == CompanyCommon.CompanyBldngGrade.Base || GD.Randi() % 4 <= 2)
-                                td.SetCustomData(CompanyLayerName, c);
-                            else
-                                c.Free();
+                            c.InitBusiness(entry, cityBlock, actual);
+                            cityBlock.AddCompany(actual, c);
+                            td.SetCustomData(CompanyLayerName, c);
                             break;
                         }
                         case 'P':
                         {
                             var c = companyScene.Instantiate<Company>();
-                            c.SetOwner(CompanyCommon.CompanyOwner.Neutral);
-                            c.SetType(CompanyCommon.CompanyType.NonInteractive);
-                            c.SetGrade(CompanyCommon.CompanyBldngGrade.Police);
+                            c.InitPoliceStation(actual);
+                            cityBlock.AddCompany(actual, c);
                             td.SetCustomData(CompanyLayerName, c);
                             break;
                         }
@@ -153,6 +155,11 @@ public static class TileMapGenerator
 
                     tileMap.SetCell(actual, bldngCounter, bldngTilePosition);
                 }
+
+            // The collector visits the block row by row (sub_429146: index -> x = i % width, y = i / width).
+            for (var yo = 0; yo < block.Y; yo++)
+                for (var x = 0; x < block.X; x++)
+                    cityBlock.Cells.Add(cellOf[new Vector2I(x, yo)]);
 
             bldngCounter++;
         }
@@ -210,40 +217,19 @@ public static class TileMapGenerator
                 continue;
             }
 
+            // The original puts the HQ building (class 9, sub_415090) right on the start point (sub_404098);
+            // a business that stood there is replaced.
             var company = GetCompany(td);
             if (company == null)
             {
-                // Start point is not on a company: take a neighbouring base-grade one.
-                foreach (var offset in NeighbourOffsets)
-                {
-                    var tryTd = tileMap.GetCellTileData(coords + offset);
-                    var tryCompany = tryTd == null ? null : GetCompany(tryTd);
-                    if (tryCompany != null && tryCompany.CompanyGrade == CompanyCommon.CompanyBldngGrade.Base)
-                    {
-                        coords += offset;
-                        company = tryCompany;
-                        td = tryTd;
-                        break;
-                    }
-                }
-            }
-
-            if (company == null)
-            {
-                // TODO: HQ placement fix (no base company near the start point)
                 company = companyScene.Instantiate<Company>();
+                company.InitBuilding(CompanyCommon.CompanyType.HQ, coords);
                 td.SetCustomData(CompanyLayerName, company);
             }
-            company.SetType(CompanyCommon.CompanyType.HQ);
             bases.Add(new Godot.Collections.Array { coords, company });
         }
         return bases;
     }
-
-    private static readonly Vector2I[] NeighbourOffsets =
-    {
-        new(1, 1), new(1, 0), new(1, -1), new(0, 1), new(0, -1), new(-1, 1), new(-1, 0), new(-1, -1),
-    };
 
     public static Vector2[] GetStandartTileVertices(Vector2 margin)
     {

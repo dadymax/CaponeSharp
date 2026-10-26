@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Godot;
 
 namespace Capone;
@@ -70,6 +71,8 @@ public partial class CampaignManager : Node
 
         MainScene = mainSceneRef;
         GameClock.Instance?.Reset();
+        RandomNames.Reset();
+        World.Reset();
         InitPlayersFromScenario();
         InitAlliancesFromScenario();
         InitBribeAdvances();
@@ -110,6 +113,7 @@ public partial class CampaignManager : Node
             var entry = bases[next++].AsGodotArray();
             team.HqCoords = entry[0].AsVector2I();
             team.HqCompany = entry[1].AsGodotObject() as Company;
+            team.HqCompany?.MakeHq(team);
             SpawnBaseSquad(team);
         }
     }
@@ -120,31 +124,94 @@ public partial class CampaignManager : Node
     /// </summary>
     private void SpawnBaseSquad(Team team)
     {
-        var unitScene = GD.Load<PackedScene>("res://Units/Unit.tscn");
-        var blocked = new HashSet<Vector2I>(TileMap.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>());
-        var used = new HashSet<Vector2I>(TileMap.GetUsedCells());
-        var free = new List<Vector2I>();
-        for (var radius = 1; radius <= 4 && free.Count < 2; radius++)
-            for (var dx = -radius; dx <= radius; dx++)
-                for (var dy = -radius; dy <= radius; dy++)
-                {
-                    var cell = team.HqCoords + new Vector2I(dx, dy);
-                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) == radius && used.Contains(cell) && !blocked.Contains(cell)
-                        && free.Count < 2)
-                        free.Add(cell);
-                }
-
+        var free = FreeCellsAround(team.HqCoords, 2);
         UnitCommon.UnitType[] squad = { UnitCommon.UnitType.Thug, UnitCommon.UnitType.Pistol };
         for (var i = 0; i < squad.Length; i++)
+            CreateUnit(squad[i], team, i < free.Count ? free[i] : team.HqCoords);
+        GD.Print($"CampaignManager: base of player {team.PlayerId} '{team.PlayerName}' at {team.HqCoords} with a Thug and a Pistol man");
+    }
+
+    /// <summary>
+    /// Walkable cells nearest to <paramref name="center"/> (rings of growing radius) without a living unit on them,
+    /// like World::FindFreeCellNearObject (sub_43B955).
+    /// </summary>
+    public List<Vector2I> FreeCellsAround(Vector2I center, int count, int maxRadius = 6)
+    {
+        var blocked = new HashSet<Vector2I>(TileMap.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>());
+        var used = new HashSet<Vector2I>(TileMap.GetUsedCells());
+        var occupied = new HashSet<Vector2I>(MainScene.GetTree().GetNodesInGroup(Unit.GroupName).OfType<Unit>()
+            .Where(u => !u.IsDead && u.Map != null).Select(u => u.Cell));
+        var free = new List<Vector2I>();
+        for (var radius = 1; radius <= maxRadius && free.Count < count; radius++)
+            for (var dx = -radius; dx <= radius && free.Count < count; dx++)
+                for (var dy = -radius; dy <= radius && free.Count < count; dy++)
+                {
+                    var cell = center + new Vector2I(dx, dy);
+                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) == radius && used.Contains(cell)
+                        && !blocked.Contains(cell) && !occupied.Contains(cell))
+                        free.Add(cell);
+                }
+        return free;
+    }
+
+    /// <summary>A new unit of <paramref name="team"/> (null: neutral) on <paramref name="cell"/>.</summary>
+    public Unit CreateUnit(UnitCommon.UnitType type, Team team, Vector2I cell)
+    {
+        var unit = GD.Load<PackedScene>("res://Units/Unit.tscn").Instantiate<Unit>();
+        unit.SetType(type);
+        if (team != null)
         {
-            var unit = unitScene.Instantiate<Unit>();
-            unit.SetType(squad[i]);
             unit.TeamColor = team.TeamColor;
             unit.SetOwner(OwnerFor(team));
-            unit.Position = TileMap.MapToLocal(i < free.Count ? free[i] : team.HqCoords);
-            MainScene.AddChild(unit);
         }
-        GD.Print($"CampaignManager: base of player {team.PlayerId} '{team.PlayerName}' at {team.HqCoords} with a Thug and a Pistol man");
+        else
+            unit.SetOwner(UnitCommon.UnitOwner.Enemy); // neutral police use the enemy sprite set
+        unit.Position = TileMap.MapToLocal(cell);
+        MainScene.AddChild(unit);
+        return unit;
+    }
+
+    /// <summary>A collector for <paramref name="team"/>, standing next to its HQ (sub_41FEF0 + Unit::Unit(type 7)).</summary>
+    public Unit SpawnCollector(Team team)
+    {
+        if (team?.HqCompany == null || MainScene == null)
+            return null;
+        var free = FreeCellsAround(team.HqCoords, 1);
+        return CreateUnit(UnitCommon.UnitType.Collector, team, free.Count > 0 ? free[0] : team.HqCoords);
+    }
+
+    /// <summary>A police car next to <paramref name="station"/> (sub_4461A4: object sub_4459D0 placed at the station).</summary>
+    public Unit SpawnPoliceCar(Company station)
+    {
+        if (MainScene == null)
+            return null;
+        var free = FreeCellsAround(station.Cell, 1);
+        return CreateUnit(UnitCommon.UnitType.PoliceCar, null, free.Count > 0 ? free[0] : station.Cell);
+    }
+
+    /// <summary>
+    /// Starts the timed events once the map, the bases and the units exist: the players' hourly statistics and
+    /// debt interest, the blocks' weekly collector dispatch, the companies' income, healing and weekly reset.
+    /// </summary>
+    public void StartEconomy()
+    {
+        var clock = GameClock.Instance;
+        if (clock == null || MainScene == null)
+            return;
+        if (Police.Instance == null)
+            MainScene.AddChild(new Police { Name = "Police" });
+        foreach (var team in Teams.TeamsInGame.Values)
+            team.Org?.Start(clock);
+        foreach (var block in CityBlock.All)
+            block.Start(clock);
+        var companies = MainScene.GetTree().GetNodesInGroup(Company.GroupName).OfType<Company>().ToList();
+        foreach (var company in companies)
+            company.StartEconomy(clock);
+        foreach (var team in Teams.TeamsInGame.Values)
+            team.Org?.UpdateStats();
+        VictoryManager.Instance?.Start(clock);
+        GD.Print($"CampaignManager: economy started — {companies.Count(c => c.IsEconomic)} businesses in {CityBlock.All.Count} blocks, "
+                 + $"{companies.Count(c => c.IsPoliceStation)} police stations");
     }
 
     private static UnitCommon.UnitOwner OwnerFor(Team team) =>
@@ -196,6 +263,9 @@ public partial class CampaignManager : Node
         unit.PersonalName = unnamed ? "" : sUnit.Name;
         unit.EpiFlagA = sUnit.FlagA;
         unit.EpiFlagB = sUnit.FlagB;
+        // Episode units with flag A = 0 cost no salary (TODO: confirm the meaning of flag A).
+        if (sUnit.FlagA == 0)
+            unit.Salary = 0;
 
         var playerTeam = Teams.GetTeamByPlayerId(sUnit.PlayerId);
         if (playerTeam != null)
@@ -218,7 +288,6 @@ public partial class CampaignManager : Node
     private void InitPlayersFromScenario()
     {
         Teams.TeamsInGame.Clear();
-        Teams.PlayerMoney.Clear();
 
         var humanIndex = CurrentScenario.Players.FindIndex(p => p.IsHuman);
         if (humanIndex < 0)
@@ -236,8 +305,7 @@ public partial class CampaignManager : Node
             team.PlayerName = pData.Name;
             team.HasBase = pData.HasBase;
             team.IsCurrentPlayerColor = i == humanIndex;
-            team.PlayerMoney = CurrentScenario.Funds;
-            Teams.SetPlayerMoney(pData.Id, CurrentScenario.Funds);
+            team.Org = new Organisation(team, CurrentScenario.Funds);
         }
         GD.Print($"CampaignManager: initialized {Teams.TeamsInGame.Count} teams, funds {CurrentScenario.Funds} each");
     }
@@ -269,8 +337,10 @@ public partial class CampaignManager : Node
                 GD.PrintErr("CampaignManager: Invalid player id in bribeadvance desc: ", bribe.PlayerId);
                 continue;
             }
-            team.AuthorityFavour[bribe.Authority] = bribe.Points;
-            team.AuthorityMoney[bribe.Authority] = bribe.Money;
+            if (team.Org == null || bribe.Authority < 0 || bribe.Authority >= Organisation.TypeCount)
+                continue;
+            team.Org.Favour[bribe.Authority] = bribe.Points;
+            team.Org.AuthorityMoney[bribe.Authority] = bribe.Money;
         }
     }
 
@@ -279,6 +349,20 @@ public partial class CampaignManager : Node
         var victoryManager = new VictoryManager();
         AddChild(victoryManager);
         victoryManager.InitFromScenario(CurrentScenario);
+    }
+
+    /// <summary>
+    /// A player met all their victory conditions. TODO (R8/M7): the original's success / failure screens and the move to
+    /// the next episode; for now the game stops with the episode's success (or failure) text as a message.
+    /// </summary>
+    public void OnPlayerWon(int playerId)
+    {
+        var team = Teams.GetTeamByPlayerId(playerId);
+        var human = team?.IsCurrentPlayerColor == true;
+        GD.Print($"CampaignManager: player {playerId} '{team?.PlayerName}' won episode {CurrentScenario?.EpisodeNumber} at {GameClock.Format(GameClock.Instance?.Minute ?? 0)}: {team?.Org}");
+        Messages.Show(human ? CurrentScenario?.SuccessText ?? "" : CurrentScenario?.FailureText ?? "");
+        if (GameClock.Instance != null)
+            GameClock.Instance.Paused = true;
     }
 
     /// <summary>Scenario won: move to the next one if there is one.</summary>

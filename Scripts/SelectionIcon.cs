@@ -21,7 +21,7 @@ public partial class SelectionIcon : TextureRect
         var tile = node switch
         {
             Unit unit => tiles.ResolveTile(unit.UnitData?.Avatar),
-            Company { CompanyData.AvatarTileIndex: >= 0 } company => tiles.GetTileByIndex(company.CompanyData.AvatarTileIndex),
+            Company company => tiles.ResolveTile(CompanyPortrait(company)),
             _ => null,
         };
         if (tile == null)
@@ -37,4 +37,17 @@ public partial class SelectionIcon : TextureRect
         }
         Texture = ImageTexture.CreateFromImage(images[0]);
     }
+
+    /// <summary>
+    /// Chicago.tile "info …" portrait (84×95) of a building. TODO: the original picks it per building; until that
+    /// mapping is found: grade 1 slum house, grade 2 house, grade 3 central building.
+    /// </summary>
+    public static string CompanyPortrait(Company company) => company switch
+    {
+        { IsHq: true } => "HQ info picture",
+        { IsPoliceStation: true } => "info police",
+        { Entry.Grade: 3 } => "info central 1",
+        { Entry.Grade: 2 } => "info house 1",
+        _ => "info slum",
+    };
 }

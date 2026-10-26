@@ -114,7 +114,7 @@ public class VictoryCondition
         if (Type != ConditionType.Money)
             return;
         CurrentProgress = currentMoney;
-        if (currentMoney >= MoneyTarget)
+        if (currentMoney > MoneyTarget)
             Complete();
     }
 

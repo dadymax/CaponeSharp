@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Godot;
 
@@ -7,9 +8,11 @@ namespace Capone;
 public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 {
     public const string GroupName = "units";
+    /// <summary>Corpses stay on the map this many game minutes.</summary>
+    private const int CorpseMinutes = 3 * GameClock.MinutesPerHour;
 
     private Selection _selection;
-    public bool Selectable => true;
+    public bool Selectable => !IsDead && !IsArrested;
     public bool Selected
     {
         get => _selection?.Enabled ?? false;
@@ -21,6 +24,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     }
 
     public Color TeamColor { get; set; } = Teams.NeutralTeamColor;
+    /// <summary>Owning player, or null for neutral units (police, units that resigned).</summary>
+    public Team OwnerTeam => Teams.GetTeam(TeamColor);
     public TileMapLayer Map { get; private set; }
 
     private AStarGrid2D _astarNav;
@@ -29,7 +34,6 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     private UnitCommon _unitInstance;
     private UnitCommon.UnitOwner _unitOwner;
-    private CollectorAI _collectorAI;
 
     public UnitCommon UnitData => _unitInstance;
 
@@ -47,6 +51,24 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     public CanBeAttacked CanBeAttacked => _unitInstance?.CanBeAttacked;
     public CanHoldMoney CanHoldMoney => _unitInstance?.CanHoldMoney;
 
+    // ---- state used by the economy ------------------------------------------------------------------------------------
+
+    /// <summary>Weekly salary (unit table +0x20), paid daily as salary / 7 (unit event handler sub_42A535).</summary>
+    public int Salary { get; set; }
+    /// <summary>Money a collector carries (unit vt+1CCh / vt+1D0h / vt+1D4h).</summary>
+    public long CarriedMoney { get; set; }
+    public bool IsDead { get; private set; }
+    /// <summary>In a police car on the way to the station.</summary>
+    public bool IsArrested { get; private set; }
+    /// <summary>The order the unit is carrying out (extortion…); replaced by the next order.</summary>
+    public Node CurrentOrder { get; private set; }
+
+    /// <summary>Raised once when the unit dies or leaves the game (jailed).</summary>
+    public event Action<Unit> Died;
+
+    public Vector2I Cell => Map.LocalToMap(Position);
+    public bool IsMoving => _astarNavPath.Count > 0 || _targetPositionNext != NoTarget;
+
     public void SetType(UnitCommon.UnitType type)
     {
         UnitType = type;
@@ -57,12 +79,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         }
         _unitInstance = new UnitCommon(type) { OwnerType = _unitOwner };
         AddChild(_unitInstance);
-
-        if (type == UnitCommon.UnitType.Collector && _collectorAI == null)
-        {
-            _collectorAI = new CollectorAI();
-            AddChild(_collectorAI);
-        }
+        Salary = _unitInstance.Stats?.Cost ?? 0;
     }
 
     public void SetOwner(UnitCommon.UnitOwner owner)
@@ -71,6 +88,35 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         if (_unitInstance != null)
             _unitInstance.OwnerType = owner;
     }
+
+    #region Orders
+
+    /// <summary>Start a new order (a node that drives this unit); the previous one is cancelled.</summary>
+    public void SetOrder(Node order)
+    {
+        CancelOrder();
+        CurrentOrder = order;
+        if (order != null)
+            AddChild(order);
+    }
+
+    public void CancelOrder()
+    {
+        if (CurrentOrder != null && IsInstanceValid(CurrentOrder))
+            CurrentOrder.QueueFree();
+        CurrentOrder = null;
+    }
+
+    /// <summary>Called by an order node when it is done.</summary>
+    public void OrderFinished(Node order)
+    {
+        if (CurrentOrder == order)
+            CurrentOrder = null;
+        if (IsInstanceValid(order))
+            order.QueueFree();
+    }
+
+    #endregion
 
     #region Movement targets
 
@@ -81,42 +127,61 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// <summary>Current destination cell.</summary>
     public Vector2I Target => _targetPosition;
 
-    /// <summary>Walk to a point given in the parent's (main scene's) coordinates.</summary>
+    /// <summary>Player order: walk to a point given in the parent's (main scene's) coordinates.</summary>
     public void MoveTo(Vector2 localPosition)
     {
-        _targetPositionNext = Map.LocalToMap(localPosition);
+        CancelOrder();
         TargetStructure = null;
+        WalkToCell(Map.LocalToMap(localPosition));
+    }
+
+    /// <summary>Walk to a cell (or next to it, if it is a building). Used by orders; doesn't touch the current order.</summary>
+    public void WalkToCell(Vector2I cell) => _targetPositionNext = cell;
+
+    /// <summary>Walk next to a map object.</summary>
+    public void WalkTo(Node2D target) => WalkToCell(Map.LocalToMap(target.Position));
+
+    public void StopMoving()
+    {
+        _targetPositionNext = NoTarget;
+        _astarNavPath.Clear();
     }
 
     private Node2D _targetStructure;
-    /// <summary>Walk to a company/unit and attack it if hostile.</summary>
+    /// <summary>
+    /// Player order on a map object: a company is extorted (<see cref="ExtortOrder"/>), a hostile unit is attacked.
+    /// </summary>
     public Node2D TargetStructure
     {
         get => _targetStructure;
         set
         {
             _targetStructure = value;
+            if (CanAttack != null)
+                CanAttack.Target = null;
             if (value == null)
+                return;
+
+            if (value is Company company)
             {
-                if (CanAttack != null)
-                    CanAttack.Target = null;
+                if (ExtortOrder.CanExtort(this, company))
+                    SetOrder(new ExtortOrder(this, company));
+                else
+                {
+                    CancelOrder();
+                    WalkTo(company);
+                }
                 return;
             }
 
-            if (CanAttack != null && value is IGameEntity target)
+            CancelOrder();
+            if (CanAttack != null && value is IGameEntity target && target.CanBeAttacked != null)
             {
                 var relation = Teams.GetOrAddTeam(TeamColor).GetTargetRelation(target.TeamColor);
                 if (relation is Teams.TeamRelation.Enemy or Teams.TeamRelation.Neutral)
-                {
-                    if (target.CanBeAttacked != null)
-                        CanAttack.Target = target.CanBeAttacked;
-                }
-                else if (relation == Teams.TeamRelation.Self)
-                {
-                    // TODO: can embark into limousine. Maybe needs to move out of CanAttack != null for thief.
-                }
+                    CanAttack.Target = target.CanBeAttacked;
             }
-            _targetPositionNext = Map.LocalToMap(value.Position);
+            WalkTo(value);
         }
     }
 
@@ -141,8 +206,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             if (path.Count > 0)
                 path.RemoveAt(path.Count - 1);
         }
-        if (path.Count > 0)
-            _astarNavPath = path;
+        _astarNavPath = path;
     }
 
     #endregion
@@ -186,6 +250,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
         if (CanBeAttacked != null)
             CanBeAttacked.HPisZERO += OnHPisZero;
+
+        StartPayroll();
     }
 
     #region Animation
@@ -197,7 +263,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     public void AnimationStop(bool move = true)
     {
-        if (_animStopped)
+        if (_animStopped || IsDead)
             return;
         if ((_animMove && move) || (_animAttack && !move))
         {
@@ -210,6 +276,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     public void AnimationMoveOrAttack(Vector2 directionAsVector, bool move = true)
     {
+        if (IsDead)
+            return;
         var direction = MapTileMath.GetDirection(directionAsVector);
         if (!_animStopped && direction == _oldDirection && ((move && _animMove) || (!move && _animAttack)))
             return;
@@ -222,16 +290,32 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         _as2d.Play(OriginalUnitSprites.GetAnimLayerName(slType, direction));
     }
 
+    /// <summary>Show one attack swing towards <paramref name="target"/> (used by orders that hit once).</summary>
+    public void AnimationAttackOnce(Node2D target)
+    {
+        AnimationMoveOrAttack(target.Position - Position, false);
+        _attackPoseUntil = GameClock.Instance?.Minute + 20 ?? 0;
+    }
+
+    private long _attackPoseUntil = -1;
+
     #endregion
 
     public override void _Process(double delta)
     {
+        if (IsDead || IsArrested)
+            return;
+        if (_attackPoseUntil >= 0 && (GameClock.Instance?.Minute ?? 0) >= _attackPoseUntil)
+        {
+            _attackPoseUntil = -1;
+            AnimationStop(false);
+        }
         if (CanAttack == null)
             return;
         CanAttack.DecreaseAttackTimer(delta);
         if (CanAttack.TargetInRange() && CanAttack.TargetParent != null)
             AnimationMoveOrAttack(CanAttack.TargetParent.Position - Position, false);
-        else
+        else if (_attackPoseUntil < 0)
             AnimationStop(false);
     }
 
@@ -239,6 +323,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     public override void _PhysicsProcess(double delta)
     {
+        if (IsDead || IsArrested)
+            return;
         if (_astarPointReached && _targetPositionNext != NoTarget)
         {
             _targetPosition = _targetPositionNext;
@@ -264,20 +350,139 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         }
     }
 
-    private void OnHPisZero(Color attackerColor)
+    #region Salary (sub_42A535: daily salary / 7; a unit that can't be paid resigns)
+
+    private void StartPayroll()
     {
-        // TODO: unit death animation
-        // TODO: remove from the scene (after some tick?)
-        if (_collectorAI != null)
-        {
-            _collectorAI.QueueFree();
-            _collectorAI = null;
-        }
+        var clock = GameClock.Instance;
+        clock?.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
     }
 
-    /// <summary>Switch the collector between autopilot and manual control.</summary>
-    public void ToggleCollectorMode() => _collectorAI?.ToggleControlMode();
+    private void PayDay(GameClock clock)
+    {
+        if (!IsInstanceValid(this) || IsDead)
+            return;
+        var org = OwnerTeam?.Org;
+        if (org != null && Salary > 0 && !IsArrested)
+        {
+            if (!org.Spend(Salary / 7) && UnitType != UnitCommon.UnitType.Collector)
+            {
+                Resign();
+                return;
+            }
+        }
+        clock.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
+    }
 
-    /// <summary>Send the collector to the HQ now.</summary>
-    public void ForceCollectorReturn() => _collectorAI?.ForceReturnToHQ();
+    /// <summary>Unpaid units quit: they become neutral (the original sets the owner to none).</summary>
+    public void Resign()
+    {
+        var wasLocal = OwnerTeam?.IsCurrentPlayerColor == true;
+        GD.Print($"Unit {DisplayName} resigns");
+        if (wasLocal && ResignSound(UnitType) is { } sound)
+            Sound.Play(sound);
+        CancelOrder();
+        StopMoving();
+        if (CanAttack != null)
+            CanAttack.Target = null;
+        Selected = false;
+        TeamColor = Teams.NeutralTeamColor;
+        _unitOwner = UnitCommon.UnitOwner.Neutral;
+        CanAttack?.Reinit();
+    }
+
+    public static string ResignSound(UnitCommon.UnitType type) => type switch
+    {
+        UnitCommon.UnitType.Thug => "ThugResign.wav",
+        UnitCommon.UnitType.Pistol => "PistolResign.wav",
+        UnitCommon.UnitType.Thompson => "ThompsonResign.wav",
+        UnitCommon.UnitType.Terrorist => "BombmanResign.wav",
+        UnitCommon.UnitType.Sniper => "SniperResign.wav",
+        UnitCommon.UnitType.Shotgun => "ShotgunResign.wav",
+        UnitCommon.UnitType.Hitman => "HitmanResign.wav",
+        UnitCommon.UnitType.Thief => "ThiefResign.wav",
+        _ => null,
+    };
+
+    #endregion
+
+    #region Death and arrest
+
+    private void OnHPisZero(Color attackerColor) => Die();
+
+    /// <summary>The unit is killed: it stops, shows its corpse for a while and is removed.</summary>
+    public void Die()
+    {
+        if (IsDead)
+            return;
+        IsDead = true;
+        Selected = false;
+        CancelOrder();
+        StopMoving();
+        if (CanAttack != null)
+            CanAttack.Target = null;
+        RemoveFromGroup(GroupName);
+        _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+        var killed = OriginalUnitSprites.SpriteLayersDict[OriginalUnitSprites.SpriteLayersEnum.killed];
+        if (_as2d != null && _as2d.SpriteFrames.HasAnimation(killed) && _as2d.SpriteFrames.GetFrameCount(killed) > 0)
+            _as2d.Play(killed);
+        GD.Print($"Unit {DisplayName} ({UnitType}) died");
+        Died?.Invoke(this);
+        var clock = GameClock.Instance;
+        if (clock != null)
+            clock.ScheduleIn(CorpseMinutes, () =>
+            {
+                if (IsInstanceValid(this))
+                    QueueFree();
+            });
+        else
+            QueueFree();
+    }
+
+    /// <summary>Taken by the police: hidden and inactive until jailed or released.</summary>
+    public void Arrest()
+    {
+        if (IsDead || IsArrested)
+            return;
+        IsArrested = true;
+        Selected = false;
+        CancelOrder();
+        StopMoving();
+        if (CanAttack != null)
+            CanAttack.Target = null;
+        Visible = false;
+        _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+        GD.Print($"Unit {DisplayName} ({UnitType}) arrested");
+    }
+
+    /// <summary>Released by the police at <paramref name="cell"/>.</summary>
+    public void Release(Vector2I cell)
+    {
+        if (!IsArrested)
+            return;
+        IsArrested = false;
+        Visible = true;
+        Position = Map.MapToLocal(cell);
+        _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
+    }
+
+    /// <summary>Jailed for good (unit vt+1A0h): the unit leaves the game.</summary>
+    public void Jail() => RemoveFromGame("jailed");
+
+    /// <summary>A collector with nothing left to collect leaves the map (vt+1E8h).</summary>
+    public void Leave() => RemoveFromGame("left the map");
+
+    private void RemoveFromGame(string reason)
+    {
+        if (IsDead)
+            return;
+        IsDead = true;
+        Selected = false;
+        RemoveFromGroup(GroupName);
+        GD.Print($"Unit {DisplayName} ({UnitType}) {reason}");
+        Died?.Invoke(this);
+        QueueFree();
+    }
+
+    #endregion
 }

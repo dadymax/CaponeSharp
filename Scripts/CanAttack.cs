@@ -51,7 +51,7 @@ public partial class CanAttack : Node, IJsonConfigurable
     /// <summary>The attacked map object (unit or company), or null if there is none or it was freed.</summary>
     public Node2D TargetParent => _targetParent != null && IsInstanceValid(_targetParent) ? _targetParent : null;
 
-    /// <summary>Enemies and neutrals can be attacked (attacking a neutral company captures it); self and friends can't.</summary>
+    /// <summary>Enemies and neutrals can be attacked; self and friends can't.</summary>
     private bool IsHostile(Node2D target)
     {
         var targetColor = (target as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
@@ -161,15 +161,6 @@ public partial class CanAttack : Node, IJsonConfigurable
         if (!TargetInRange())
             return;
 
-        // Attacking a neutral company captures it instead of damaging it.
-        if (CanCaptureNeutral && TargetParent is Company targetCompany
-            && targetCompany.CompanyOwner == CompanyCommon.CompanyOwner.Neutral)
-        {
-            targetCompany.CaptureBy(_thisTeamColor, _thisParent);
-            ResetAttackTimer();
-            return;
-        }
-
         var damage = RollDamage();
         switch (unitType)
         {
@@ -196,6 +187,23 @@ public partial class CanAttack : Node, IJsonConfigurable
         }
 
         ResetAttackTimer();
+    }
+
+    /// <summary>
+    /// One hit on a map object (unit vt+104h, used by the extortion order on every refusal). Returns the damage done
+    /// (0 on a miss). TODO: the original Unit::Attack (sub_42BD15) also handles bursts, ammo and the Cadillac.
+    /// </summary>
+    public int HitOnce(Node2D target)
+    {
+        if (target is not IGameEntity { CanBeAttacked: { } health } || !IsInstanceValid(health))
+            return 0;
+        if (MissChance > 0 && GD.Randf() < MissChance)
+            return 0;
+        var againstUnit = target is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
+        var (min, max) = againstUnit ? (DamageMin, DamageMax) : (BuildingDamageMin, BuildingDamageMax);
+        var damage = max <= min ? min : GD.RandRange(min, max);
+        health.ReceiveDamage(damage, this);
+        return damage;
     }
 
     public bool TargetInRange()

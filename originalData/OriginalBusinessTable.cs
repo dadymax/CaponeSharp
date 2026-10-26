@@ -71,6 +71,21 @@ public class OriginalBusinessTable
     public IEnumerable<Entry> LegalOfGrade(int grade) =>
         Entries.Where(e => e.Type == BusinessType.Legal && e.Grade == grade);
 
+    /// <summary>+24h value of rows that may stand in any district.</summary>
+    public const int AnyDistrict = 3;
+
+    /// <summary>
+    /// fnSelectBuildingRandomly (0x4202A0): a random legal row that may stand in this district (+24h = district or 3)
+    /// with this grade (+0Ch = grade or 0). The original draws rows until one fits, which is the same as a uniform pick.
+    /// </summary>
+    public Entry RandomLegal(int grade, int district)
+    {
+        var fits = Entries.Where(e => e.Type == BusinessType.Legal
+                                      && (e.Value24 == AnyDistrict || e.Value24 == district)
+                                      && (e.Grade == 0 || e.Grade == grade)).ToList();
+        return fits.Count == 0 ? null : fits[GD.RandRange(0, fits.Count - 1)];
+    }
+
     public class Entry
     {
         public int Index;
@@ -91,9 +106,9 @@ public class OriginalBusinessTable
         public int Value1C;
         /// <summary>+0x20 1 or 2.</summary>
         public int Value20;
-        /// <summary>+0x24 0..3 (3 for legal and support rows).</summary>
+        /// <summary>+0x24 district the row may be placed in: 0 slum, 1 middle class, 2 center, 3 any (fnSelectBuildingRandomly).</summary>
         public int Value24;
-        /// <summary>+0x28 2/3/4/7.</summary>
+        /// <summary>+0x28 2/3/4/7; 3 = cash-out business where collectors can deliver (company vt+1A8h, sub_429221).</summary>
         public int Value28;
         /// <summary>+0x2C 0/1.</summary>
         public int Flag2C;

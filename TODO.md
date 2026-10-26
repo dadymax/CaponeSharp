@@ -10,6 +10,62 @@ Addresses below are virtual addresses in `Capone.EXE.lst`. Grep for them; never 
 
 ---
 
+## Next session — savepoint 2026-10-26 (economy brick, PLAN M3/M4/M8)
+
+Committed as a savepoint: compiles with 0 warnings, `--smoke-test` green, episode 1 starts with the economy
+("232 businesses in 313 blocks, 2 police stations"). **Not play-tested yet.** Resume here:
+
+1. Add a small debug node (e.g. `Scripts/DebugCommands.cs`, child of Main) for MCP `game_eval`: `Status()` (clock,
+   cash, net/gross income, owned companies, collectors), `ExtortNearest(i)`, `AutoExtort(on)` (idle player units
+   extort the nearest unowned business).
+2. MCP test episode 1 at `GameClock.Speed = 16`: a business pays → its block spawns a collector at the HQ →
+   collector waits 60 min, visits the owner's companies in row order, delivers to the HQ → `Organisation.Cash`
+   and `NetIncome` grow → VCOND 1 (net income > 500 000) wins. Also check refusals → one hit per hour, cops at
+   attempt 10 (slum), police car chase/arrest/jail, salaries paid daily, resign when broke.
+3. Fix what the test shows, then mark PLAN M3/M4 done and commit.
+4. Add the new RE facts below to `godottry/disassembled/annotate/hand_notes.py`, regenerate the commented listing,
+   and add the time/economy facts to `godottry/CLAUDE.md` and the capone-godot skill.
+
+Known gaps in the brick (do later):
+- `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
+- `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
+- Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
+- HQ building HP unknown (class 9, `sub_415090`); HQs can't be attacked yet.
+- Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).
+- Lawyers (HQ items 0x24/0x27/0x29) and informers (0x2C/0x31/0x34, `sub_42C503`) need M6 items; `Organisation.Items` is empty.
+- UNIT flag A = 0 → salary 0 is assumed (`CampaignManager.SpawnUnit`).
+- Smoke test leaks nodes (RID warnings at exit).
+
+### Economy facts recovered (this brick)
+
+- **Company** (vtable off_4803CC, handler sub_420ED5): hourly — cache block income flag, heal 5 HP if unowned or
+  legal; 441× per week (slot 22 min + random 0–21) — uncollected += income / 441 (upkeep rows charge the owner);
+  weekly — percent = 100, unowned lose uncollected. Income = catalogue × percent × damage factor (1 at full HP,
+  0 at ≤ 75 %) × district (legal: 1 / 1.25 / 1.875) × owner's type factor. SetOwner sub_4211F0 → block vt+178h.
+- **Extortion** sub_422FB4: base chance from income ((0,100),(25000,90),(100000,15),(1000000,0)) + unit pressure
+  within 4 cells (Thug 5, Pistol/Shotgun 6, Thompson 10, Terrorist/Hitman 20; own +, others −) − 45 after the first
+  attempt + 15 if owned; unowned: the owner calls the cops when attempt = threshold (slum 10, middle 5, center 0;
+  Thompson +3, Terrorist/Hitman +5, Sniper −2), after that −100. Legal pays if rand(100) ≤ chance; any pays below
+  15 % HP. Order sub_428C11: one attempt per hour, a refusal = attempt+1 and one hit.
+- **Map placement** fnBuildingPlacementOnMapByNumber: B grade 1 and C grade 2 businesses 3 in 4, M/H grade 3
+  always, P police station; fnSelectBuildingRandomly = random legal row with +24h = district or 3 (all legal rows
+  are 3) and grade. Catalogue +28h = 3 marks cash-out businesses (company vt+1A8h).
+- **Block** (off_47CF28): owner entries {HQ, collector, income enabled, lost time}; first company → collector at
+  once (sub_41FC15); weekly sub_41FF60 replaces a lost collector one week after the loss.
+- **Collector job** sub_428D62 (on arrival): pickup → wait 60 → next own company in row order (sub_429146) or the
+  nearest HQ / cash-out (sub_429221); deliver → Deposit, heal, next round at max(start + 2520, now + 60); no
+  companies → block forgets the owner, collector leaves; killed → owner's income in the block stops until the
+  next collector's first pickup.
+- **Organisation** (HQ class 6): Spend sub_430860 (cash − amount + 200 000 ≥ 0 or net ≥ 0, else "out of funds"
+  20,0 + sound 24); Deposit sub_430790 (bribe shares of the profit part); UpdateStats sub_430C30 hourly; interest
+  −cash/10 every 1008 min when negative; market-share curve; salaries = unit table +0x20 per week, paid daily / 7
+  (sub_42A535), unpaid non-collectors resign.
+- **Police** order sub_4460C5 (start sub_4461A4, step sub_4462B4): car from the nearest station (sub_446123) to the
+  gangster's cell; within 5 cells → chase ≤ 12 h; within 1 → arrest (sounds 27/28); at the station → jail (unit
+  vt+1A0h) unless lawyers (70/50/30 %) → release with text 28,1.
+
+---
+
 ## 0. What exists vs what sharptry uses
 
 | Source | Contents | Used by sharptry now |
@@ -45,8 +101,8 @@ Still open from this part:
 - [ ] Thief walk frames and the Terrorist attack frames are not named in Chicago.tile (idle/walk used as fallback). The EXE's per-type animation tile table is not located yet.
 - [ ] UNIT flags: A = 0 clears the unit's value (vtable+0x174), B → vtable+0x1EC (stationary guard?). Stored on `Unit.EpiFlagA/B`, not used.
 - [ ] VCOND 7 uses unit type 13 (not a table entry, probably "any unit"); VCOND 2/5/6/8 company-type numbers not decoded.
-- [ ] BRIBEADVANCE authority numbering (1–4) not verified; stored on `Team.AuthorityFavour/AuthorityMoney`.
-- [ ] Company stats: incomes, names and HP now available from the EXE catalogue (`OriginalBusinessTable`, 0x47DDC0, 161 rows); `companies*.json` still used until the company model is rebuilt (PLAN M3).
+- [ ] BRIBEADVANCE authority numbering (1–4) not verified; stored on `Organisation.Favour/AuthorityMoney`.
+- [x] Company stats come from the EXE catalogue (`OriginalBusinessTable`); `Company` is rebuilt on it (PLAN M3). `companies2.json` is no longer read (delete it once the logos are remade); `companies.json` still maps sign types to Chicago.tile sprites.
 - [ ] Episode texts (briefing/success/failure) are parsed but not shown yet (§3).
 
 ## 2. Text and localisation (P1)
@@ -80,7 +136,7 @@ Still open from this part:
 - [ ] Load WAVs at runtime from `original_game/Sound` (`AudioStreamWav.LoadFromFile`); add a `SoundManager` autoload. The EXE's id → file table starts at 0x4779B8.
 - [ ] Unit voices per type: `<Unit>Arrive / Click / ClickEnemy / Die / Idle1-5 / Order / OrderHurry / Resign` for Thug, Pistol, Shotgun, Thompson, Sniper, Bombman, Hitman, Thief, Godfather.
 - [ ] Weapons: `Gun`, `Machgun`, `Rifle`, `Shotgun`, `bang`, `Hit`, `CRASH`.
-- [ ] Business: `Bootlegging/Entertainment/Gambling/TroubleShooting/CollectionCenter/TraningCenter/HQ/Business`. Capture outcome: `BusinessPay1-6` (paid) vs `BusinessRefuse1-6` (resisted — hook into `CompanyResistance`). Collector hits: `CollectorHit1-3`.
+- [ ] Business: `Bootlegging/Entertainment/Gambling/TroubleShooting/CollectionCenter/TraningCenter/HQ/Business`. Capture outcome: `BusinessPay1-6` / `BusinessRefuse1-5` — done in `Company.Extort` (`Sound` class). Collector hits: `CollectorHit1-3`.
 - [ ] Police/FBI: `PoliceArrest1-3`, `PoliceRaid`, `POLICE_S`, `FBIInforms`. Cars: `NewCar`, `CarGo`, `CarClick`. UI: `ButtonClick`, `OverButton`, `Click`, `select`, `Message1-8`, `OutOfFunds`, `Permit`, `Welcome`, `NewGame`, `WinEffect`, `LoseEffect`.
 
 ## 5. Gameplay rules recovered from the EXE (P2)
@@ -156,8 +212,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [x] Clicks on GUI controls (menu, bottom panel) no longer select/deselect on the map: `Main` uses `_UnhandledInput`.
 
 - [ ] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
-- [ ] **Avatar tile index**: `AvatarTileIndex` in `companies2.json` is the 0-based tile index (Chicago.tile line − 58).
-- [ ] **HQ placement**: when no base company is next to a start point, the HQ is placed wrongly (`TileMapGenerator`). Needs fallback logic.
+- [ ] **Company portraits**: `SelectionIcon.CompanyPortrait` uses Chicago.tile "info …" pictures per grade as placeholders; find the original building → picture mapping.
+- [x] **HQ placement**: the HQ now stands on the start point itself, as in `sub_404098` (a business there is replaced).
 - [ ] **RID leaks at exit** with `--headless --quit-after`: harmless.
 - [x] ~~Group (rectangle) select~~: fixed in the C# port.
 - [x] ~~PICS dir check with `res://L:/…`~~: not present in the C# port.
