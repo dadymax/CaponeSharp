@@ -87,7 +87,7 @@ From `ep1.epi` and the EXE:
   the HQ (or cash-out business), visits the owner's companies in that block, returns, pays into the account.
 - Replace the current `CollectorAI` (GDScript-era design) with the original rules.
 
-**M5 — Money and panel** ✅ (cash, weekly net income, info texts, HP bar in `PanelInfo`; MCP screenshots checked)
+**M5 — Money and panel** ✅ (cash, weekly net income, info texts, HP bar in `PanelInfo`; bribe shares chart `SharesPanel`; MCP-checked)
 - Player account (HQ +14h equivalent), income and expenses; bottom-panel finance block with the original
   texts and positions; company/unit info texts; selection avatar.
 

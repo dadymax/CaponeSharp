@@ -31,6 +31,7 @@ public partial class DebugCommands : Node
             sb.Append($"P{team.PlayerId} {team.PlayerName}{(team.IsCurrentPlayerColor ? " (you)" : "")}: {team.Org}; ");
             sb.Append($"companies {owned.Count} (uncollected {owned.Sum(c => c.Uncollected)}); ");
             sb.Append($"units {mine.Count}: {string.Join(",", mine.Select(UnitLine))}\n");
+            sb.Append($"  shares [{string.Join(" ", team.Org.Shares.Select(v => v.ToString("0.#")))}] favour [{string.Join(" ", team.Org.Favour.Select(v => v.ToString("0.#")))}] bribed [{string.Join(" ", team.Org.AuthorityMoney)}]\n");
         }
         var police = units.Where(u => u.UnitType is UnitCommon.UnitType.PoliceCar or UnitCommon.UnitType.Policeman && !u.IsDead).ToList();
         sb.Append($"police units {police.Count}; blocks with owners {CityBlock.All.Count(b => b.Owners.Count > 0)}\n");

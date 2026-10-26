@@ -117,6 +117,17 @@ code (base squad) get random personal names like `Unit::Unit`.
 - The recruit-price table 0x4884EC / 0x480E18 differs from 0x484030 for the Collector (15 000 vs 5 000) and type 6.
 - Open: "set as primary training center" (company command 12), the conversion progress bar, Cadillac passengers.
 
+## Bribe shares — "Расходы" chart (2026-10-27)
+
+`Scripts/SharesPanel.cs`: five coin bars (GameButt.bmp 16,43, 20 high) at x 546..680, rows y 447/472/499/526/554
+(table 0x476BF8) = savings, army, FBI, politician, police (`Organisation.Shares` 0–4). Dragging a row (sub_411F84 /
+sub_413350 / sub_413A04) sets its width (0–134) and sub_409C60 rebalances: piecewise scale with knots (0,0) (49,20)
+(88,40) (108,60) (122,80) (134,100) (inverse switches at 21/41/61/81); the other bars are scaled to the rest of 100 %
+(a quarter each when all zero), a shortfall goes to the next row (row 0 after the last); shares written via
+sub_414CB0. Hover (sub_40C2C2) prints texts 5,63/64/67/70/73 at (232, 555) and the favour 5,65–75 at (232, 573);
+that line is also the panel's status line for order hints (5,40–62) — TODO: show button texts there instead of
+OS tooltips. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
