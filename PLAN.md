@@ -63,7 +63,7 @@ From `ep1.epi` and the EXE:
 | R7 ◐ | **Police** (police order sub_4460C5/sub_4461A4/sub_4462B4 done as `Police`/`PoliceJob`; informers sub_42C503, raids, police car stats open) in episode 1: police station (class 11), "Police Batman"/police car units, arrests of gangsters (`PoliceArrest1-3`), raids. | `fnSetBuildingPolice` class methods, unit types 6/11. |
 | R8 | **Episode end**: confirm VCOND 1 value; how often conditions are checked; failure conditions; success/failure screens and what happens next. | `sub_463610`, callers of the VCOND list, `GameWin*` / `GAMEOVER*` bitmap loading. |
 | R9 | **Recruit**: training time (unit table +24h?), price, army favour (episode 1: none needed for Thug/Pistol?), spawn point, progress bar. | "Recruit … ($%s and %1.0f Army favour points)" message users, `Recruit.bmp`/`Blood.bmp` users. |
-| R10 | **Panel layout and texts**: positions of money/income/expenses, info texts (Salary/Income/Uncollected/Extort/Owner), action buttons. | `fnMainLoadBMPs` (0x40FA16) surface object, message tables (`fnMessagePrep`). |
+| R10 ◐ | **Panel layout and texts** (done: info column sub_40A997, finance block sub_40A245, text routine sub_40F126, fonts, HP bar → `PanelInfo`; open: action buttons, recruit bars, Expenses chart): positions of money/income/expenses, info texts (Salary/Income/Uncollected/Extort/Owner), action buttons. | `fnMainLoadBMPs` (0x40FA16) surface object, message tables (`fnMessagePrep`). |
 
 ## M. Build (C#) — in order, each step testable in the running game
 
@@ -87,7 +87,7 @@ From `ep1.epi` and the EXE:
   the HQ (or cash-out business), visits the owner's companies in that block, returns, pays into the account.
 - Replace the current `CollectorAI` (GDScript-era design) with the original rules.
 
-**M5 — Money and panel** (after R6/R10) ◐ money model done (`Organisation`), panel numbers not shown yet
+**M5 — Money and panel** ✅ (cash, weekly net income, info texts, HP bar in `PanelInfo`; MCP screenshots checked)
 - Player account (HQ +14h equivalent), income and expenses; bottom-panel finance block with the original
   texts and positions; company/unit info texts; selection avatar.
 

@@ -173,6 +173,7 @@ public partial class Main : Node2D
 			canvasLayer = new CanvasLayer { Name = "CanvasLayerGUI" };
 			AddChild(canvasLayer);
 		}
+		canvasLayer.ProcessMode = ProcessModeEnum.Always;
 		canvasLayer.AddChild(new GuiMenu());
 	}
 

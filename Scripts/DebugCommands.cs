@@ -76,6 +76,21 @@ public partial class DebugCommands : Node
         return $"cops after {units[index].UnitType}@{units[index].Cell}";
     }
 
+    /// <summary>Shows a unit (kind "unit", index among the player's units), an own company or the HQ in the panel.</summary>
+    public string Select(string kind, int index = 0)
+    {
+        Node2D node = kind switch
+        {
+            "unit" => Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => u.OwnerTeam == Player).ElementAtOrDefault(index),
+            "company" => Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Player && c.IsEconomic).ElementAtOrDefault(index),
+            "neutral" => Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == null && c.IsEconomic).ElementAtOrDefault(index),
+            "hq" => Player.HqCompany,
+            _ => null,
+        };
+        GuiGameback.UpdateSelectionIcon(node);
+        return node?.ToString() ?? "nothing";
+    }
+
     public string Speed(float speed)
     {
         GameClock.Instance.Speed = speed;

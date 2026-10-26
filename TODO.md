@@ -29,6 +29,27 @@ Still to do from this brick:
 - On a win only the clock pauses; units keep walking (end screen is R8/M7).
 - Cops at attempt 10 not seen naturally (slum chance ~94 % rarely refuses 10 times); `CallCops` covers the chase.
 
+## Panel texts — R10/M5 (2026-10-27)
+
+`Scripts/PanelInfo.cs` draws the bottom-panel texts like the original (screen 800×600, GAMEBACK 800×220 at y 380):
+- Text routine `sub_40F126(hdc, text, x, y, maxWidth, font, colour)`: shadow 0x101010 at +2,+2, text cut to maxWidth;
+  colours 0 green 00FF00, 1 red D64A4A, 2 yellow FFF77B (default), 3 light green 8CEFC6, 4 brown 524218;
+  colour ≥ 100 = centred, colour − 100. Fonts (`sub_41AB73`, created in WinMain at 0x41A0D3, Arial, Cyrillic):
+  0 = 14 px/400, 1 = 16/500, 2 = 24/700, 3 = 16/700, 4 = 28/700 (cell heights).
+- Finance `sub_40A245`: cash (HQ vt+60h) at (600, 394) font 2 yellow, as "%sK" of cash/1000 from 20 000 000;
+  weekly net income (vt+64h) at (600, 425) font 3 yellow; width 105. Numbers via `sub_408AD0` = digits grouped by spaces.
+- Info `sub_40A997` at x 320, width 165: name (vt+18h) y 395 font 2, colour by relation vt+E4h (own green, enemy red,
+  ally yellow, other light green); kind y 419 font 3 (unit type text 5,1–11/87; company: legal → district 5,15–18,
+  business → type 5,19–23); own HQ: "Headquarters" + market share of types 1–4 at y 434/449/464/479 font 1 green;
+  own company: Income y 437, Uncollected y 455 (not support), Market share y 470 (types 1–4); own unit: Salary y 437
+  (if ≠ 0), Collector/Thief "Money carried" y 455; others: "Owner: %s" y 437 (yellow ally, red otherwise).
+  HP bar: black 233..318 × 493..502, fill from 235, 81 px at 100 %, green > 50 %, yellow > 25 %, red.
+- Open: action buttons and recruit progress bars (rects at 0x476BC8: 546..680 × 447..553, Blood.bmp source),
+  the "Expenses" chart (green bars per business type, vt+C0h), the text 5,31/5,32 meaning (enemy/ally HQ).
+
+Also fixed: a win now pauses the scene tree (units acted in physics frames after the clock stopped); units created in
+code (base squad) get random personal names like `Unit::Unit`.
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

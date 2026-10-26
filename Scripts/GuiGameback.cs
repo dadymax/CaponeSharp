@@ -9,6 +9,9 @@ public partial class GuiGameback : TextureRect
 
     private SelectionIcon _selectionIcon;
 
+    /// <summary>The object whose avatar and info texts the panel shows.</summary>
+    public Node2D SelectedNode => _selectionIcon?.SelectedNode;
+
     public override void _Ready()
     {
         Instance = this;
@@ -37,6 +40,7 @@ public partial class GuiGameback : TextureRect
         // Over the black avatar rectangle in GAMEBACK.BMP.
         _selectionIcon.Position = new Vector2(232, 12);
         AddChild(_selectionIcon);
+        AddChild(new PanelInfo { Name = "PanelInfo" });
     }
 
     public static void UpdateSelectionIcon(Node2D node)

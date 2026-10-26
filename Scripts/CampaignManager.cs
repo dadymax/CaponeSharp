@@ -159,6 +159,9 @@ public partial class CampaignManager : Node
     {
         var unit = GD.Load<PackedScene>("res://Units/Unit.tscn").Instantiate<Unit>();
         unit.SetType(type);
+        // Unit::Unit (sub_42A150): every gangster but the Collector gets a random personal name.
+        if (team != null && type != UnitCommon.UnitType.Collector)
+            unit.PersonalName = RandomNames.Gangster();
         if (team != null)
         {
             unit.TeamColor = team.TeamColor;
@@ -363,6 +366,9 @@ public partial class CampaignManager : Node
         Messages.Show(human ? CurrentScenario?.SuccessText ?? "" : CurrentScenario?.FailureText ?? "");
         if (GameClock.Instance != null)
             GameClock.Instance.Paused = true;
+        // Units move and act in physics frames, so the whole world stops (the GUI layer keeps running).
+        if (MainScene != null)
+            MainScene.GetTree().Paused = true;
     }
 
     /// <summary>Scenario won: move to the next one if there is one.</summary>
