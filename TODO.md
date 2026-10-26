@@ -22,11 +22,10 @@ Result on episode 1 at speed 16 with `AutoExtort(true)`: 2 starting units took 2
 won on day 10 (weekly net 505 400 > 500 000) with the success text. `CallCops(0)`: car from the nearest station,
 arrest, jail, car leaves. `Give(-500000)`: the unpaid Pistol man resigns; interest is refused past the overdraft
 (the original also charges it through Spend, 0x430A8A), so "out of funds" repeats every 1008 min — as in the original.
-Fixed: the clock kept firing events after the win paused it.
+Fixed: the clock kept firing events after the win paused it. The RE facts below are in
+`godottry/disassembled/annotate/hand_notes.py` (commented listing regenerated), `godottry/CLAUDE.md` and the skill.
 
 Still to do from this brick:
-- Add the RE facts below to `godottry/disassembled/annotate/hand_notes.py`, regenerate the commented listing, and add
-  the time/economy facts to `godottry/CLAUDE.md` and the capone-godot skill.
 - On a win only the clock pauses; units keep walking (end screen is R8/M7).
 - Cops at attempt 10 not seen naturally (slum chance ~94 % rarely refuses 10 times); `CallCops` covers the chase.
 
