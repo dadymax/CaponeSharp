@@ -69,6 +69,7 @@ public partial class CampaignManager : Node
         }
 
         MainScene = mainSceneRef;
+        GameClock.Instance?.Reset();
         InitPlayersFromScenario();
         InitAlliancesFromScenario();
         InitBribeAdvances();

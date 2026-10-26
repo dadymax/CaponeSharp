@@ -54,7 +54,7 @@ From `ep1.epi` and the EXE:
 
 | # | Question | Where to start |
 |---|---|---|
-| R1 | **Game clock**: what one tick is (minute?), how fast it runs per real second, game speed, calendar (week = 10080, "Full year!"). | callers of `sub_402CD0` / `sub_416790`, `sub_43C150` + `fnSetThisToa2` + `sub_402D20` time arithmetic, the main loop in `fnMainWndMsgProcess`. |
+| R1 ✅ | **Game clock** (done: minutes, 60-min turns, 1 turn per real second; `GameClock`): what one tick is (minute?), how fast it runs per real second, game speed, calendar (week = 10080, "Full year!"). | callers of `sub_402CD0` / `sub_416790`, `sub_43C150` + `fnSetThisToa2` + `sub_402D20` time arithmetic, the main loop in `fnMainWndMsgProcess`. |
 | R2 | **Company economy**: company object fields; how income accrues (per week? per minute × income/10080?); "Uncollected"; "Extort %"; market share. | company vtable off_4803CC slots (+154h, +17Ch, +180h, +184h, +A4h, +A8h…), catalogue field reads at 0x421xxx–0x422xxx. |
 | R3 | **Extortion/capture** of a legal company: what an attack on an "open" company does, refusal chance (sounds `BusinessRefuse1-6` / `BusinessPay1-6`), how ownership and extort % are set; HP of companies (catalogue +14). | company methods that call `fnMessagePrep` with the Pay/Refuse sound ids; replace `CompanyResistance` (a GDScript invention). |
 | R4 | **Collector route**: dispatch interval and condition, start point (HQ or cash-out business, `sub_41FEF0`), which companies it visits (own, same block), pickup, return, deposit into HQ +14h, capacity, what happens if it dies. | `sub_41FF60`, the collector unit's methods (type 7 in Unit vtable paths), class 9 object `sub_415090`. |
@@ -67,12 +67,12 @@ From `ep1.epi` and the EXE:
 
 ## M. Build (C#) — in order, each step testable in the running game
 
-**M1 — Data readers**
+**M1 — Data readers** ✅ (`OriginalBusinessTable`, `OriginalTexts`, smoke-tested)
 - `OriginalBusinessTable` (0x47DDC0, 161 × 48) → replaces the hand-written incomes/names in `companies2.json`.
 - `OriginalTexts`: EN/ES/RU message tables used by `fnMessagePrep(id, sub)` (needed for every panel text).
 - Smoke test checks both.
 
-**M2 — Game clock** (after R1)
+**M2 — Game clock** ✅ (`GameClock` autoload: minutes, scheduler, turns, `Speed` for tests)
 - One `GameClock` autoload: ticks/minutes, week, month, year events; pause/speed. Everything time-based
   (income, collectors, salaries, unit speed) uses it.
 

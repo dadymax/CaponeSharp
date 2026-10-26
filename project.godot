@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+GameClock="*res://Scripts/GameClock.cs"
 McpInteractionServer="*res://Scripts/mcp_interaction_server.gd"
 
 [display]

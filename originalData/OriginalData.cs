@@ -22,6 +22,8 @@ public class OriginalData
     public OriginalBlocks BuildingBlocks => OriginalBlocks.Instance;
     public OriginalExe Exe => OriginalExe.Instance;
     public OriginalUnitTable UnitTable => OriginalUnitTable.Instance;
+    public OriginalBusinessTable Businesses => OriginalBusinessTable.Instance;
+    public OriginalTexts Texts => OriginalTexts.Instance;
 
     private OriginalData()
     {

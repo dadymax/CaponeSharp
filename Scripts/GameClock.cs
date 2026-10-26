@@ -1,0 +1,150 @@
+using System;
+using System.Collections.Generic;
+using Godot;
+
+namespace Capone;
+
+/// <summary>
+/// Game clock and event scheduler, modelled on the original (see PLAN.md R1):
+/// <list type="bullet">
+/// <item>Game time is counted in <b>minutes</b> (World +166h). Objects schedule events at a game minute
+/// (World::Schedule <c>sub_43AF10</c>); the world runs them in time order (<c>sub_43ABD0</c>).</item>
+/// <item>The game advances in 60-minute turns (<c>sub_416790</c> = 60, <c>sub_429870</c>); a turn may start at most
+/// every 1000 ms of real time (World +16Ah). So at normal speed <b>one game hour = one real second</b>,
+/// a day = 24 s, a week (10080 min, <c>sub_402CD0</c>) = 168 s, and a 60-minutes-per-tile unit walks 1 tile/s.</item>
+/// </list>
+/// <see cref="Speed"/> multiplies everything (it also sets <see cref="Engine.TimeScale"/> so movement, attack timers and
+/// animations follow). Set it with <c>-- --speed=N</c>, from the MCP tools (<c>/root/GameClock</c> property <c>Speed</c>),
+/// or with the <c>-</c> / <c>=</c> keys.
+/// </summary>
+public partial class GameClock : Node
+{
+    public const int MinutesPerHour = 60;
+    public const int MinutesPerDay = 24 * MinutesPerHour;
+    /// <summary>One week, the collector dispatch interval (sub_402CD0).</summary>
+    public const int MinutesPerWeek = 7 * MinutesPerDay;
+    /// <summary>Length of a turn in game minutes.</summary>
+    public const int TurnMinutes = 60;
+    /// <summary>Game minutes per real second at speed 1 (one 60-minute turn per 1000 ms).</summary>
+    public const double MinutesPerRealSecond = 60.0;
+
+    public const float MinSpeed = 0.25f;
+    public const float MaxSpeed = 64f;
+
+    public static GameClock Instance { get; private set; }
+
+    [Signal] public delegate void TurnPassedEventHandler(long turn);
+    [Signal] public delegate void SpeedChangedEventHandler(float speed);
+
+    private float _speed = 1f;
+
+    /// <summary>Game speed multiplier (1 = original speed).</summary>
+    [Export]
+    public float Speed
+    {
+        get => _speed;
+        set
+        {
+            _speed = Mathf.Clamp(value, MinSpeed, MaxSpeed);
+            Engine.TimeScale = _speed;
+            EmitSignal(SignalName.SpeedChanged, _speed);
+        }
+    }
+
+    /// <summary>When true the clock stops (scheduled events wait). Units keep their own pause state.</summary>
+    [Export] public bool Paused { get; set; }
+
+    /// <summary>Exact game time in minutes since the start of the scenario.</summary>
+    public double Minutes { get; private set; }
+
+    /// <summary>Current game minute (what the original keeps in World +166h).</summary>
+    public long Minute => (long)Minutes;
+
+    /// <summary>Number of whole turns (hours) since the start.</summary>
+    public long Turn => Minute / TurnMinutes;
+
+    private readonly PriorityQueue<Action, (long minute, long seq)> _events = new();
+    private long _sequence;
+    private long _lastTurn;
+
+    public override void _EnterTree()
+    {
+        Instance = this;
+        ProcessMode = ProcessModeEnum.Pausable;
+    }
+
+    public override void _Ready()
+    {
+        foreach (var arg in OS.GetCmdlineUserArgs())
+            if (arg.StartsWith("--speed=") && float.TryParse(arg["--speed=".Length..],
+                    System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var s))
+                Speed = s;
+        if (Engine.TimeScale != _speed)
+            Engine.TimeScale = _speed;
+    }
+
+    /// <summary>Restart the clock at minute 0 and drop all scheduled events (new scenario).</summary>
+    public void Reset()
+    {
+        Minutes = 0;
+        _lastTurn = 0;
+        _events.Clear();
+        _sequence = 0;
+    }
+
+    /// <summary>Run <paramref name="action"/> when the clock reaches <paramref name="minute"/> (now if it already passed).</summary>
+    public void ScheduleAt(long minute, Action action) => _events.Enqueue(action, (Math.Max(minute, Minute), _sequence++));
+
+    /// <summary>Run <paramref name="action"/> after <paramref name="minutes"/> game minutes.</summary>
+    public void ScheduleIn(long minutes, Action action) => ScheduleAt(Minute + Math.Max(0, minutes), action);
+
+    /// <summary>Real seconds (at the current speed) that <paramref name="minutes"/> game minutes take.</summary>
+    public double RealSecondsFor(double minutes) => minutes / MinutesPerRealSecond / _speed;
+
+    public override void _Process(double delta)
+    {
+        if (Paused)
+            return;
+        // delta is already multiplied by Engine.TimeScale (= Speed).
+        Minutes += delta * MinutesPerRealSecond;
+
+        // Events in time order; each one sees the clock at its own minute, as in the original scheduler.
+        var now = Minute;
+        while (_events.TryPeek(out _, out var when) && when.minute <= now)
+        {
+            var action = _events.Dequeue();
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                GD.PushError($"GameClock: event at minute {when.minute} failed: {e}");
+            }
+        }
+
+        var turn = Turn;
+        while (_lastTurn < turn)
+            EmitSignal(SignalName.TurnPassed, ++_lastTurn);
+    }
+
+    public override void _UnhandledKeyInput(InputEvent @event)
+    {
+        if (@event is not InputEventKey { Pressed: true, Echo: false } key)
+            return;
+        switch (key.Keycode)
+        {
+            case Key.Equal or Key.KpAdd:
+                Speed *= 2;
+                GD.Print($"GameClock: speed x{Speed}");
+                break;
+            case Key.Minus or Key.KpSubtract:
+                Speed /= 2;
+                GD.Print($"GameClock: speed x{Speed}");
+                break;
+        }
+    }
+
+    /// <summary>"day D, HH:MM" for logs and debug UI.</summary>
+    public static string Format(long minute) => $"day {minute / MinutesPerDay + 1}, {minute % MinutesPerDay / 60:00}:{minute % 60:00}";
+}

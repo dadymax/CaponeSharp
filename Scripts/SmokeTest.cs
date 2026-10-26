@@ -35,6 +35,7 @@ public static class SmokeTest
         GD.Print("=== Smoke test: original data ===");
         CheckExe();
         CheckUnits();
+        CheckBusinessesAndTexts();
         CheckMaps();
         CheckEpisodes();
         GD.Print($"=== Smoke test done: {_failures} failure(s), {_warnings} warning(s) ===");
@@ -77,6 +78,31 @@ public static class SmokeTest
         }
         foreach (var missing in UnitCommon.ValidateSprites())
             Fail("units.json sprite not in Chicago.tile: " + missing);
+    }
+
+    private static void CheckBusinessesAndTexts()
+    {
+        var table = OriginalBusinessTable.Instance;
+        Check(table.Entries.Count == OriginalBusinessTable.RecordCount, $"{table.Entries.Count} business catalogue records");
+        var beerBar = table.Get(43);
+        Check(beerBar is { Price: 75000, Income: 92000, Type: OriginalBusinessTable.BusinessType.Bootlegging, Grade: 1 },
+            $"catalogue row 43 = {beerBar}");
+        foreach (var (grade, income) in new[] { (1, 25200), (2, 37800), (3, 50400) })
+        {
+            var legal = table.LegalOfGrade(grade).ToList();
+            Check(legal.Count > 0 && legal.All(e => e.Income == income && e.Price == 0),
+                $"{legal.Count} legal companies of grade {grade}, income {income}");
+        }
+        var byType = table.Entries.GroupBy(e => e.Type).Select(g => $"{g.Key} {g.Count()}");
+        GD.Print("  catalogue: ", string.Join(", ", byType));
+
+        var texts = OriginalTexts.Instance;
+        Check(texts.Get(5, 1, OriginalExe.Language.English) == "Thug", "text (5, 1) EN = Thug");
+        Check(texts.Get(5, 1, OriginalExe.Language.Russian) == "Вышибала", "text (5, 1) RU = Вышибала");
+        var all = texts.All(OriginalExe.Language.English).ToList();
+        var unreadable = all.Count(t => t.Text == OriginalTexts.MissingText);
+        var untranslated = all.Count(t => !texts.HasTranslation(t.Group, t.Index, OriginalExe.Language.Russian));
+        Check(unreadable == 0, $"{all.Count} texts in {texts.GroupCount} groups, {unreadable} unreadable, {untranslated} without Russian (English used)");
     }
 
     private static void CheckMaps()

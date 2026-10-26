@@ -33,8 +33,6 @@ public partial class UnitCommon : Node
 
     public enum UnitOwner { Neutral, Player, Teammate, Enemy }
 
-    /// <summary>Assumed speed of the original game clock, used to turn "ticks per tile" into pixels per second.</summary>
-    public const float OriginalTicksPerSecond = 60f;
 
     private const string DictNameSprites = "Sprites";
 
@@ -210,7 +208,7 @@ public partial class UnitCommon : Node
         VisionRadius = Stats.Vision;
         VisionRadiusMax = Mathf.Max(Stats.Vision, Stats.VisionMax);
         if (Stats.TicksPerTile > 0)
-            MoveSpeed = MapTileMath.TileStepLength * OriginalTicksPerSecond / Stats.TicksPerTile;
+            MoveSpeed = (float)(MapTileMath.TileStepLength * GameClock.MinutesPerRealSecond / Stats.TicksPerTile); // TicksPerTile = game minutes per tile
     }
 
     private void ApplyProperty(string key, Variant value)
