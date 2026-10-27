@@ -181,6 +181,19 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
 - Open: the vt+1C4h gate per type, Stand Ground's guarding, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
+## Victory conditions and defeat (2026-10-27)
+
+- VCOND IsMet virtuals (slot 0 of each class vtable), checked hourly (`VictoryCondition.Evaluate`):
+  1 sub_463610 weekly net income > target; 2 sub_463A40 the player owns ≥ count companies of business type
+  (fields: count +8, type +0Ch — the old parser had them swapped); 3 sub_463B04 no living unit of the type (any
+  owner); 4 sub_463774 a unit of the type exists (any owner); 5 sub_4639B0 market share of the type > target (reads
+  the first HQ object); 6 sub_4638D0 the player owns a business (not legal / support) in district n. 7 (unit reaches
+  area) and 8 (companies in a rectangle) are not decoded yet.
+- MCP-tested: episode 2 "open four thieves' dens" (VCOND 2 1 4 4) won on day 8 after four type-4 businesses.
+- Defeat: see the Spend correction (sub_430860 → sub_43B677); MCP-tested with no gangsters and cash −400 000.
+- Test tip: start another episode by writing `current=N` into `%APPDATA%\Godotpp_userdata\CaponeSharp\campaign.cfg`
+  (delete it afterwards). C# default parameters are not visible to GDScript `game_eval` — pass every argument.
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using Godot;
 
@@ -12,11 +13,11 @@ public class VictoryCondition
     public enum ConditionType
     {
         Money = 1,            // VCOND 1 p money
-        CompanyCount = 2,     // VCOND 2 p companyType count (guess: "2 1 4 4")
+        CompanyCount = 2,     // VCOND 2 p count businessType (sub_463A13: +8 count, +0Ch type)
         UnitKill = 3,         // VCOND 3 p unitType (12 = the enemy boss)
         UnitCreate = 4,       // VCOND 4 p unitType
         MarketShare = 5,      // VCOND 5 p share companyType
-        CompanyCountType = 6, // VCOND 6 p count
+        CompanyCountType = 6, // VCOND 6 p district: own a business in that district (sub_4638D0)
         UnitReach = 7,        // VCOND 7 p x y size unitType
         CaptureArea = 8,      // VCOND 8 p x1 y1 x2 y2 companyType count
         Unknown9 = 9,         // VCOND 9 p a b (not used by the episodes)
@@ -48,6 +49,8 @@ public class VictoryCondition
     /// <summary>VCOND 7 third value (13, 5 or 3 seen): size of the target area, probably.</summary>
     public int TargetSize { get; private set; }
     public float TargetShare { get; private set; }
+    /// <summary>VCOND 6: district 0 slum, 1 middle class, 2 center.</summary>
+    public int District { get; private set; }
 
     /// <summary>Called once when the condition completes.</summary>
     public Action OnUpdate { get; set; }
@@ -70,8 +73,8 @@ public class VictoryCondition
                 RequiredProgress = MoneyTarget;
                 break;
             case ConditionType.CompanyCount:
-                CompanyType = V(0);
-                RequiredProgress = V(1);
+                RequiredProgress = V(0);
+                CompanyType = V(1);
                 break;
             case ConditionType.UnitKill:
             case ConditionType.UnitCreate:
@@ -83,7 +86,8 @@ public class VictoryCondition
                 CompanyType = V(0);
                 break;
             case ConditionType.CompanyCountType:
-                RequiredProgress = V(0);
+                District = V(0);
+                RequiredProgress = 1;
                 break;
             case ConditionType.UnitReach:
                 TargetCoords = new Vector2I(V(0), V(1));
@@ -108,6 +112,46 @@ public class VictoryCondition
 
     /// <summary>True if completed. Progress is pushed in through the Update* methods (checks for most types are not written yet).</summary>
     public bool Check() => IsCompleted;
+
+    /// <summary>
+    /// The IsMet virtuals of the VCOND classes (checked every game hour):
+    /// 2 sub_463A40 — the player owns at least <c>count</c> companies of business type <c>type</c>;
+    /// 3 sub_463B04 — no living unit of the type exists (anyone's);
+    /// 4 sub_463774 — a unit of the type exists (anyone's; the original doesn't check the owner);
+    /// 5 sub_4639B0 — the market share of the type is above the target (the original reads the first HQ);
+    /// 6 sub_4638D0 — the player owns a business (not legal, not support) in the district.
+    /// </summary>
+    public void Evaluate(Team team)
+    {
+        if (IsCompleted || Engine.GetMainLoop() is not SceneTree tree)
+            return;
+        var companies = tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.IsEconomic);
+        var units = tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead);
+        switch (Type)
+        {
+            case ConditionType.CompanyCount:
+                CurrentProgress = companies.Count(c => c.OwnerTeam == team && (int)c.BusinessType == CompanyType);
+                if (CurrentProgress >= RequiredProgress)
+                    Complete();
+                break;
+            case ConditionType.UnitKill:
+                if (!units.Any(u => (int)u.UnitType == OriginalUnitType))
+                    Complete();
+                break;
+            case ConditionType.UnitCreate:
+                if (units.Any(u => (int)u.UnitType == OriginalUnitType))
+                    Complete();
+                break;
+            case ConditionType.MarketShare:
+                if (team.Org != null && CompanyType is >= 0 and < Organisation.TypeCount && team.Org.MarketShare[CompanyType] > TargetShare)
+                    Complete();
+                break;
+            case ConditionType.CompanyCountType:
+                if (companies.Any(c => c.OwnerTeam == team && (int)c.BusinessType is not (0 or 5) && c.Block?.District == District))
+                    Complete();
+                break;
+        }
+    }
 
     public void UpdateMoneyProgress(long currentMoney)
     {

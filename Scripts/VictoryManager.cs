@@ -84,6 +84,9 @@ public partial class VictoryManager : Node
                     // VCOND 1 compares the weekly net income (HQ +14h), not the cash.
                     vc.UpdateMoneyProgress(team.Org.NetIncome);
                     break;
+                default:
+                    vc.Evaluate(team);
+                    break;
             }
         }
         var winner = CheckAll();
