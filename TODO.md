@@ -163,7 +163,11 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   0 go (sub_428BC8 / sub_4284B0), 1 attack (sub_4284B0), 2 extort (sub_428BC8, 0x64 bytes), 4/5/6 (sub_4284B0,
   0x60 bytes), **8 patrol = sub_4292E0 (0x68 bytes, vtable off_483E54)**: its event sub_429375 stores the two ends
   (+60h / +64h) on start and passes every event to the shared order stepper sub_428500 — the back-and-forth lives
-  there / in the vtable overrides; read sub_428500 next to implement Patrol.
+  there / in the vtable overrides. Done: patrol overrides vt+88h (sub_4293C7, leg finished): if the unit lives, swap
+  the target end (+2Ch = +60h / +64h) and re-run after one game hour (event 3EAh); sub_428500 then sets the unit's
+  target / stance (vt+1A4h, vt+194h with 1/2/4 by the order's mode +5Ch) and steps the move order sub_4279E7.
+  `Units/PatrolOrder.cs`, slot 6 (icons 0x484484, text 29,8). MCP-tested: a Thug shuttles between its cell and the
+  clicked cell. Open: the stance (fighting on the way).
 - Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
   vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
   and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),
@@ -173,7 +177,7 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
 - Done (M10): order acknowledgements sub_42CEF8 → `UnitVoice` — selection "…Click", go "…Order" (Cadillac CarGo /
   CarClick), attack/extort "…ClickEnemy" (Hit man uses the Bombman voice), forced go "…OrderHurry"; played for the
   first commanded own unit (not collectors).
-- Open: the vt+1C4h gate per type, Stand Ground's guarding, Patrol, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
+- Open: the vt+1C4h gate per type, Stand Ground's guarding, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
 Known gaps in the brick (do later):

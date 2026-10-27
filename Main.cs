@@ -16,7 +16,7 @@ public partial class Main : Node2D
 	public static Main Instance { get; private set; }
 
 	/// <summary>Order buttons (unit menu sub_42D2C1): the next left click on the map carries out the chosen order.</summary>
-	public enum OrderMode { None, Go, Attack, Extort, ForceGo, ForceAttack }
+	public enum OrderMode { None, Go, Attack, Extort, ForceGo, ForceAttack, Patrol }
 	public OrderMode PendingOrder { get; set; }
 
 	/// <summary>Selected units the player may command.</summary>
@@ -220,7 +220,7 @@ public partial class Main : Node2D
 		{
 			UnitVoice.Play(first, order switch
 			{
-				OrderMode.Go => UnitVoice.Kind.Go,
+				OrderMode.Go or OrderMode.Patrol => UnitVoice.Kind.Go,
 				OrderMode.ForceGo => UnitVoice.Kind.GoHurry,
 				_ => UnitVoice.Kind.Attack,
 			});
@@ -235,6 +235,9 @@ public partial class Main : Node2D
 					break;
 				case OrderMode.Attack or OrderMode.ForceAttack when hit is Unit target && target != unit:
 					unit.TargetStructure = target;
+					break;
+				case OrderMode.Patrol:
+					unit.SetOrder(new PatrolOrder(unit, unit.Cell, Map.LocalToMap(local)));
 					break;
 				case OrderMode.Extort when hit is Company company && ExtortOrder.CanExtort(unit, company):
 					unit.SetOrder(new ExtortOrder(unit, company));

@@ -114,7 +114,7 @@ public partial class ActionBar : Control
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
-    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C;
+    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484;
 
     private static int TypeIcon(uint table, UnitCommon.UnitType type) =>
         OriginalExe.Instance.IsLoaded ? (int)OriginalExe.Instance.ReadU32(table + (uint)type * 4) : 0;
@@ -122,7 +122,7 @@ public partial class ActionBar : Control
     /// <summary>
     /// Unit menu (sub_42D2C1) for a selected own unit: Go (29,0), Attack (29,1), Extort Business (29,3) in slots 0–2.
     /// The button arms the order; the next left click on the map carries it out (Main.PendingOrder).
-    /// TODO: Stand Ground's guarding (it only stops for now), Patrol (29,8, slot 5), Disguise (order 0Ah, 29,10, Hit man), Force Go/Attack (29,6/7 with Shift), Frenzy (29,5), Unload
+    /// TODO: Stand Ground (blank icon, gate), Disguise (order 0Ah, 29,10, Hit man), Force Go/Attack (29,6/7 with Shift), Frenzy (29,5), Unload
     /// (29,9, Cadillac), the per-type order gate unit vt+1C4h, the enemy-unit buttons (orders 0Bh/0Ch).
     /// </summary>
     private bool BuildUnitMenu(Unit unit)
@@ -139,6 +139,9 @@ public partial class ActionBar : Control
             () => Arm(force ? Main.OrderMode.ForceAttack : Main.OrderMode.Attack));
         if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
             Set(2, TypeIcon(ExtortIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 3), () => Arm(Main.OrderMode.Extort));
+        // Slot 5: order 8 "Patrol" (29,8) between the unit's cell and the clicked cell (PatrolOrder).
+        if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
+            Set(5, TypeIcon(PatrolIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 8), () => Arm(Main.OrderMode.Patrol));
         // Order 3 "Stand Ground" (29,4): its icon table 0x484380 holds tile 0x38 ("Button upgrade up", blank) for every
         // type, so the original most likely hides it via vt+1C4h(3); not shown until that gate is decoded.
         return true;
