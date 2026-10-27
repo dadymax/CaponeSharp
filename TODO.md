@@ -194,6 +194,24 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
 - Test tip: start another episode by writing `current=N` into `%APPDATA%\Godotpp_userdata\CaponeSharp\campaign.cfg`
   (delete it afterwards). C# default parameters are not visible to GDScript `game_eval` — pass every argument.
 
+## Unit combat AI (2026-10-27)
+
+`Units/UnitAI.cs` (partial `Unit`), from the unit tick sub_42AA86 (unit vt+5Ch):
+- Scan of the vision square (vision grid +0E4h): nearest enemy building (player vt+E0h(owner) = 1), nearest enemy
+  unit that is fighting (vt+11Ch sub_42E454: activity +0BCh in 5–8 or hit within the last hour, +0CCh) and nearest
+  passive one; hidden units (vt+19Ch) are skipped; an unowned unit (police) counts every owned unit as an enemy.
+- With a running move/attack/patrol order (job classes 17h/22h/27h/28h) the order's mode (job vt+90h) is the
+  stance: 0 passive, 1 shoot the order's target in range, 2 the nearest enemy, 3 target else nearest, 4 enemy
+  buildings when no unit. Without one (idle): keep the target in range; else shoot the nearest enemy in range unless
+  stance 3; else chase (vt+164h) — stance 2/4 always, stance 1 within 5 cells (flt_4845EC) — and stance 1 chases an
+  enemy that is fighting. Default stance vt+1B0h: 3 Terrorist, 1 others. Shots: vt+104h; in range: vt+118h.
+- Done: the idle rules for owned units (every 5 game minutes), the "fighting" mark on both sides of a hit.
+  MCP-tested in episode 4: walking 4 gangsters near Большой Джим's snipers started a fight on both sides.
+- Open: per-order stances, enemy buildings, police targeting, the Terrorist/Cadillac chase rule.
+- Start points (sub_43BDB7): RANDOM 0 → the first free start point in list order, RANDOM 1 → a random free one; .map
+  STARTPOINTS and .epi UNIT use the same (x y) order (episode 13: Torrio's guard at 84,37 next to start 81,38).
+  Episode 4's boss stands far from his base on purpose.
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

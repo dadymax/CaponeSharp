@@ -19,6 +19,55 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>Walks the player's unit number <paramref name="index"/> to map cell (x, y) like a Go order.</summary>
+    public string GoTo(int index, int x, int y)
+    {
+        var unit = PlayerFighters().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.MoveTo(unit.Map.MapToLocal(new Vector2I(x, y)));
+        return $"{unit.UnitType}@{unit.Cell} -> ({x}, {y})";
+    }
+
+    /// <summary>
+    /// Coordinate convention check: how many episode units and map start points land on walkable cells when read as
+    /// (x, y) — the current FromOriginal — and when swapped.
+    /// </summary>
+    public string CheckCoords()
+    {
+        var cm = CampaignManager.Instance;
+        var map = cm?.TileMap;
+        if (map == null)
+            return "no map";
+        var blocked = new System.Collections.Generic.HashSet<Vector2I>(map.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>());
+        var used = new System.Collections.Generic.HashSet<Vector2I>(map.GetUsedCells());
+        bool Walkable(Vector2I original)
+        {
+            var c = MapTileMath.FromOriginal(map, original);
+            return used.Contains(c) && !blocked.Contains(c);
+        }
+        int asIs = 0, swapped = 0, n = 0;
+        foreach (var u in cm.CurrentScenario.StartingUnits)
+        {
+            n++;
+            if (Walkable(u.Position)) asIs++;
+            if (Walkable(new Vector2I(u.Position.Y, u.Position.X))) swapped++;
+        }
+        var sb = new StringBuilder($"units walkable: as-is {asIs}/{n}, swapped {swapped}/{n}\n");
+        var original = OriginalData.Instance.Maps.Maps.Values.FirstOrDefault(m => m.FileName.Equals(cm.CurrentScenario.MapFile, System.StringComparison.OrdinalIgnoreCase));
+        if (original != null)
+            foreach (var p in original.StartPoints)
+                sb.Append($"start {p}: as-is walkable {Walkable(p)} building {blocked.Contains(MapTileMath.FromOriginal(map, p))}; swapped walkable {Walkable(new Vector2I(p.Y, p.X))} building {blocked.Contains(MapTileMath.FromOriginal(map, new Vector2I(p.Y, p.X)))}\n");
+        return sb.ToString();
+    }
+
+    /// <summary>Every unit: type, owner, cell, HP, current target.</summary>
+    public string Units()
+    {
+        return string.Join("\n", Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead).Select(u =>
+            $"{u.UnitType} {u.OwnerTeam?.PlayerName ?? "-"} @{u.Cell} HP {u.CanBeAttacked?.HP}/{u.CanBeAttacked?.MaxHP} target {(u.CanAttack?.TargetParent as Unit)?.UnitType.ToString() ?? "-"} fighting {u.IsFighting}"));
+    }
+
     public string Status()
     {
         var clock = GameClock.Instance;

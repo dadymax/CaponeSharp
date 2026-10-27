@@ -310,6 +310,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             _attackPoseUntil = -1;
             AnimationStop(false);
         }
+        ThinkTick();
         if (CanAttack == null)
             return;
         CanAttack.DecreaseAttackTimer(delta);

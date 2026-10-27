@@ -34,6 +34,9 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
 
     public void ReceiveDamage(int damage, CanAttack attacker)
     {
+        // Both sides count as fighting for the next game hour (unit vt+11Ch).
+        (GetParent()?.GetParent() as Unit)?.MarkFighting();
+        (attacker?.GetParent()?.GetParent() as Unit)?.MarkFighting();
         var crit = false;
         if (EvasionFactor > 0)
         {
