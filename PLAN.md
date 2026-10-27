@@ -106,7 +106,7 @@ From `ep1.epi` and the EXE:
 **M9 — Recruit panel** ✅ (recruit column, training with blood bar, pay on arrival; MCP-tested Thug, army-favour gating)
 - `Recruit.bmp` buttons, price/army favour checks, training progress (`Blood.bmp`), spawn at the base.
 
-**M10 — Sound** for the events above (`Sound/*.wav`, EXE sound table at 0x4779B8).
+**M10 — Sound** ◐ (done: extortion pay/refuse, out of funds, arrive, resign, unit order voices) for the events above (`Sound/*.wav`, EXE sound table at 0x4779B8).
 
 ## Definition of done for episode 1
 

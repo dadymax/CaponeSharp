@@ -193,6 +193,11 @@ public partial class Main : Node2D
 	{
 		var hit = IntersectPoint(globalPoint);
 		var target = ToLocal(globalPoint);
+		foreach (var first in CommandableSelection())
+		{
+			UnitVoice.Play(first, hit is Company or Unit ? UnitVoice.Kind.Attack : UnitVoice.Kind.Go);
+			break;
+		}
 		foreach (var selected in _selected)
 		{
 			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
@@ -211,6 +216,11 @@ public partial class Main : Node2D
 		PendingOrder = OrderMode.None;
 		var hit = IntersectPoint(globalPoint);
 		var local = ToLocal(globalPoint);
+		foreach (var first in CommandableSelection())
+		{
+			UnitVoice.Play(first, order == OrderMode.Go ? UnitVoice.Kind.Go : UnitVoice.Kind.Attack);
+			break;
+		}
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
@@ -236,6 +246,8 @@ public partial class Main : Node2D
 		{
 			Select(selectable);
 			GuiGameback.UpdateSelectionIcon(selectable as Node2D);
+			if (selectable is Unit unit)
+				UnitVoice.Play(unit, UnitVoice.Kind.Select);
 		}
 	}
 

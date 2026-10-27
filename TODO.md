@@ -158,6 +158,9 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   0Ch "Pay snitch to switch sides ($200.000)" (29,12) — both authority services.
 - Map clicks now use the event position (`GetGlobalMousePosition` reads the OS cursor), so MCP `game_click` on the
   map selects and orders units. The camera starts on the local player's HQ (PLAN M7).
+- Done (M10): order acknowledgements sub_42CEF8 → `UnitVoice` — selection "…Click", go "…Order" (Cadillac CarGo /
+  CarClick), attack/extort "…ClickEnemy" (Hit man uses the Bombman voice), forced go "…OrderHurry"; played for the
+  first commanded own unit (not collectors).
 - Open: the vt+1C4h gate per type, Stand Ground's guarding, Patrol, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
