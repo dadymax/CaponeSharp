@@ -141,6 +141,21 @@ event's position — `GetGlobalMousePosition` reads the OS cursor and misses MCP
 it). The order hints (5,40–62: "Attack/Extort/Destroy %s") depend on the chosen order button ([+8E0h], unit order
 buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
 
+## Unit orders — action bar (2026-10-27)
+
+- Unit menu sub_42D2C1 (unit vt+10h): own units get buttons gated by unit vt+1C4h(order): slot 0 order 0 "Go To"
+  (29,0; with Shift action 5 "Force Go To" 29,6), slot 1 order 1 "Attack" (29,1; Shift: action 6 "Force Attack"
+  29,7), slot 2 order 2 "Extort Business" (29,3), slot 3 order 3, slot 4 order 0Ah, slot 5 order 8 "Patrol" (29,8);
+  others' units: orders 0Bh / 0Ch. Texts 29,0–9 are loaded into 0x4A1368… by Unit::Unit; 29,4 "Stand Ground",
+  29,5 "Frency", 29,9 "Unload" (Cadillac). Icons per unit type: go 0x4842E4, attack 0x484318, extort 0x48434C,
+  0x484380 / 0x4843B4 (orders 3 / 0Ah), go+Shift 0x4843E8, attack+Shift 0x48441C, patrol 0x484484, car exit 0x4844B8.
+- Done (`ActionBar.BuildUnitMenu`, `Main.PendingOrder`): Go, Attack (units), Extort; the button arms the order and the
+  next left click on the map carries it out. MCP-tested: a Thug extorted a business and walked to a clicked cell.
+- Map clicks now use the event position (`GetGlobalMousePosition` reads the OS cursor), so MCP `game_click` on the
+  map selects and orders units. The camera starts on the local player's HQ (PLAN M7).
+- Open: the vt+1C4h gate per type, Stand Ground, Patrol, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
+  buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
+
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).

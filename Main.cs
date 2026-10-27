@@ -13,6 +13,20 @@ public partial class Main : Node2D
 	private Vector2 _dragStartGlobal;
 	private CampaignManager _campaignManager;
 
+	public static Main Instance { get; private set; }
+
+	/// <summary>Order buttons (unit menu sub_42D2C1): the next left click on the map carries out the chosen order.</summary>
+	public enum OrderMode { None, Go, Attack, Extort }
+	public OrderMode PendingOrder { get; set; }
+
+	/// <summary>Selected units the player may command.</summary>
+	public System.Collections.Generic.IEnumerable<Unit> CommandableSelection()
+	{
+		foreach (var s in _selected)
+			if (s is Unit unit && IsInstanceValid(unit) && IsCommandable(unit))
+				yield return unit;
+	}
+
 	/// <summary>Episode (1-based) to start after a scene reload by the end screen; 0 = none.</summary>
 	public static int PendingEpisode;
 
@@ -20,6 +34,8 @@ public partial class Main : Node2D
 	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
 	/// --skip-briefing starts the episode at once; --smoke-test checks all original data and quits with exit code 0/1.
 	/// </summary>
+	public override void _EnterTree() => Instance = this;
+
 	public override void _Ready()
 	{
 		var args = OS.GetCmdlineUserArgs();
@@ -114,6 +130,9 @@ public partial class Main : Node2D
 
 		campaignManager.TileMap = Map;
 		campaignManager.AssignBases();
+		// The view starts on the local player's headquarters.
+		if (GetNodeOrNull<Camera2D>("Camera2D") is { } camera && Teams.GetCurrentPlayerTeam()?.HqCompany is { } hq)
+			camera.GlobalPosition = hq.GlobalPosition;
 		campaignManager.SpawnStartingUnits();
 		campaignManager.StartEconomy();
 		AddChild(new DebugCommands { Name = "Debug" });
@@ -131,9 +150,11 @@ public partial class Main : Node2D
 		if (@event is not InputEventMouseButton mouse || Map == null)
 			return;
 
+		// Event position, not GetGlobalMousePosition (that reads the OS cursor; same for a real mouse).
+		var eventGlobal = GetCanvasTransform().AffineInverse() * mouse.Position;
 		if (mouse.ButtonIndex == MouseButton.Right && mouse.Pressed)
 		{
-			GiveOrder();
+			GiveOrder(eventGlobal);
 			return;
 		}
 
@@ -143,16 +164,21 @@ public partial class Main : Node2D
 		if (mouse.Pressed)
 		{
 			_isMouseDrag = true;
-			_dragStartGlobal = GetGlobalMousePosition();
+			_dragStartGlobal = eventGlobal;
 			return;
 		}
 
 		if (!_isMouseDrag)
 			return;
 		_isMouseDrag = false;
+		if (PendingOrder != OrderMode.None)
+		{
+			ExecutePendingOrder(eventGlobal);
+			return;
+		}
 		ClearSelection();
 
-		var dragEndGlobal = GetGlobalMousePosition();
+		var dragEndGlobal = eventGlobal;
 		if (dragEndGlobal == _dragStartGlobal)
 			SelectAtPoint(dragEndGlobal);
 		else
@@ -163,10 +189,10 @@ public partial class Main : Node2D
 	/// Right click: extort the company under the cursor, attack the unit under it, or walk there.
 	/// Collectors and the police are not under the player's command.
 	/// </summary>
-	private void GiveOrder()
+	private void GiveOrder(Vector2 globalPoint)
 	{
-		var hit = IntersectPoint(GetGlobalMousePosition());
-		var target = GetLocalMousePosition();
+		var hit = IntersectPoint(globalPoint);
+		var target = ToLocal(globalPoint);
 		foreach (var selected in _selected)
 		{
 			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
@@ -176,6 +202,28 @@ public partial class Main : Node2D
 			else
 				unit.MoveTo(target);
 		}
+	}
+
+	/// <summary>Carries out the order chosen with an order button on the map point <paramref name="globalPoint"/>.</summary>
+	private void ExecutePendingOrder(Vector2 globalPoint)
+	{
+		var order = PendingOrder;
+		PendingOrder = OrderMode.None;
+		var hit = IntersectPoint(globalPoint);
+		var local = ToLocal(globalPoint);
+		foreach (var unit in CommandableSelection())
+			switch (order)
+			{
+				case OrderMode.Go:
+					unit.MoveTo(local);
+					break;
+				case OrderMode.Attack when hit is Unit target && target != unit:
+					unit.TargetStructure = target;
+					break;
+				case OrderMode.Extort when hit is Company company && ExtortOrder.CanExtort(unit, company):
+					unit.SetOrder(new ExtortOrder(unit, company));
+					break;
+			}
 	}
 
 	private static bool IsCommandable(Unit unit) =>

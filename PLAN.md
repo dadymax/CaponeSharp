@@ -98,7 +98,7 @@ From `ep1.epi` and the EXE:
 **M7 — Episode flow** ◐ (briefing → episode → end screen → next/same episode, progress in user://campaign.cfg; MCP-tested ep 1 → ep 2)
 - Briefing (`ScenDisp.bmp`, SCENARIONAME/STORYTEXT/OBJECTIVETEXT/TIPTEXT), victory checks (VCOND 1 ✅ hourly on net income),
   success/failure screens (`GameWin*`, `GAMEOVER*`), next episode / replay.
-- Camera starts on the player's HQ.
+- Camera starts on the player's HQ. ✅
 
 **M8 — Police and losses** ◐ (play-tested: car dispatch, arrest, jail, resign when unpaid; arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
 - Police station behaviour and arrests needed by episode 1; unit death/removal.
