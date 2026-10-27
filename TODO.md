@@ -161,7 +161,9 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   (Patrol) and the command handler for 3 / 0Ah. Lead: the slot click arms [+8E0h] at 0x41287A..0x4128CA; the map
   click (0x413280) calls, for each selected unit, unit vt+C0h = sub_42C1F6(mode, target), which builds the order:
   0 go (sub_428BC8 / sub_4284B0), 1 attack (sub_4284B0), 2 extort (sub_428BC8, 0x64 bytes), 4/5/6 (sub_4284B0,
-  0x60 bytes), **8 patrol = sub_4292E0 (0x68 bytes)** — read its event method next to implement Patrol.
+  0x60 bytes), **8 patrol = sub_4292E0 (0x68 bytes, vtable off_483E54)**: its event sub_429375 stores the two ends
+  (+60h / +64h) on start and passes every event to the shared order stepper sub_428500 — the back-and-forth lives
+  there / in the vtable overrides; read sub_428500 next to implement Patrol.
 - Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
   vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
   and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),
