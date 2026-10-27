@@ -17,6 +17,8 @@ public partial class DebugCommands : Node
 
     private SceneTree Tree => GetTree();
 
+    public string StatusLine() => PanelInfo.StatusText;
+
     public string Status()
     {
         var clock = GameClock.Instance;

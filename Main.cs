@@ -123,6 +123,11 @@ public partial class Main : Node2D
 	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>
 	public override void _UnhandledInput(InputEvent @event)
 	{
+		if (@event is InputEventMouseMotion motion && Map != null)
+		{
+			UpdateMapHint(GetCanvasTransform().AffineInverse() * motion.Position);
+			return;
+		}
 		if (@event is not InputEventMouseButton mouse || Map == null)
 			return;
 
@@ -216,6 +221,39 @@ public partial class Main : Node2D
 				selectable.Selected = false;
 		_selected.Clear();
 		GuiGameback.UpdateSelectionIcon(null);
+	}
+
+	private string _mapHint = "";
+
+	/// <summary>
+	/// sub_40C2C2: the name of the company or unit under the cursor goes to the panel's status line.
+	/// TODO: with an order button chosen it reads "Extort %s" / "Attack %s" / "Destroy %s" (texts 5,40–62).
+	/// </summary>
+	private void UpdateMapHint(Vector2 globalPoint)
+	{
+		var hint = IntersectPoint(globalPoint) switch
+		{
+			Company { IsHq: true } hq => hq.OwnerTeam?.PlayerName ?? hq.KindName,
+			Company company => company.CompanyName,
+			Unit unit => unit.DisplayName,
+			_ => "",
+		};
+		if (hint == _mapHint)
+			return;
+		if (PanelInfo.StatusText == _mapHint)
+			PanelInfo.StatusText = hint;
+		_mapHint = hint;
+	}
+
+	public override void _Process(double delta)
+	{
+		// Leaving the map for the GUI clears the map hint (button hints set their own text).
+		if (_mapHint.Length > 0 && GetViewport().GuiGetHoveredControl() != null)
+		{
+			if (PanelInfo.StatusText == _mapHint)
+				PanelInfo.StatusText = "";
+			_mapHint = "";
+		}
 	}
 
 	private GodotObject IntersectPoint(Vector2 globalPoint)

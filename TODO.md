@@ -136,7 +136,10 @@ sub_413350 / sub_413A04) sets its width (0–134) and sub_409C60 rebalances: pie
 (a quarter each when all zero), a shortfall goes to the next row (row 0 after the last); shares written via
 sub_414CB0. Hover (sub_40C2C2) prints texts 5,63/64/67/70/73 at (232, 555) and the favour 5,65–75 at (232, 573);
 that line is also the panel's status line: button texts now show there (`PanelInfo.StatusText`, `HookStatus`) instead
-of OS tooltips; the order hints (5,40–62: "Attack/Extort/Destroy %s" while hovering targets) are still TODO. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
+of OS tooltips; hovering a company / unit on the map prints its name there (`Main.UpdateMapHint`, from the motion
+event's position — `GetGlobalMousePosition` reads the OS cursor and misses MCP-injected events; map clicks still use
+it). The order hints (5,40–62: "Attack/Extort/Destroy %s") depend on the chosen order button ([+8E0h], unit order
+buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
 
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
