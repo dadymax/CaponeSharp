@@ -39,8 +39,41 @@ public partial class PanelInfo : Control
 
     private static string T(int index) => OriginalTexts.Instance.Get(5, index);
 
+    private static PanelInfo _instance;
+    private static string _status = "";
+
+    /// <summary>
+    /// Status line (sub_40C2C2): the hovered button's text at (232, 555), font 1, yellow, width 248 — the original's
+    /// replacement for tooltips.
+    /// </summary>
+    public static string StatusText
+    {
+        get => _status;
+        set
+        {
+            _status = value ?? "";
+            if (_instance != null && IsInstanceValid(_instance))
+                _instance.QueueRedraw();
+        }
+    }
+
+    /// <summary>Shows <paramref name="text"/>() on the status line while the mouse is over <paramref name="control"/>.</summary>
+    public static void HookStatus(Control control, System.Func<string> text)
+    {
+        control.MouseEntered += () => StatusText = text();
+        control.MouseExited += () =>
+        {
+            if (StatusText == text())
+                StatusText = "";
+        };
+    }
+
+    public override void _EnterTree() => _instance = this;
+
     public override void _Draw()
     {
+        if (_status.Length > 0)
+            Text(_status, 232, 0x22B, 248, 1, 2);
         var player = Teams.GetCurrentPlayerTeam();
         if (player?.Org != null)
             DrawFinance(player.Org);

@@ -92,6 +92,7 @@ code (base squad) get random personal names like `Unit::Unit`.
   = build time); rows with +2Ch also use politician service 1Fh; then SetRow.
 - **SetRow** sub_422070: HP to the new max if full; another player opening a row with +20h = 2 → "%s founds a %s."
   **Sell** sub_421E40 case 11: Deposit(price × 0.5), random legal row of the grade (fnSelectBuildingRandomly), owner none.
+- Done: the conversion progress bar (GameButt frame + coin fill over the slots, `ActionBar._Draw`).
 - Open: repair job (sub_4289A0), training center (case 12), raids/demolition/brownout on other players' companies
   (items 14h/18h/1Dh, 26h/2Bh/2Fh/32h…), freezing, the original tooltip line (texts probably go to the message bar),
   button hover animation (12 frames).
@@ -125,8 +126,8 @@ sub_413350 / sub_413A04) sets its width (0–134) and sub_409C60 rebalances: pie
 (88,40) (108,60) (122,80) (134,100) (inverse switches at 21/41/61/81); the other bars are scaled to the rest of 100 %
 (a quarter each when all zero), a shortfall goes to the next row (row 0 after the last); shares written via
 sub_414CB0. Hover (sub_40C2C2) prints texts 5,63/64/67/70/73 at (232, 555) and the favour 5,65–75 at (232, 573);
-that line is also the panel's status line for order hints (5,40–62) — TODO: show button texts there instead of
-OS tooltips. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
+that line is also the panel's status line: button texts now show there (`PanelInfo.StatusText`, `HookStatus`) instead
+of OS tooltips; the order hints (5,40–62: "Attack/Extort/Destroy %s" while hovering targets) are still TODO. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
 
 Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).

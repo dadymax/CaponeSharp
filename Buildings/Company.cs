@@ -372,6 +372,12 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
 
     /// <summary>Row being built by a running conversion job (company vt+9Ch busy), or null.</summary>
     public OriginalBusinessTable.Entry Building { get; private set; }
+    /// <summary>Conversion job start / end minute (job +30h / +34h).</summary>
+    public long BuildStart { get; private set; }
+    public long BuildEnd { get; private set; }
+
+    /// <summary>Job progress 0–1 for the panel bar (job vt+80h).</summary>
+    public float BuildProgress(long now) => BuildEnd <= BuildStart ? 1f : Mathf.Clamp((float)(now - BuildStart) / (BuildEnd - BuildStart), 0f, 1f);
     public bool UnderConstruction => Building != null;
 
     public enum ConversionResult { Started, NotAllowed, NoMoney, NoFavour }
@@ -402,6 +408,8 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         }
         org.Spend(row.Price);
         Building = row;
+        BuildStart = GameClock.Instance?.Minute ?? 0;
+        BuildEnd = BuildStart + row.Value1C;
         var owner = OwnerTeam;
         GD.Print($"Company {CompanyName}: {owner.PlayerName} builds {row.Name} for {row.Price} ({row.Value1C} min)");
         GameClock.Instance?.ScheduleIn(row.Value1C, () => FinishConversion(row, owner));

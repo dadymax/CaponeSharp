@@ -14,6 +14,7 @@ public partial class RecruitPanel : Control
     private static readonly Vector2 StripTopLeft = new(730, 390 - PanelInfo.PanelTop);
 
     private readonly Dictionary<Training.Recruit, TextureButton> _buttons = new();
+    private readonly Dictionary<Training.Recruit, string> _texts = new();
     private Texture2D _blood;
     private int _bloodColumn;
     private double _bloodTimer;
@@ -34,6 +35,7 @@ public partial class RecruitPanel : Control
                 TextureNormal = Icon(recruit.Icon), TextureHover = Icon(recruit.Icon), TexturePressed = Icon(recruit.Icon + 1),
             };
             button.Pressed += () => Training.Start(Teams.GetCurrentPlayerTeam(), r);
+            PanelInfo.HookStatus(button, () => _texts.TryGetValue(r, out var t) ? t : "");
             AddChild(button);
             _buttons[recruit] = button;
         }
@@ -87,7 +89,7 @@ public partial class RecruitPanel : Control
             button.Disabled = training;
             button.TextureDisabled = Icon(recruit.Icon + 1);
             var price = PanelInfo.Money(Training.Price(recruit.Type));
-            button.TooltipText = PanelInfo.CFormat(OriginalTexts.Instance.Get(20, recruit.Text), price, Training.ServicePoints(recruit));
+            _texts[recruit] = PanelInfo.CFormat(OriginalTexts.Instance.Get(20, recruit.Text), price, Training.ServicePoints(recruit));
         }
     }
 

@@ -33,6 +33,8 @@ public partial class ActionBar : Control
 
     private readonly TextureButton[] _slots = new TextureButton[SlotCount];
     private readonly Action[] _actions = new Action[SlotCount];
+    private readonly string[] _texts = new string[SlotCount];
+    private Texture2D _gameButt;
     private static readonly Dictionary<int, Texture2D> IconCache = new();
 
     /// <summary>Company whose type submenu is open, and the type (original dword_48029C / word_4802A0).</summary>
@@ -51,6 +53,7 @@ public partial class ActionBar : Control
             var slot = i;
             var button = new TextureButton { Position = new Vector2(SlotSize * i, 0), Size = new Vector2(SlotSize, SlotSize), Visible = false };
             button.Pressed += () => _actions[slot]?.Invoke();
+            PanelInfo.HookStatus(button, () => _texts[slot] ?? "");
             AddChild(button);
             _slots[i] = button;
         }
@@ -63,6 +66,7 @@ public partial class ActionBar : Control
             return;
         _refresh = 0.2;
         Rebuild(false);
+        QueueRedraw();
     }
 
     private static Texture2D Icon(int tileIndex)
@@ -82,9 +86,29 @@ public partial class ActionBar : Control
         button.TextureNormal = Icon(icon);
         button.TextureHover = Icon(icon);
         button.TexturePressed = Icon(icon + 1);
-        button.TooltipText = tooltip;
+        _texts[slot] = tooltip;
+        if (button.IsHovered())
+            PanelInfo.StatusText = tooltip;
         button.Visible = true;
         _actions[slot] = action;
+    }
+
+    /// <summary>
+    /// sub_40A997: while the selected own company runs a conversion job (class 15h) GameButt.bmp's frame (0,0 258×43)
+    /// covers the slots at (230, 504) and its coin bar (0,63, 37 high) fills up to 252 px at (233, 507).
+    /// </summary>
+    public override void _Draw()
+    {
+        if (GuiGameback.Instance?.SelectedNode is not Company { UnderConstruction: true } company || !IsInstanceValid(company)
+            || company.OwnerTeam != Teams.GetCurrentPlayerTeam())
+            return;
+        _gameButt ??= ScreenPictures.Load("GAMEBUTT.BMP");
+        if (_gameButt == null)
+            return;
+        DrawTextureRectRegion(_gameButt, new Rect2(0, 0, 258, 43), new Rect2(0, 0, 258, 43));
+        var w = Mathf.RoundToInt(company.BuildProgress(GameClock.Instance?.Minute ?? 0) * 252);
+        if (w > 0)
+            DrawTextureRectRegion(_gameButt, new Rect2(3, 3, w, 37), new Rect2(0, 63, w, 37));
     }
 
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
@@ -105,6 +129,8 @@ public partial class ActionBar : Control
         _shown = key;
         for (var i = 0; i < SlotCount; i++)
         {
+            if (_slots[i].IsHovered() && _slots[i].Visible)
+                PanelInfo.StatusText = "";
             _slots[i].Visible = false;
             _actions[i] = null;
         }
