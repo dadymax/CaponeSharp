@@ -19,6 +19,9 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>State of every computer player.</summary>
+    public string Ai() => string.Join("\n", Teams.TeamsInGame.Values.Where(t => t.Ai != null).Select(t => t.Ai.Describe() + " | " + t.Org));
+
     /// <summary>Walks the player's unit number <paramref name="index"/> to map cell (x, y) like a Go order.</summary>
     public string GoTo(int index, int x, int y)
     {

@@ -108,6 +108,9 @@ From `ep1.epi` and the EXE:
 
 **M10 — Sound** ◐ (done: extortion pay/refuse, out of funds, arrive, resign, unit order voices) for the events above (`Sound/*.wav`, EXE sound table at 0x4779B8).
 
+**M11 — Computer players** ✅ (`ComputerPlayer`: AI HQ sub_461510 with the 3-hour cycles, per-kind parameters; MCP-tested episodes 4, 13, 15)
+- Extortion, recruiting, business conversion and attacks on the human HQ as in the original AI.
+
 ## Definition of done for episode 1
 
 - [x] Starts with the briefing; the map, base and two gangsters come from the original data (not compared side by side with the running original).

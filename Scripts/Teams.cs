@@ -60,6 +60,8 @@ public class Team
     public Company HqCompany { get; set; }
     /// <summary>Finances (original HQ object, class 6).</summary>
     public Organisation Org { get; set; }
+    /// <summary>Computer opponent (AI HQ, sub_461510) for a PLAYER of kind ≠ 0; null for the human.</summary>
+    public ComputerPlayer Ai { get; set; }
 
     // Player data from the scenario
     public int PlayerId { get; set; } = -1;

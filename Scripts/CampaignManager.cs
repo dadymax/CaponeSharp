@@ -206,6 +206,11 @@ public partial class CampaignManager : Node
             MainScene.AddChild(new Police { Name = "Police" });
         foreach (var team in Teams.TeamsInGame.Values)
             team.Org?.Start(clock);
+        foreach (var team in Teams.TeamsInGame.Values.Where(t => t.Kind != 0 && !t.IsCurrentPlayerColor && t.Org != null))
+        {
+            team.Ai = new ComputerPlayer(team);
+            team.Ai.Start(clock);
+        }
         foreach (var block in CityBlock.All)
             block.Start(clock);
         var companies = MainScene.GetTree().GetNodesInGroup(Company.GroupName).OfType<Company>().ToList();

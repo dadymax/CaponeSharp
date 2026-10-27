@@ -222,6 +222,44 @@ Known gaps in the brick (do later):
 - UNIT flag A = 0 → salary 0 is assumed (`CampaignManager.SpawnUnit`).
 - Smoke test leaks nodes (RID warnings at exit).
 
+## Computer players (2026-10-27)
+
+`Scripts/Economy/ComputerPlayer.cs`: the AI HQ object (sub_461510, vtable off_4911BC, 0x244 bytes) for every PLAYER
+with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
+- Timing (sub_462480 / handler sub_462590): events 44Dh / 44Eh / 44Fh first at +1 / +2 / +3 hours, then every
+  3 hours: 44Dh unit tasking (vt+130h sub_461CA8 → vt+140h sub_4618D0 per unit), 44Eh recruit and convert
+  (vt+134h sub_461F24), 44Fh strategy (vt+138h sub_4620D7). Event 450h at +3 hours sets the bribe shares from
+  parameters 5–9 (sub_4623E4, share job sub_4287F0, ×/÷ flt_48381C = 1000).
+- Parameters (+210h, setter vt+15Ch): [0] convert legal companies, [1] minimum Thugs, [2] recruit when the human is
+  stronger, [3] salary budget in % of company income (+18h = gross income, flt_4911A8 = 100), [4] net income
+  below which fighters extort (400 000), [5..9] shares (savings, army, FBI, politician, police), [10] attack the
+  human HQ, [11] cash reserve, [12] type left alone (12 Godfather). Defaults: 1 5 1 25 400000 60 30 0 0 10 0 0 12.
+  Kind 1: shares 100/0, [0]=0 [1]=2 [2]=0 [3]=10; kind 2: shares 70/30, [0]=0 [1]=2 [2]=0 [3]=20; kind 3: shares
+  70/30, [0]=1 [1]=5 [2]=1 [3]=25; kind 4: defaults; kind 5: [11]=−20 000; kind 6: as 3 plus [10]=1, [11]=−20 000.
+  +1F8h = random business type 1–3 (bootlegging / entertainment / gambling) used for conversions.
+- Strategy: strength = Σ word_491188[type] (1 4 16 6 5 14 0 0 8 10 0 0 0) over own units (vt+14Ch sub_461F88);
+  human strength + 5 > mine → "weaker"; mine / 2 > human → target the human. Intruder (vt+154h sub_462028): another
+  player's unit (not a Collector) within 30 cells (flt_4911A4) of the AI's training center. Recruit the best
+  licensed type (vt+158h sub_461BD7: Thompson if service 6, Hitman 3, Shotgun 2, Pistol 0, else Thug) when
+  (weaker and [2]) or [10], and cash > reserve (or cash > −60 000 with an intruder); else a Thug when Thugs < [1];
+  else the chosen type when salaries < [3] % of company income; else when net income > 2 000 000 and the lead over
+  the human's net income / 2 > salaries. Convert when cash > reserve and [0]. +1ECh (attack the human HQ) turns on
+  at strength − Thugs ≥ 12 and off below 7.
+- Unit tasking (not Collectors, not type [12], not fighting): Thugs extort; others attack the intruder, else the
+  human's training center (+1ECh), else the target's, else extort while net income < [4] (not Cadillacs), else walk
+  home when ≥ 10 cells (flt_491180) from the training center. Extort search (sub_461781 / sub_461690): square rings
+  around the unit up to 500, a company of nobody or a non-ally outside district 2, 50 % per try (LCG sub_461660).
+- Conversion (vt+13Ch sub_461E10): the own legal company (vt+190h = row type 0) nearest the training center that is
+  not busy and has a row (vt+144h sub_461D40: the AI's type, the company's grade, its district or 3, licensed, price
+  < cash + 100 000; the most expensive) starts converting (job sub_427000). One per cycle.
+- MCP-tested: episode 4 (kind 2) extorts, keeps 2 Thugs, trains Pistol men once licensed, no conversions; episode 13
+  (kind 6) converts legal companies to dog tracks and recruits Shotgun men; episode 15 (kind 6) destroyed the
+  player's base and army in a week.
+- Deviations: one extort try per company instead of per ring cell; a unit already extorting keeps its order; allies'
+  and police units aren't intruders. Unknown: unit vt+1F0h (units skipped by the tasking) and unit vt+A0h.
+- Found while testing: the human HQ has 15 HP; a player without units and HQ is not eliminated; attacking units
+  stack on one cell.
+
 ### Economy facts recovered (this brick)
 
 - **Company** (vtable off_4803CC, handler sub_420ED5): hourly — cache block income flag, heal 5 HP if unowned or
@@ -361,7 +399,8 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 ## 6. AI players (P3)
 
-- [ ] AI kinds 2/3/4/6 from PLAYER. Find the AI update loop, starting from the code that reads `PLAYER`'s kind field (`sub_404390` calls in `sub_4670A5`). Until then: a simple scripted AI (capture nearby neutrals, recruit when rich, attack HQ).
+- [x] AI kinds from PLAYER: done, see "Computer players" above. Open: AI elimination cleanup, alliances between AIs, AI use of HQ services (lawyers, informers).
+- (old note) AI kinds 2/3/4/6 from PLAYER. Find the AI update loop, starting from the code that reads `PLAYER`'s kind field (`sub_404390` calls in `sub_4670A5`). Until then: a simple scripted AI (capture nearby neutrals, recruit when rich, attack HQ).
   Known so far: `sub_404390` = Player::Player (0x80 bytes, vtable off_47613C, class id 7), called with `isComputer = (kind != 0)`, the name and the PLAYER numbers. The other class-7 vtables (off_475E3C … off_4763C8, 27 slots each) are probably the player subclasses — start there to find how kinds 2/3/4/6 differ.
 
 ## 7. Tooling
