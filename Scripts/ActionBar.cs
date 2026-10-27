@@ -99,7 +99,7 @@ public partial class ActionBar : Control
     /// </summary>
     public override void _Draw()
     {
-        if (GuiGameback.Instance?.SelectedNode is not Company { UnderConstruction: true } company || !IsInstanceValid(company)
+        if (GuiGameback.Instance?.SelectedNode is not Company { Busy: true } company || !IsInstanceValid(company)
             || company.OwnerTeam != Teams.GetCurrentPlayerTeam())
             return;
         _gameButt ??= ScreenPictures.Load("GAMEBUTT.BMP");
@@ -122,7 +122,7 @@ public partial class ActionBar : Control
         if (!own || company != _submenuCompany)
             _submenuCompany = null;
         var key = own
-            ? $"{company.GetInstanceId()}|{company.Entry?.Index}|{company.UnderConstruction}|{company.Hp >= company.MaxHp}|{_submenuCompany != null}|{_submenuType}|{(int)player.Org.Favour[4]}|{player.Org.AuthorityMoney[4]}"
+            ? $"{company.GetInstanceId()}|{company.Entry?.Index}|{company.Busy}|{company.Hp >= company.MaxHp}|{_submenuCompany != null}|{_submenuType}|{(int)player.Org.Favour[4]}|{player.Org.AuthorityMoney[4]}"
             : "";
         if (!force && key == _shown)
             return;
@@ -134,7 +134,7 @@ public partial class ActionBar : Control
             _slots[i].Visible = false;
             _actions[i] = null;
         }
-        if (!own || company.UnderConstruction)
+        if (!own || company.Busy)
             return;
 
         if (_submenuCompany != null)
@@ -178,7 +178,13 @@ public partial class ActionBar : Control
             return;
         }
 
-        if (company.CanSell)
+        if (company.CanRepair)
+            Set(SlotCount - 1, IconRepair, PanelInfo.CFormat(T(6), company.RepairCost), () =>
+            {
+                company.StartRepair();
+                Rebuild(true);
+            });
+        else if (company.CanSell)
             Set(SlotCount - 1, IconSell, PanelInfo.CFormat(T(7), company.SellPrice), () =>
             {
                 company.Sell();

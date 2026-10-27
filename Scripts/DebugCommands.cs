@@ -118,6 +118,16 @@ public partial class DebugCommands : Node
         return $"favour {Player.Org.Favour[authority]}, money {Player.Org.AuthorityMoney[authority]}";
     }
 
+    /// <summary>Takes <paramref name="hp"/> hit points from own company <paramref name="index"/>.</summary>
+    public string Damage(int index, int hp)
+    {
+        var company = OwnCompany(index);
+        if (company?.CanBeAttacked == null)
+            return "no company";
+        company.CanBeAttacked.HP = Mathf.Max(1, company.CanBeAttacked.HP - hp);
+        return company.ToString();
+    }
+
     private Company OwnCompany(int index) =>
         Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Player && c.IsEconomic).ElementAtOrDefault(index);
 

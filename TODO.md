@@ -93,7 +93,11 @@ code (base squad) get random personal names like `Unit::Unit`.
 - **SetRow** sub_422070: HP to the new max if full; another player opening a row with +20h = 2 → "%s founds a %s."
   **Sell** sub_421E40 case 11: Deposit(price × 0.5), random legal row of the grade (fnSelectBuildingRandomly), owner none.
 - Done: the conversion progress bar (GameButt frame + coin fill over the slots, `ActionBar._Draw`).
-- Open: repair job (sub_4289A0), training center (case 12), raids/demolition/brownout on other players' companies
+- Done: **Repair** (action 1, job sub_4289A0 / sub_4289E8, class 1Eh): menu cost = missing HP × vt+160h, where vt+160h
+  (sub_422F13) = price / max HP × 0.5 (integer division first); the job heals 5 HP (vt+ECh) and pays one vt+160h per
+  game hour until full (so the menu figure overstates the real cost 5×, as in the original); the panel bar runs to
+  now + missing HP × 12 min. `Company.StartRepair`, `ActionBar` slot 6. MCP-tested 300 → 500 HP.
+- Open: training center (case 12), raids/demolition/brownout on other players' companies
   (items 14h/18h/1Dh, 26h/2Bh/2Fh/32h…), freezing, the original tooltip line (texts probably go to the message bar),
   button hover animation (12 frames).
 

@@ -448,10 +448,55 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         GD.Print($"Company {CompanyName} is now {row}");
     }
 
+    // ---- repair (menu action 1, job sub_4289A0 / sub_4289E8) -------------------------------------------------------
+
+    public const int RepairHpPerStep = 5;
+    public bool Repairing { get; private set; }
+    /// <summary>A conversion or repair job runs (company vt+9Ch).</summary>
+    public bool Busy => UnderConstruction || Repairing;
+
+    /// <summary>vt+160h (sub_422F13): price / max HP × 0.5 per hit point.</summary>
+    public long RepairCostPerHp => Entry == null || MaxHp <= 0 ? 0 : (long)(Entry.Price / MaxHp * 0.5);
+
+    /// <summary>Menu "Repair ($%ld)" (30,6): missing HP × cost per HP.</summary>
+    public long RepairCost => (MaxHp - Hp) * RepairCostPerHp;
+
+    public bool CanRepair => IsEconomic && OwnerTeam != null && !Busy
+                             && BusinessType != OriginalBusinessTable.BusinessType.Legal && Hp < MaxHp;
+
+    /// <summary>
+    /// Repair job: every game hour heal 5 HP and charge the owner one HP's cost (as the original does), until full;
+    /// the panel bar runs to now + missing HP × 12 min.
+    /// </summary>
+    public void StartRepair()
+    {
+        if (!CanRepair)
+            return;
+        Repairing = true;
+        BuildStart = GameClock.Instance?.Minute ?? 0;
+        RepairStep();
+    }
+
+    private void RepairStep()
+    {
+        if (!IsInstanceValid(this) || !Repairing)
+            return;
+        var clock = GameClock.Instance;
+        if (Hp >= MaxHp || OwnerTeam?.Org == null || clock == null)
+        {
+            Repairing = false;
+            return;
+        }
+        BuildEnd = clock.Minute + (MaxHp - Hp) * GameClock.MinutesPerHour / RepairHpPerStep;
+        Heal(RepairHpPerStep);
+        OwnerTeam.Org.Spend(RepairCostPerHp);
+        clock.ScheduleIn(GameClock.MinutesPerHour, RepairStep);
+    }
+
     public long SellPrice => Entry == null ? 0 : (long)(Entry.Price * BusinessRules.SellFactor);
 
     /// <summary>Menu "Sell for $%ld" (30,7): an undamaged business of the owner.</summary>
-    public bool CanSell => IsEconomic && OwnerTeam != null && !UnderConstruction
+    public bool CanSell => IsEconomic && OwnerTeam != null && !Busy
                            && BusinessType != OriginalBusinessTable.BusinessType.Legal && Hp >= MaxHp;
 
     /// <summary>
