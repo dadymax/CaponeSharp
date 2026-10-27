@@ -131,7 +131,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     /// <summary>
     /// HQ building vt+FCh (sub_415F20): "Your headquarter has been destroyed." (17,37) for the local owner, else
     /// "%s's headquater has been destroyed!" (17,38); the owner is eliminated (sub_43B677) and the building removed
-    /// (sub_43BCE0). TODO: capture of an HQ (vt+74h sub_4151C5, texts 17,0 / 17,1) also eliminates the old owner.
+    /// (sub_43BCE0). An HQ can't be captured in play, so the owner-change handler (vt+74h sub_4151C5) isn't ported.
     /// </summary>
     private void OnHqDestroyed()
     {

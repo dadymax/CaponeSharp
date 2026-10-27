@@ -264,8 +264,9 @@ with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
 - HQ destroyed (vt+FCh `sub_415F20`): "Your headquarter has been destroyed." (17,37) to the owner, else
   "%s's headquater has been destroyed!" (17,38); the owner is eliminated (`sub_43B677`) and the building removed
   (`sub_43BCE0`). The owner is out even with units left.
-- HQ captured (vt+74h `sub_4151C5`): "You have just lost your headquarters." (17,0) / "You've just conquered %s's
-  headquarters." (17,1), then the old owner is eliminated. Not done: HQs can't change hands in the port yet.
+- An HQ can only be destroyed, never captured (user, from the original). The EXE still has an owner-change handler
+  (vt+74h `sub_4151C5`: "You have just lost your headquarters." 17,0 / "You've just conquered %s's headquarters."
+  17,1, then the old owner is eliminated), but play doesn't reach it; not ported.
 - Elimination (`sub_43B677`): 19,1 defeat for the local player, else "%s has been eliminated." (19,2); then
   `sub_43B711` removes the HQ object (`sub_43AB50`, so its events stop) and, while the game runs (+186h): fewer
   than 2 players left → the local player, if still in, wins with "You have won ! The city belongs to your gang !"
