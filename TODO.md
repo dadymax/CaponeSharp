@@ -151,7 +151,10 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   0x484380 / 0x4843B4 (orders 3 / 0Ah), go+Shift 0x4843E8, attack+Shift 0x48441C, patrol 0x484484, car exit 0x4844B8.
 - Done (`ActionBar.BuildUnitMenu`, `Main.PendingOrder`): Go, Attack (units), Extort; the button arms the order and the
   next left click on the map carries it out. MCP-tested: a Thug extorted a business and walked to a clicked cell.
-  Stand Ground (slot 3, icons 0x484380) stops the selected units at once (no guarding yet).
+  Shift switches slots 0–1 to Force Go To / Force Attack (icons 0x4843E8 / 0x48441C, texts 29,6/7, "…OrderHurry"
+  voice; movement as Go for now). Stand Ground was tried and removed: its icon table 0x484380 holds tile 0x38 ("Button
+  upgrade up", blank) for every type, so the original likely hides order 3 via vt+1C4h; Chicago.tile has a separate
+  "Button guard" (tile 0x30) — decode the gate before showing it.
 - Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
   vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
   and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),

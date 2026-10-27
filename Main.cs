@@ -16,7 +16,7 @@ public partial class Main : Node2D
 	public static Main Instance { get; private set; }
 
 	/// <summary>Order buttons (unit menu sub_42D2C1): the next left click on the map carries out the chosen order.</summary>
-	public enum OrderMode { None, Go, Attack, Extort }
+	public enum OrderMode { None, Go, Attack, Extort, ForceGo, ForceAttack }
 	public OrderMode PendingOrder { get; set; }
 
 	/// <summary>Selected units the player may command.</summary>
@@ -218,16 +218,22 @@ public partial class Main : Node2D
 		var local = ToLocal(globalPoint);
 		foreach (var first in CommandableSelection())
 		{
-			UnitVoice.Play(first, order == OrderMode.Go ? UnitVoice.Kind.Go : UnitVoice.Kind.Attack);
+			UnitVoice.Play(first, order switch
+			{
+				OrderMode.Go => UnitVoice.Kind.Go,
+				OrderMode.ForceGo => UnitVoice.Kind.GoHurry,
+				_ => UnitVoice.Kind.Attack,
+			});
 			break;
 		}
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
-				case OrderMode.Go:
+				// TODO: forced orders ignore enemies on the way; our units don't engage on their own yet.
+				case OrderMode.Go or OrderMode.ForceGo:
 					unit.MoveTo(local);
 					break;
-				case OrderMode.Attack when hit is Unit target && target != unit:
+				case OrderMode.Attack or OrderMode.ForceAttack when hit is Unit target && target != unit:
 					unit.TargetStructure = target;
 					break;
 				case OrderMode.Extort when hit is Company company && ExtortOrder.CanExtort(unit, company):

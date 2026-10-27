@@ -114,7 +114,7 @@ public partial class ActionBar : Control
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
-    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C, StandIcons = 0x484380;
+    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C;
 
     private static int TypeIcon(uint table, UnitCommon.UnitType type) =>
         OriginalExe.Instance.IsLoaded ? (int)OriginalExe.Instance.ReadU32(table + (uint)type * 4) : 0;
@@ -131,20 +131,16 @@ public partial class ActionBar : Control
         if (main == null)
             return false;
         void Arm(Main.OrderMode mode) => main.PendingOrder = mode;
-        Set(0, TypeIcon(GoIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 0), () => Arm(Main.OrderMode.Go));
-        Set(1, TypeIcon(AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 1), () => Arm(Main.OrderMode.Attack));
+        // With Shift held the first two become Force Go To / Force Attack (actions 5 / 6, texts 29,6 / 29,7).
+        var force = Input.IsKeyPressed(Key.Shift);
+        Set(0, TypeIcon(force ? ForceGoIcons : GoIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 6 : 0),
+            () => Arm(force ? Main.OrderMode.ForceGo : Main.OrderMode.Go));
+        Set(1, TypeIcon(force ? ForceAttackIcons : AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 7 : 1),
+            () => Arm(force ? Main.OrderMode.ForceAttack : Main.OrderMode.Attack));
         if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
             Set(2, TypeIcon(ExtortIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 3), () => Arm(Main.OrderMode.Extort));
-        // Order 3 "Stand Ground" (29,4) acts at once: the selected units drop their orders and stay where they are.
-        Set(3, TypeIcon(StandIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 4), () =>
-        {
-            main.PendingOrder = Main.OrderMode.None;
-            foreach (var u in main.CommandableSelection())
-            {
-                u.CancelOrder();
-                u.StopMoving();
-            }
-        });
+        // Order 3 "Stand Ground" (29,4): its icon table 0x484380 holds tile 0x38 ("Button upgrade up", blank) for every
+        // type, so the original most likely hides it via vt+1C4h(3); not shown until that gate is decoded.
         return true;
     }
 
@@ -155,7 +151,7 @@ public partial class ActionBar : Control
             && selectedUnit.OwnerTeam == Teams.GetCurrentPlayerTeam() && !selectedUnit.IsDead
             && selectedUnit.UnitType is not UnitCommon.UnitType.Collector)
         {
-            var unitKey = $"unit|{selectedUnit.GetInstanceId()}";
+            var unitKey = $"unit|{selectedUnit.GetInstanceId()}|{Input.IsKeyPressed(Key.Shift)}";
             if (!force && unitKey == _shown)
                 return;
             _shown = unitKey;
