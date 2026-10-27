@@ -127,19 +127,54 @@ public class Organisation
     /// </summary>
     public bool Spend(long amount)
     {
-        if (CanAfford(amount) || NetIncome >= 0)
+        if (Eliminated)
+            return false;
+        // sub_430860: pay when affordable, or the weekly net income isn't negative, or the player still has gangsters
+        // (vt+D8h, sub_4308F0: any own unit but a Collector) — the debt simply grows.
+        if (CanAfford(amount) || NetIncome >= 0 || HasGangsters())
         {
             Cash -= amount;
             return true;
         }
-        GD.Print($"Organisation: {Team.PlayerName} is out of funds");
+        GD.Print($"Organisation: {Team.PlayerName} is out of funds and eliminated");
         if (Team.IsCurrentPlayerColor)
         {
             Messages.Show(OriginalTexts.Instance.Get(20, 0));
             Sound.Play("OutOfFunds.wav");
         }
         OutOfFunds?.Invoke(this);
+        Eliminate();
         return false;
+    }
+
+    /// <summary>The player is out of the game (sub_43B677).</summary>
+    public bool Eliminated { get; private set; }
+
+    /// <summary>vt+D8h (sub_4308F0): does the player own a unit other than a Collector?</summary>
+    public bool HasGangsters()
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return false;
+        foreach (var node in tree.GetNodesInGroup(Unit.GroupName))
+            if (node is Unit { IsDead: false } unit && unit.OwnerTeam == Team && unit.UnitType != UnitCommon.UnitType.Collector)
+                return true;
+        return false;
+    }
+
+    /// <summary>
+    /// sub_43B677: the local player gets "Game over. You have been defeated!" (19,1, a loss message), others are
+    /// announced as "%s has been eliminated." (19,2). TODO (sub_43B711): removing an AI player's objects and the
+    /// last-player-standing win ("You have won! The city belongs to you", 19,4).
+    /// </summary>
+    public void Eliminate()
+    {
+        if (Eliminated)
+            return;
+        Eliminated = true;
+        if (Team.IsCurrentPlayerColor)
+            CampaignManager.Instance?.OnPlayerDefeated(Team, OriginalTexts.Instance.Get(19, 1));
+        else
+            Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(19, 2), Team.PlayerName));
     }
 
     /// <summary>

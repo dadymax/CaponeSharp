@@ -359,6 +359,18 @@ public partial class CampaignManager : Node
     /// A player met all their victory conditions. TODO (R8/M7): the original's success / failure screens and the move to
     /// the next episode; for now the game stops with the episode's success (or failure) text as a message.
     /// </summary>
+    /// <summary>The local player was eliminated (sub_43B677): the failure screen with the defeat text.</summary>
+    public void OnPlayerDefeated(Team team, string text)
+    {
+        GD.Print($"CampaignManager: '{team?.PlayerName}' defeated in episode {CurrentScenario?.EpisodeNumber} at {GameClock.Format(GameClock.Instance?.Minute ?? 0)}: {team?.Org}");
+        Messages.Show(text);
+        if (GameClock.Instance != null)
+            GameClock.Instance.Paused = true;
+        if (MainScene != null)
+            MainScene.GetTree().Paused = true;
+        (MainScene as Main)?.ShowEndScreen(false, text, CurrentScenario?.EpisodeNumber ?? 1);
+    }
+
     public void OnPlayerWon(int playerId)
     {
         var team = Teams.GetTeamByPlayerId(playerId);

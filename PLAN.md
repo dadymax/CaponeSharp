@@ -110,15 +110,15 @@ From `ep1.epi` and the EXE:
 
 ## Definition of done for episode 1
 
-- [ ] Starts with the briefing; the map, base and two gangsters match the original.
-- [ ] Extorting "open" companies works with the original refusal/payment behaviour.
-- [ ] Companies earn on the original schedule; collectors come per block, collect and deliver.
-- [ ] Money, income and expenses in the panel match the original numbers over the same game time.
-- [ ] Captured companies can be converted to businesses with the original choices, prices and incomes.
-- [ ] Police behaves as in the original episode 1 (arrests).
-- [ ] Gangsters can be recruited when lost.
-- [ ] Reaching the objective shows the success screen; losing shows the failure screen.
-- [ ] No hand-written game data: everything from the original files.
+- [x] Starts with the briefing; the map, base and two gangsters come from the original data (not compared side by side with the running original).
+- [x] Extorting "open" companies works with the original refusal/payment behaviour (sub_422FB4).
+- [x] Companies earn on the original schedule; collectors come per block, collect and deliver.
+- [~] Money, income and the expense shares are shown as in the original; not compared numerically with the running original.
+- [x] Captured companies can be converted to businesses with the original choices, prices and incomes (sell, repair too).
+- [x] Police behaves as in the original episode 1 (owner calls the cops → car, chase, arrest, jail).
+- [x] Gangsters can be recruited (recruit column, training, army favour).
+- [x] Reaching the objective shows the success screen; bankruptcy without gangsters eliminates the player and shows the failure screen (sub_430860 → sub_43B677).
+- [~] No hand-written game data: rules and tables come from the EXE; `units.json` / `companies.json` still map sprites.
 
 ## Verification
 

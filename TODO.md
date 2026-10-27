@@ -21,8 +21,8 @@ debugger and freezes the game — restart it.
 Result on episode 1 at speed 16 with `AutoExtort(true)`: 2 starting units took 29 slum businesses in 10 days
 (chance ~94 %, a few refusals with hits), one collector per block, deliveries to the HQ, daily salaries; VCOND 1
 won on day 10 (weekly net 505 400 > 500 000) with the success text. `CallCops(0)`: car from the nearest station,
-arrest, jail, car leaves. `Give(-500000)`: the unpaid Pistol man resigns; interest is refused past the overdraft
-(the original also charges it through Spend, 0x430A8A), so "out of funds" repeats every 1008 min — as in the original.
+arrest, jail, car leaves. (Superseded: the "refused Spend / resign / repeated out of funds" behaviour seen here was
+wrong — see the Spend correction below.)
 Fixed: the clock kept firing events after the win paused it. The RE facts below are in
 `godottry/disassembled/annotate/hand_notes.py` (commented listing regenerated), `godottry/CLAUDE.md` and the skill.
 
@@ -124,7 +124,8 @@ code (base squad) get random personal names like `Unit::Unit`.
   `Organisation.PrimaryCenter`), shown on an own training center that isn't primary. MCP-tested: Thug 600 → 300 min.
 - Verified (sub_420ED5 at 0x42114B): a row with catalogue income ≤ 0 calls owner Spend(−Income() / 441) on each of the
   441 weekly ticks, so a Тренировочный центр costs ~500 000 a week and a failing Spend repeats "out of funds" every
-  tick, as in the original. Open: the owner type factor the original applies to type 5 (HQ +120h?) is assumed 1.
+  tick — corrected: Spend keeps paying while the player has gangsters, so there is no repeated message; with none
+  left and negative net income the player is eliminated. Open: the owner type factor the original applies to type 5 (HQ +120h?) is assumed 1.
 - Open: Cadillac passengers.
 
 ## Bribe shares — "Расходы" chart (2026-10-27)
@@ -210,10 +211,12 @@ Known gaps in the brick (do later):
   nearest HQ / cash-out (sub_429221); deliver → Deposit, heal, next round at max(start + 2520, now + 60); no
   companies → block forgets the owner, collector leaves; killed → owner's income in the block stops until the
   next collector's first pickup.
-- **Organisation** (HQ class 6): Spend sub_430860 (cash − amount + 200 000 ≥ 0 or net ≥ 0, else "out of funds"
-  20,0 + sound 24); Deposit sub_430790 (bribe shares of the profit part); UpdateStats sub_430C30 hourly; interest
+- **Organisation** (HQ class 6): Spend sub_430860 pays when cash − amount + 200 000 ≥ 0, or net ≥ 0, or the player
+  has a non-collector unit (vt+D8h sub_4308F0); otherwise "out of funds" (20,0 + sound 24) and the player is
+  **eliminated** (sub_43B677: local → "Game over. You have been defeated!" 19,1 as a loss → GAMEOVER screen; others
+  "%s has been eliminated." 19,2; sub_43B711 then checks for a last-player win, 19,4); Deposit sub_430790 (bribe shares of the profit part); UpdateStats sub_430C30 hourly; interest
   −cash/10 every 1008 min when negative; market-share curve; salaries = unit table +0x20 per week, paid daily / 7
-  (sub_42A535), unpaid non-collectors resign.
+  (sub_42A535); an unpaid gangster resigns, which in practice only follows an elimination.
 - **Police** order sub_4460C5 (start sub_4461A4, step sub_4462B4): car from the nearest station (sub_446123) to the
   gangster's cell; within 5 cells → chase ≤ 12 h; within 1 → arrest (sounds 27/28); at the station → jail (unit
   vt+1A0h) unless lawyers (70/50/30 %) → release with text 28,1.
