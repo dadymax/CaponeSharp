@@ -34,7 +34,7 @@ public partial class Unit
     public int DefaultStance => UnitType == UnitCommon.UnitType.Terrorist ? 3 : 1;
 
     private bool ThinksForItself =>
-        CanAttack != null && (OwnerTeam != null || IsRogue) && !IsDead && !IsArrested
+        CanAttack != null && (OwnerTeam != null || IsRogue || IsDeserter) && !IsDead && !IsArrested
         && UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar
             or UnitCommon.UnitType.Policeman or UnitCommon.UnitType.Cadillac);
 
@@ -98,11 +98,18 @@ public partial class Unit
             Chase(active);
     }
 
-    /// <summary>Enemy players' units; a rogue unit and everyone around it are enemies to each other.</summary>
+    /// <summary>
+    /// Enemy players' units; a rogue unit and everyone around it are enemies to each other; a deserter and every
+    /// player's unit are enemies (deserters leave each other and the police alone).
+    /// </summary>
     private bool IsHostileTo(Unit other)
     {
         if (IsRogue || other.IsRogue)
             return true;
+        if (IsDeserter)
+            return other.OwnerTeam != null;
+        if (other.IsDeserter)
+            return OwnerTeam != null;
         return OwnerTeam != null && other.OwnerTeam != null
                && OwnerTeam.GetTargetRelation(other.TeamColor) == Teams.TeamRelation.Enemy;
     }

@@ -31,6 +31,35 @@ public partial class DebugCommands : Node
         return IsInstanceValid(hq) ? $"HQ HP {hq.Hp}/{hq.MaxHp}" : "HQ destroyed";
     }
 
+    /// <summary>Sets the salary of every unit of player <paramref name="playerId"/> (episode units often cost nothing).</summary>
+    public string SetSalary(int playerId, int salary)
+    {
+        var units = Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && u.OwnerTeam?.PlayerId == playerId).ToList();
+        foreach (var unit in units)
+            unit.Salary = salary;
+        return $"{units.Count} units";
+    }
+
+    /// <summary>The player's unit number <paramref name="index"/> quits as if unpaid and walks to map cell (x, y).</summary>
+    public string Desert(int index, int x, int y)
+    {
+        var unit = PlayerFighters().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.Resign();
+        unit.WalkToCell(new Vector2I(x, y));
+        return $"{unit.UnitType}@{unit.Cell} deserts -> ({x}, {y})";
+    }
+
+    /// <summary>Deserters (unpaid units that quit) and rogue units with their targets.</summary>
+    public string Deserters() =>
+        string.Join("\n", Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && (u.IsDeserter || u.IsRogue)).Select(u =>
+        {
+            var t = u.CanAttack?.TargetParent;
+            var target = t is Unit tu ? $"{tu.UnitType} of {tu.OwnerTeam?.PlayerName ?? (tu.IsDeserter ? "deserter" : "-")}" : t?.ToString() ?? "-";
+            return $"{u.UnitType}{(u.IsRogue ? " rogue" : " deserter")} @{u.Cell} HP {u.CanBeAttacked?.HP} target {target}";
+        }));
+
     /// <summary>Eliminated players' units go rogue instead of disappearing.</summary>
     public string RogueUnits(bool on)
     {

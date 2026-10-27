@@ -307,9 +307,15 @@ with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
 - **Organisation** (HQ class 6): Spend sub_430860 pays when cash − amount + 200 000 ≥ 0, or net ≥ 0, or the player
   has a non-collector unit (vt+D8h sub_4308F0); otherwise "out of funds" (20,0 + sound 24) and the player is
   **eliminated** (sub_43B677: local → "Game over. You have been defeated!" 19,1 as a loss → GAMEOVER screen; others
-  "%s has been eliminated." 19,2; sub_43B711 then checks for a last-player win, 19,4); Deposit sub_430790 (bribe shares of the profit part); UpdateStats sub_430C30 hourly; interest
+  "%s has been eliminated." 19,2; sub_43B711 then checks for a last-player win, 19,3); Deposit sub_430790 (bribe shares of the profit part); UpdateStats sub_430C30 hourly; interest
   −cash/10 every 1008 min when negative; market-share curve; salaries = unit table +0x20 per week, paid daily / 7
-  (sub_42A535); an unpaid gangster resigns, which in practice only follows an elimination.
+  (sub_42A535). Payday asks vt+70h (cash − pay + 200 000 ≥ 0), not Spend: past the overdraft a gangster quits
+  (vt+74h(0), resign sound for the local player) and a Collector just goes unpaid. A gangster who quits is ownerless
+  and, like every ownerless unit in the unit AI, fights every player's units, his former owner's included
+  (`Unit.IsDeserter`; deserters leave each other and the police alone). MCP-tested: two deserters attacked the
+  player's Shotgun man and were killed. Bankruptcy itself doesn't end the game while you have gangsters; it does
+  (Spend, e.g. the debt interest 0x430A8A) once they've all quit or died, the debt is past the overdraft and net
+  income is negative (the user remembers bankruptcy never defeating the player; kept as in the EXE).
 - **Police** order sub_4460C5 (start sub_4461A4, step sub_4462B4): car from the nearest station (sub_446123) to the
   gangster's cell; within 5 cells → chase ≤ 12 h; within 1 → arrest (sounds 27/28); at the station → jail (unit
   vt+1A0h) unless lawyers (70/50/30 %) → release with text 28,1.

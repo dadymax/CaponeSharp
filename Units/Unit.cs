@@ -366,7 +366,11 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         var org = OwnerTeam?.Org;
         if (org != null && Salary > 0 && !IsArrested)
         {
-            if (!org.Spend(Salary / 7) && UnitType != UnitCommon.UnitType.Collector)
+            // sub_42A535: the owner must afford the day's pay within the overdraft (vt+70h), else a gangster quits
+            // (a Collector just goes unpaid); Spend itself would always pay while the player has gangsters.
+            if (org.CanAfford(Salary / 7))
+                org.Spend(Salary / 7);
+            else if (UnitType != UnitCommon.UnitType.Collector)
             {
                 Resign();
                 return;
@@ -375,7 +379,14 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         clock.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
     }
 
-    /// <summary>Unpaid units quit: they become neutral (the original sets the owner to none).</summary>
+    /// <summary>A gangster who quit (owner none): he fights every player's units (unit AI, unowned units).</summary>
+    public bool IsDeserter { get; private set; }
+
+    /// <summary>
+    /// Unpaid units quit (vt+74h with no owner): they become neutral and hostile to every player's units, the
+    /// former owner's included (user, from the original game; unit AI sub_42AA86 treats every owned unit as an enemy
+    /// of an unowned one).
+    /// </summary>
     public void Resign()
     {
         var wasLocal = OwnerTeam?.IsCurrentPlayerColor == true;
@@ -389,6 +400,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         Selected = false;
         TeamColor = Teams.NeutralTeamColor;
         _unitOwner = UnitCommon.UnitOwner.Neutral;
+        IsDeserter = true;
         CanAttack?.Reinit();
     }
 
