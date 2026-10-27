@@ -216,7 +216,6 @@ Known gaps in the brick (do later):
 - `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
 - Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
-- HQ building HP unknown (class 9, `sub_415090`); HQs can't be attacked yet.
 - Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).
 - Lawyers (HQ items 0x24/0x27/0x29) and informers (0x2C/0x31/0x34, `sub_42C503`) need M6 items; `Organisation.Items` is empty.
 - UNIT flag A = 0 → salary 0 is assumed (`CampaignManager.SpawnUnit`).
@@ -257,8 +256,26 @@ with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
   player's base and army in a week.
 - Deviations: one extort try per company instead of per ring cell; a unit already extorting keeps its order; allies'
   and police units aren't intruders. Unknown: unit vt+1F0h (units skipped by the tasking) and unit vt+A0h.
-- Found while testing: the human HQ has 15 HP; a player without units and HQ is not eliminated; attacking units
-  stack on one cell.
+- Found while testing: attacking units stack on one cell. (HQ HP and elimination: fixed, see below.)
+
+## Elimination and last player standing (2026-10-27)
+
+- HQ building (class 9, vtable off_477644): vt+F8h `sub_416750` = 514h → 1300 HP (`Company.HqMaxHp`).
+- HQ destroyed (vt+FCh `sub_415F20`): "Your headquarter has been destroyed." (17,37) to the owner, else
+  "%s's headquater has been destroyed!" (17,38); the owner is eliminated (`sub_43B677`) and the building removed
+  (`sub_43BCE0`). The owner is out even with units left.
+- HQ captured (vt+74h `sub_4151C5`): "You have just lost your headquarters." (17,0) / "You've just conquered %s's
+  headquarters." (17,1), then the old owner is eliminated. Not done: HQs can't change hands in the port yet.
+- Elimination (`sub_43B677`): 19,1 defeat for the local player, else "%s has been eliminated." (19,2); then
+  `sub_43B711` removes the HQ object (`sub_43AB50`, so its events stop) and, while the game runs (+186h): fewer
+  than 2 players left → the local player, if still in, wins with "You have won ! The city belongs to your gang !"
+  (19,3); with World +4EAh (alliance victory, copied by `sub_404B50` from the game setup +7870h) and no two enemy
+  players left → "… belongs to your alliance !" (19,4). The flag's campaign value is unknown; the port keeps it off
+  (`Organisation.AllianceVictory`).
+- MCP-tested: episode 4, destroying Большой Джим's HQ (Debug `DamageHq`) → 17,38, 19,2, win screen with 19,3;
+  episode 15, the player's HQ destroyed → 17,37 and the defeat screen.
+- Open: what happens to an eliminated player's units and companies (the original only removes the HQ object);
+  other removal paths `sub_429658` (text 25,9) and `sub_43C052` (19,7).
 
 ### Economy facts recovered (this brick)
 

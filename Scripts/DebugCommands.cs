@@ -19,6 +19,17 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>Hits player <paramref name="playerId"/>'s HQ for <paramref name="hp"/>, as if by one of the local player's units.</summary>
+    public string DamageHq(int playerId, int hp)
+    {
+        var hq = Teams.GetTeamByPlayerId(playerId)?.HqCompany;
+        if (hq?.CanBeAttacked == null || !IsInstanceValid(hq))
+            return "no HQ";
+        var attacker = PlayerFighters().FirstOrDefault()?.CanAttack;
+        hq.CanBeAttacked.ReceiveDamage(hp, attacker);
+        return IsInstanceValid(hq) ? $"HQ HP {hq.Hp}/{hq.MaxHp}" : "HQ destroyed";
+    }
+
     /// <summary>State of every computer player.</summary>
     public string Ai() => string.Join("\n", Teams.TeamsInGame.Values.Where(t => t.Ai != null).Select(t => t.Ai.Describe() + " | " + t.Org));
 

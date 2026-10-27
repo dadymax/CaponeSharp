@@ -106,12 +106,16 @@ public class Organisation
 
     private void HourTick(GameClock clock)
     {
+        if (Eliminated)
+            return; // the HQ object is removed from the world (sub_43AB50), so its events stop
         UpdateStats();
         clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
     }
 
     private void InterestTick(GameClock clock)
     {
+        if (Eliminated)
+            return;
         if (Cash < 0)
             Spend((long)(-Cash / InterestDivisor));
         clock.ScheduleIn(InterestPeriodMinutes, () => InterestTick(clock));
@@ -171,10 +175,40 @@ public class Organisation
         if (Eliminated)
             return;
         Eliminated = true;
+        GD.Print($"Organisation: {Team.PlayerName} eliminated");
         if (Team.IsCurrentPlayerColor)
             CampaignManager.Instance?.OnPlayerDefeated(Team, OriginalTexts.Instance.Get(19, 1));
         else
             Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(19, 2), Team.PlayerName));
+        CheckLastPlayers();
+    }
+
+    /// <summary>
+    /// Alliance victory (World +4EAh, a game-setup option copied from the loader's +7870h by sub_404B50). Its value
+    /// for the campaign is not known yet, so it is off.
+    /// </summary>
+    public static bool AllianceVictory { get; set; }
+
+    /// <summary>
+    /// sub_43B711, after a player is removed: with fewer than two players left the local player, if still in, wins
+    /// ("You have won ! The city belongs to your gang !", 19,3). With alliance victory on, players that are all
+    /// allies (no pair with relation 1, enemy) also end the game ("… belongs to your alliance !", 19,4).
+    /// </summary>
+    private static void CheckLastPlayers()
+    {
+        var alive = Teams.TeamsInGame.Values.Where(t => t.Org is { Eliminated: false }).ToList();
+        var human = alive.FirstOrDefault(t => t.IsCurrentPlayerColor);
+        if (alive.Count < 2)
+        {
+            if (human != null)
+                CampaignManager.Instance?.OnLastPlayerWon(human, OriginalTexts.Instance.Get(19, 3));
+            return;
+        }
+        if (!AllianceVictory)
+            return;
+        var enemies = alive.Any(a => alive.Any(b => a != b && a.GetTargetRelation(b.TeamColor) == Teams.TeamRelation.Enemy));
+        if (!enemies && human != null)
+            CampaignManager.Instance?.OnLastPlayerWon(human, OriginalTexts.Instance.Get(19, 4));
     }
 
     /// <summary>

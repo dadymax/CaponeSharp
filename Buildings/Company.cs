@@ -118,9 +118,36 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     {
         IsHq = true;
         EnsureComponents(CompanyCommon.CompanyType.HQ);
+        _company.SetMaxHp(HqMaxHp);
+        _company.CanBeAttacked.HPisZERO += _ => OnHqDestroyed();
         OwnerTeam = team;
         UpdateOwnerRelation();
         UpdateSign();
+    }
+
+    /// <summary>HQ building (class 9, vtable off_477644) vt+F8h, sub_416750: 514h hit points.</summary>
+    public const int HqMaxHp = 1300;
+
+    /// <summary>
+    /// HQ building vt+FCh (sub_415F20): "Your headquarter has been destroyed." (17,37) for the local owner, else
+    /// "%s's headquater has been destroyed!" (17,38); the owner is eliminated (sub_43B677) and the building removed
+    /// (sub_43BCE0). TODO: capture of an HQ (vt+74h sub_4151C5, texts 17,0 / 17,1) also eliminates the old owner.
+    /// </summary>
+    private void OnHqDestroyed()
+    {
+        if (!IsHq || OwnerTeam == null)
+            return;
+        var owner = OwnerTeam;
+        GD.Print($"Company: HQ of {owner.PlayerName} destroyed");
+        Messages.Show(owner.IsCurrentPlayerColor
+            ? OriginalTexts.Instance.Get(17, 37)
+            : PanelInfo.CFormat(OriginalTexts.Instance.Get(17, 38), owner.PlayerName));
+        if (owner.HqCompany == this)
+            owner.HqCompany = null;
+        IsHq = false;
+        OwnerTeam = null;
+        owner.Org?.Eliminate();
+        QueueFree();
     }
 
     private void EnsureComponents(CompanyCommon.CompanyType type)

@@ -376,6 +376,18 @@ public partial class CampaignManager : Node
         (MainScene as Main)?.ShowEndScreen(false, text, CurrentScenario?.EpisodeNumber ?? 1);
     }
 
+    /// <summary>The other players are eliminated (sub_43B711): the success screen with that text.</summary>
+    public void OnLastPlayerWon(Team team, string text)
+    {
+        GD.Print($"CampaignManager: '{team?.PlayerName}' is the last player in episode {CurrentScenario?.EpisodeNumber} at {GameClock.Format(GameClock.Instance?.Minute ?? 0)}");
+        Messages.Show(text);
+        if (GameClock.Instance != null)
+            GameClock.Instance.Paused = true;
+        if (MainScene != null)
+            MainScene.GetTree().Paused = true;
+        (MainScene as Main)?.ShowEndScreen(true, text, CurrentScenario?.EpisodeNumber ?? 1);
+    }
+
     public void OnPlayerWon(int playerId)
     {
         var team = Teams.GetTeamByPlayerId(playerId);
