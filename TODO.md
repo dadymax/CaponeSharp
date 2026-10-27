@@ -369,6 +369,12 @@ Still open from this part:
 
 These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`.
 
+- [ ] **Fog of war.** Every unit has a sight radius (unit table +2Ch Vision / +2Ah VisionMax, `OriginalUnitTable`) and the player sees the map only through their own units' sight (and probably their buildings'). Enemy units and other players' actions outside it must be hidden. Start from the unit's vision grid (+0E4h, (2r+1)² bytes, r = `sub_42E420`, filled around `0x42A35E`) and find how the map renderer uses it. Rules confirmed by the user (from playing the original):
+  - Own buildings reveal the map around them too.
+  - The fog is dynamic: when a unit leaves, the fog comes back over that area (units in it are hidden again). Companies and businesses outside the vision of the player and their allies stay drawn in their last seen state (owner, business type, damage) until someone sees them again.
+  - Sniper: default sight range; after standing still for a while (about a second of real time, i.e. one game hour?) both sight and attack range grow by 1 tile (compare `SniperAbility`).
+  - A disguised Hit man (vt+19Ch) inside someone's sight is visible but never auto-attacked, by unit AI or computer players; the human can still attack him manually. Once he loses the disguise he is a normal target. Check `UnitAI.Think` (it currently skips hidden units entirely, which matches the auto-attack part) and that hidden Hit men are still drawn.
+
 - [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.
 - [ ] **Police actions**: "Ask Cops to raid the business (N police favour points)", "Ask cops to arrest gangster". Police are also on the map: unit "Sergeant", building "Police Station". Episode 1 tips say the police arrest your gangsters. Needs police units + arrest logic.
 - [ ] **Army**: "Recruit gun man / shotgun man / thompson man / sniper / hitman / terrorist / thief / cadillac ($X and N Army favour points)". This matches `ArmyFavor` in `units.json`; enforce it on recruit. "Bribe the army to find and recruit a sniper."
