@@ -112,7 +112,7 @@ public static class Training
         Jobs.Remove(job.Team);
         var org = job.Team.Org;
         var price = Price(job.Recruit.Type);
-        if (org == null || !org.CanAfford(price))
+        if (org == null || org.Eliminated || !org.CanAfford(price))
             return;
         if (job.Recruit.Service >= 0 && !org.UseItem(job.Recruit.Service))
             return;

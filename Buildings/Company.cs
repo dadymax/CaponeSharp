@@ -541,6 +541,26 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         SetOwnerTeam(null);
     }
 
+    /// <summary>
+    /// The owner was eliminated: like a sale without the money, a business becomes a random legal company of its grade
+    /// for its district and the company belongs to nobody; a running conversion or repair is dropped.
+    /// </summary>
+    public void ReleaseToNeutral()
+    {
+        if (!IsEconomic || OwnerTeam == null)
+            return;
+        Building = null;
+        Repairing = false;
+        if (BusinessType != OriginalBusinessTable.BusinessType.Legal)
+        {
+            var legal = OriginalBusinessTable.Instance.RandomLegal(Entry.Grade, Block?.District ?? OriginalBusinessTable.AnyDistrict);
+            if (legal != null)
+                SetRow(legal);
+        }
+        Uncollected = 0;
+        SetOwnerTeam(null);
+    }
+
     // ---- ownership (vt+74h, sub_4211F0) ------------------------------------------------------------------------------
 
     /// <summary>Change owner; a neutral company loses its uncollected cash, and the block registers the new owner.</summary>

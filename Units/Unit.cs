@@ -470,6 +470,27 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// <summary>Jailed for good (unit vt+1A0h): the unit leaves the game.</summary>
     public void Jail() => RemoveFromGame("jailed");
 
+    /// <summary>The owner was eliminated: the unit leaves the game (default).</summary>
+    public void Vanish() => RemoveFromGame("left with its eliminated owner");
+
+    /// <summary>A unit of an eliminated owner kept as a neutral that fights everyone, other rogues included.</summary>
+    public bool IsRogue { get; private set; }
+
+    /// <summary>The owner was eliminated and <see cref="Organisation.RogueUnits"/> is on.</summary>
+    public void GoRogue()
+    {
+        GD.Print($"Unit {DisplayName} ({UnitType}) goes rogue");
+        CancelOrder();
+        StopMoving();
+        if (CanAttack != null)
+            CanAttack.Target = null;
+        Selected = false;
+        TeamColor = Teams.NeutralTeamColor;
+        _unitOwner = UnitCommon.UnitOwner.Neutral;
+        IsRogue = true;
+        CanAttack?.Reinit();
+    }
+
     /// <summary>A collector with nothing left to collect leaves the map (vt+1E8h).</summary>
     public void Leave() => RemoveFromGame("left the map");
 

@@ -180,7 +180,35 @@ public class Organisation
             CampaignManager.Instance?.OnPlayerDefeated(Team, OriginalTexts.Instance.Get(19, 1));
         else
             Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(19, 2), Team.PlayerName));
+        ReleaseAssets();
         CheckLastPlayers();
+    }
+
+    /// <summary>
+    /// What an eliminated player's units do: false (default) — they disappear; true — they stay as neutral units that
+    /// fight everyone, each other included. A future game setting.
+    /// </summary>
+    public static bool RogueUnits { get; set; }
+
+    /// <summary>
+    /// The eliminated player's units disappear (or go rogue) and every company and business they own becomes an
+    /// unowned legal company (user, from the original game).
+    /// </summary>
+    private void ReleaseAssets()
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return;
+        foreach (var unit in tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && u.OwnerTeam == Team).ToList())
+        {
+            if (RogueUnits && unit.UnitType != UnitCommon.UnitType.Collector)
+                unit.GoRogue();
+            else
+                unit.Vanish();
+        }
+        foreach (var company in tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Team).ToList())
+            company.ReleaseToNeutral();
+        if (PrimaryCenter != null)
+            PrimaryCenter = null;
     }
 
     /// <summary>

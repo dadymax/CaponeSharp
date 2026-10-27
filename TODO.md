@@ -275,8 +275,14 @@ with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
   (`Organisation.AllianceVictory`).
 - MCP-tested: episode 4, destroying Большой Джим's HQ (Debug `DamageHq`) → 17,38, 19,2, win screen with 19,3;
   episode 15, the player's HQ destroyed → 17,37 and the defeat screen.
-- Open: what happens to an eliminated player's units and companies (the original only removes the HQ object);
-  other removal paths `sub_429658` (text 25,9) and `sub_43C052` (19,7).
+- An eliminated player's assets (user, from the original game): every unit disappears (`Unit.Vanish`) and every
+  company and business goes back to an unowned legal company, like a sale without the money
+  (`Company.ReleaseToNeutral`; running conversions and repairs are dropped). Prepared for a future setting:
+  `Organisation.RogueUnits` keeps the units (not Collectors) as neutrals hostile to everyone, other rogues included
+  (`Unit.GoRogue`, `UnitAI.IsHostileTo`, `CanAttack.IsHostile`). MCP-tested in episode 8: Морган's 33 units vanished,
+  his 24 companies became unowned legal ones; with rogue units on, Рико's fighters fought each other.
+- Open: the HQ building of a player eliminated by bankruptcy stays on the map, owned by them; other removal paths
+  `sub_429658` (text 25,9) and `sub_43C052` (19,7).
 
 ### Economy facts recovered (this brick)
 

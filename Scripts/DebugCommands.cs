@@ -25,9 +25,29 @@ public partial class DebugCommands : Node
         var hq = Teams.GetTeamByPlayerId(playerId)?.HqCompany;
         if (hq?.CanBeAttacked == null || !IsInstanceValid(hq))
             return "no HQ";
-        var attacker = PlayerFighters().FirstOrDefault()?.CanAttack;
+        var attacker = Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>()
+            .FirstOrDefault(u => !u.IsDead && u.CanAttack != null && u.OwnerTeam != null && u.OwnerTeam != hq.OwnerTeam)?.CanAttack;
         hq.CanBeAttacked.ReceiveDamage(hp, attacker);
         return IsInstanceValid(hq) ? $"HQ HP {hq.Hp}/{hq.MaxHp}" : "HQ destroyed";
+    }
+
+    /// <summary>Eliminated players' units go rogue instead of disappearing.</summary>
+    public string RogueUnits(bool on)
+    {
+        Organisation.RogueUnits = on;
+        return $"rogue units {on}";
+    }
+
+    /// <summary>Units and economic companies per player.</summary>
+    public string Owners()
+    {
+        var units = Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead).ToList();
+        var companies = Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.IsEconomic).ToList();
+        var sb = new StringBuilder();
+        foreach (var team in Teams.TeamsInGame.Values)
+            sb.Append($"P{team.PlayerId} {team.PlayerName}{(team.Org?.Eliminated == true ? " [out]" : "")}: units {units.Count(u => u.OwnerTeam == team)}, companies {companies.Count(c => c.OwnerTeam == team)} (business {companies.Count(c => c.OwnerTeam == team && c.BusinessType != OriginalBusinessTable.BusinessType.Legal)})\n");
+        sb.Append($"rogue units {units.Count(u => u.IsRogue)}, unowned companies {companies.Count(c => c.OwnerTeam == null)} (business {companies.Count(c => c.OwnerTeam == null && c.BusinessType != OriginalBusinessTable.BusinessType.Legal)})");
+        return sb.ToString();
     }
 
     /// <summary>State of every computer player.</summary>

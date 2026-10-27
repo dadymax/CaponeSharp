@@ -54,6 +54,8 @@ public partial class CanAttack : Node, IJsonConfigurable
     /// <summary>Enemies and neutrals can be attacked; self and friends can't.</summary>
     private bool IsHostile(Node2D target)
     {
+        if (target != _thisParent && ((_thisParent as Unit)?.IsRogue == true || (target as Unit)?.IsRogue == true))
+            return true;
         var targetColor = (target as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
         if (targetColor == _thisTeamColor)
             return false;

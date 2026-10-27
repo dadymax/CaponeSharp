@@ -34,7 +34,7 @@ public partial class Unit
     public int DefaultStance => UnitType == UnitCommon.UnitType.Terrorist ? 3 : 1;
 
     private bool ThinksForItself =>
-        CanAttack != null && OwnerTeam != null && !IsDead && !IsArrested
+        CanAttack != null && (OwnerTeam != null || IsRogue) && !IsDead && !IsArrested
         && UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar
             or UnitCommon.UnitType.Policeman or UnitCommon.UnitType.Cadillac);
 
@@ -61,9 +61,9 @@ public partial class Unit
         var vision = _unitInstance?.VisionRadius ?? 10;
         foreach (var node in GetTree().GetNodesInGroup(GroupName))
         {
-            if (node is not Unit other || other == this || other.IsDead || other.IsArrested || other.OwnerTeam == null)
+            if (node is not Unit other || other == this || other.IsDead || other.IsArrested)
                 continue;
-            if (OwnerTeam.GetTargetRelation(other.TeamColor) != Teams.TeamRelation.Enemy)
+            if (!IsHostileTo(other))
                 continue;
             if (other.CanAttack != null && !other.CanAttack.CheckStealth(TeamColor))
                 continue;
@@ -96,6 +96,15 @@ public partial class Unit
         }
         if (active != null && Stance == 1)
             Chase(active);
+    }
+
+    /// <summary>Enemy players' units; a rogue unit and everyone around it are enemies to each other.</summary>
+    private bool IsHostileTo(Unit other)
+    {
+        if (IsRogue || other.IsRogue)
+            return true;
+        return OwnerTeam != null && other.OwnerTeam != null
+               && OwnerTeam.GetTargetRelation(other.TeamColor) == Teams.TeamRelation.Enemy;
     }
 
     /// <summary>vt+164h: go after <paramref name="target"/> and attack it.</summary>
