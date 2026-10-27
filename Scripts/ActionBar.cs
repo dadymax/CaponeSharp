@@ -114,7 +114,7 @@ public partial class ActionBar : Control
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
-    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C;
+    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C, StandIcons = 0x484380;
 
     private static int TypeIcon(uint table, UnitCommon.UnitType type) =>
         OriginalExe.Instance.IsLoaded ? (int)OriginalExe.Instance.ReadU32(table + (uint)type * 4) : 0;
@@ -122,7 +122,7 @@ public partial class ActionBar : Control
     /// <summary>
     /// Unit menu (sub_42D2C1) for a selected own unit: Go (29,0), Attack (29,1), Extort Business (29,3) in slots 0–2.
     /// The button arms the order; the next left click on the map carries it out (Main.PendingOrder).
-    /// TODO: Stand Ground (29,4), Patrol (29,8, slot 5), Force Go/Attack (29,6/7 with Shift), Frenzy (29,5), Unload
+    /// TODO: Stand Ground's guarding (it only stops for now), Patrol (29,8, slot 5), Disguise (order 0Ah, 29,10, Hit man), Force Go/Attack (29,6/7 with Shift), Frenzy (29,5), Unload
     /// (29,9, Cadillac), the per-type order gate unit vt+1C4h, the enemy-unit buttons (orders 0Bh/0Ch).
     /// </summary>
     private bool BuildUnitMenu(Unit unit)
@@ -135,6 +135,16 @@ public partial class ActionBar : Control
         Set(1, TypeIcon(AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 1), () => Arm(Main.OrderMode.Attack));
         if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
             Set(2, TypeIcon(ExtortIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 3), () => Arm(Main.OrderMode.Extort));
+        // Order 3 "Stand Ground" (29,4) acts at once: the selected units drop their orders and stay where they are.
+        Set(3, TypeIcon(StandIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 4), () =>
+        {
+            main.PendingOrder = Main.OrderMode.None;
+            foreach (var u in main.CommandableSelection())
+            {
+                u.CancelOrder();
+                u.StopMoving();
+            }
+        });
         return true;
     }
 

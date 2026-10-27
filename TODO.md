@@ -151,9 +151,14 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   0x484380 / 0x4843B4 (orders 3 / 0Ah), go+Shift 0x4843E8, attack+Shift 0x48441C, patrol 0x484484, car exit 0x4844B8.
 - Done (`ActionBar.BuildUnitMenu`, `Main.PendingOrder`): Go, Attack (units), Extort; the button arms the order and the
   next left click on the map carries it out. MCP-tested: a Thug extorted a business and walked to a clicked cell.
+  Stand Ground (slot 3, icons 0x484380) stops the selected units at once (no guarding yet).
+- Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
+  vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
+  and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),
+  0Ch "Pay snitch to switch sides ($200.000)" (29,12) — both authority services.
 - Map clicks now use the event position (`GetGlobalMousePosition` reads the OS cursor), so MCP `game_click` on the
   map selects and orders units. The camera starts on the local player's HQ (PLAN M7).
-- Open: the vt+1C4h gate per type, Stand Ground, Patrol, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
+- Open: the vt+1C4h gate per type, Stand Ground's guarding, Patrol, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
 Known gaps in the brick (do later):
