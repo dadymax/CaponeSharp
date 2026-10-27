@@ -19,7 +19,7 @@ public partial class ActionBar : Control
     public static readonly Vector2 Origin = new(230, 504 - PanelInfo.PanelTop);
 
     private const int IconUpgrade = 0xAD4, IconRepair = 0xAD6, IconTroubleshooting = 0xADA, IconBootlegging = 0xADC,
-        IconBack = 0xADE, IconGambling = 0xAE0, IconEntertainment = 0xAE2, IconSupport = 0xAE4, IconSell = 0xD47;
+        IconBack = 0xADE, IconTrainingCenter = 0xD45, IconGambling = 0xAE0, IconEntertainment = 0xAE2, IconSupport = 0xAE4, IconSell = 0xD47;
 
     /// <summary>"Upgrade to … biz" buttons in menu order (sub_421370): type, icon, text (30, n).</summary>
     private static readonly (OriginalBusinessTable.BusinessType Type, int Icon, int Text)[] TypeButtons =
@@ -122,7 +122,7 @@ public partial class ActionBar : Control
         if (!own || company != _submenuCompany)
             _submenuCompany = null;
         var key = own
-            ? $"{company.GetInstanceId()}|{company.Entry?.Index}|{company.Busy}|{company.Hp >= company.MaxHp}|{_submenuCompany != null}|{_submenuType}|{(int)player.Org.Favour[4]}|{player.Org.AuthorityMoney[4]}"
+            ? $"{company.GetInstanceId()}|{company.Entry?.Index}|{company.Busy}|{company.Hp >= company.MaxHp}|{_submenuCompany != null}|{_submenuType}|{Training.PrimaryCenter(player) == company}|{(int)player.Org.Favour[4]}|{player.Org.AuthorityMoney[4]}"
             : "";
         if (!force && key == _shown)
             return;
@@ -177,6 +177,14 @@ public partial class ActionBar : Control
             }
             return;
         }
+
+        // Command 12: "Set as primary training center" (30,8) for an own training-center business that isn't primary.
+        if (Training.IsTrainingCenter(company) && Training.PrimaryCenter(player) != company)
+            Set(4, IconTrainingCenter, T(8), () =>
+            {
+                player.Org.PrimaryCenter = company;
+                Rebuild(true);
+            });
 
         if (company.CanRepair)
             Set(SlotCount - 1, IconRepair, PanelInfo.CFormat(T(6), company.RepairCost), () =>

@@ -120,7 +120,11 @@ code (base squad) get random personal names like `Unit::Unit`.
   button stays down. Conversions (class 15h) instead show GameButt.bmp's frame + coin bar over the six action slots
   (frame 0,0–258,43 at (230, 504), fill 0,63 up to 252 px at (233, 507)) — TODO.
 - The recruit-price table 0x4884EC / 0x480E18 differs from 0x484030 for the Collector (15 000 vs 5 000) and type 6.
-- Open: "set as primary training center" (company command 12), the conversion progress bar, Cadillac passengers.
+- Done: "Set as primary training center" (command 12, slot 4, icon 0xD45, text 30,8; HQ +0CEh via vt+90h,
+  `Organisation.PrimaryCenter`), shown on an own training center that isn't primary. MCP-tested: Thug 600 → 300 min.
+- **Check**: support rows' negative income is charged as weekly upkeep (Тренировочный центр −500 000/week drained
+  280 000 cash in a week). Verify how sub_420ED5 charges upkeep (per period? only while active?) before trusting it.
+- Open: Cadillac passengers.
 
 ## Bribe shares — "Расходы" chart (2026-10-27)
 

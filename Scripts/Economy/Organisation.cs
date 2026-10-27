@@ -40,6 +40,8 @@ public class Organisation
     public static readonly float[] LegalizationFactor = { 1.0f, 0.75f, 0.5f, 0.25f };
 
     public Team Team { get; }
+    /// <summary>Chosen primary training center (HQ +0CEh, set by company command 12 via vt+90h), or null.</summary>
+    public Company PrimaryCenter { get; set; }
     public long Cash { get; set; }
     /// <summary>Weekly net income ("Доходы"), as of the last hourly update.</summary>
     public long NetIncome { get; private set; }

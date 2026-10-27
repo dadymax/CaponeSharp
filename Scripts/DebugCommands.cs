@@ -103,10 +103,10 @@ public partial class DebugCommands : Node
     }
 
     /// <summary>Converts own company <paramref name="index"/> to its first offer of <paramref name="type"/>.</summary>
-    public string Convert(int index, int type)
+    public string Convert(int index, int type, int nth = 0)
     {
         var company = OwnCompany(index);
-        var row = company == null ? null : BusinessRules.Offers(company, (OriginalBusinessTable.BusinessType)type).FirstOrDefault();
+        var row = company == null ? null : BusinessRules.Offers(company, (OriginalBusinessTable.BusinessType)type).ElementAtOrDefault(nth);
         return row == null ? "nothing to build" : $"{company.StartConversion(row)}: {row}";
     }
 

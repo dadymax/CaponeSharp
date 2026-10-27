@@ -75,9 +75,12 @@ public static class Training
     /// <summary>Catalogue +28h = 4: training-center support business (company vt+1A8h).</summary>
     public static bool IsTrainingCenter(Company company) => company.IsEconomic && company.Entry?.Value28 == 4;
 
-    /// <summary>vt+8Ch (sub_431E63): the HQ, else an own training-center business.</summary>
+    /// <summary>vt+8Ch (sub_431E63): the chosen center if still own, else the HQ, else an own training-center business.</summary>
     public static Company PrimaryCenter(Team team)
     {
+        var chosen = team?.Org?.PrimaryCenter;
+        if (chosen != null && IsInstanceValid(chosen) && chosen.OwnerTeam == team && IsTrainingCenter(chosen))
+            return chosen;
         if (team?.HqCompany != null && IsInstanceValid(team.HqCompany))
             return team.HqCompany;
         return OwnCompanies(team).FirstOrDefault(IsTrainingCenter);
