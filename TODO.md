@@ -158,7 +158,8 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
 - Unit OnAction sub_42C0C0 (vt+BCh): actions 3 (Stand Ground), 0Ah (Disguise), 0Bh, 0Ch are immediate commands
   (object sub_428752 added to the world); the others (0 Go, 1 Attack, 2 Extort, 5/6 Force, 8 Patrol) are targeted:
   they arm the order mode and the next map click builds the order. Next: find the map-click order builder for mode 8
-  (Patrol) and the command handler for 3 / 0Ah.
+  (Patrol) and the command handler for 3 / 0Ah. Lead: the slot click arms [+8E0h] at 0x41287A..0x4128CA; the map
+  click checks [+8E0h] at 0x412EA2 and dispatches through the selection list (+8B8h, vt+0) / sub_43AB00 at 0x412EF0.
 - Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
   vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
   and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),
