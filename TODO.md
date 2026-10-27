@@ -122,8 +122,9 @@ code (base squad) get random personal names like `Unit::Unit`.
 - The recruit-price table 0x4884EC / 0x480E18 differs from 0x484030 for the Collector (15 000 vs 5 000) and type 6.
 - Done: "Set as primary training center" (command 12, slot 4, icon 0xD45, text 30,8; HQ +0CEh via vt+90h,
   `Organisation.PrimaryCenter`), shown on an own training center that isn't primary. MCP-tested: Thug 600 → 300 min.
-- **Check**: support rows' negative income is charged as weekly upkeep (Тренировочный центр −500 000/week drained
-  280 000 cash in a week). Verify how sub_420ED5 charges upkeep (per period? only while active?) before trusting it.
+- Verified (sub_420ED5 at 0x42114B): a row with catalogue income ≤ 0 calls owner Spend(−Income() / 441) on each of the
+  441 weekly ticks, so a Тренировочный центр costs ~500 000 a week and a failing Spend repeats "out of funds" every
+  tick, as in the original. Open: the owner type factor the original applies to type 5 (HQ +120h?) is assumed 1.
 - Open: Cadillac passengers.
 
 ## Bribe shares — "Расходы" chart (2026-10-27)
