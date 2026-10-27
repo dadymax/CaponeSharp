@@ -69,6 +69,31 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     public Vector2I Cell => Map.LocalToMap(Position);
     public bool IsMoving => _astarNavPath.Count > 0 || _targetPositionNext != NoTarget;
 
+    /// <summary>
+    /// vt+1ACh (sub_42E385): vision radius now — unit table +2Ch while walking (activity +0BCh 1–4), +2Ah otherwise
+    /// (the Sniper sees and so shoots 1 tile farther standing: 8 / 9). TODO: activities 12+ shrink it to
+    /// +2Ah × (27 − activity) / 15 (flt_4849E0 / flt_4849E4), at least 1.
+    /// </summary>
+    public int CurrentVision
+    {
+        get
+        {
+            var stats = _unitInstance?.Stats;
+            if (stats == null)
+                return _unitInstance?.VisionRadius ?? 8;
+            return IsMoving ? stats.Vision : stats.VisionMax;
+        }
+    }
+
+    /// <summary>Is <paramref name="other"/> inside this unit's vision square (the (2r+1)² grid at +0E4h)?</summary>
+    public bool Sees(Node2D other)
+    {
+        var a = Map.LocalToMap(Position);
+        var b = Map.LocalToMap(other.Position);
+        var r = CurrentVision;
+        return Mathf.Abs(a.X - b.X) <= r && Mathf.Abs(a.Y - b.Y) <= r;
+    }
+
     public void SetType(UnitCommon.UnitType type)
     {
         UnitType = type;

@@ -215,8 +215,13 @@ public partial class CanAttack : Node, IJsonConfigurable
             return false;
 
         // Ranged attacks only work against units; a company has to be attacked from next to it.
-        var range = target is Company ? BuildingAttackRange : AttackRange;
-        return MapTileMath.GetDistanceExact(_thisParent, target) <= range;
+        if (target is Company)
+            return MapTileMath.GetDistanceExact(_thisParent, target) <= BuildingAttackRange;
+        // sub_42B750 (unit vt+118h): the target must be in the attacker's current vision square, then within the
+        // table range (+14h). TODO: line of sight (the vision grid's visible bytes).
+        if (_thisParent is Unit self && !self.Sees(target))
+            return false;
+        return MapTileMath.GetDistanceExact(_thisParent, target) <= AttackRange;
     }
 
     public override void _Ready() => Reinit();

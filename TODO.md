@@ -402,7 +402,13 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 - [ ] **Fog of war.** Every unit has a sight radius (unit table +2Ch Vision / +2Ah VisionMax, `OriginalUnitTable`) and the player sees the map only through their own units' sight (and probably their buildings'). Enemy units and other players' actions outside it must be hidden. Start from the unit's vision grid (+0E4h, (2r+1)² bytes, r = `sub_42E420`, filled around `0x42A35E`) and find how the map renderer uses it. Rules confirmed by the user (from playing the original):
   - Own buildings reveal the map around them too.
   - The fog is dynamic: when a unit leaves, the fog comes back over that area (units in it are hidden again). Companies and businesses outside the vision of the player and their allies stay drawn in their last seen state (owner, business type, damage) until someone sees them again.
-  - Sniper: default sight range; after standing still for a while (about a second of real time, i.e. one game hour?) both sight and attack range grow by 1 tile (compare `SniperAbility`).
+  - Sniper: done. Current vision (unit vt+1ACh `sub_42E385`) is unit table +2Ch while walking (activity +0BCh 1–4) and +2Ah
+    otherwise; the Sniper has 8 / 9 (Thief, Godfather 7 / 8, the rest equal). A shot (vt+118h `sub_42B750`) needs the target
+    inside the current vision square and within the table range (Sniper 9.0), so standing gives +1 sight and +1 reach
+    (`Unit.CurrentVision`, `Unit.Sees`, `CanAttack.TargetInRange`). Open: line of sight in the vision grid; activities 12+
+    shrink vision to +2Ah × (27 − activity) / 15; `SniperAbility`'s farther-is-stronger damage is a GDScript-era guess.
+  - Hit man: `HitmanStealth` (always hidden until he attacks) is a GDScript-era guess; the original has a Disguise order
+    (0Ah, text 29,10, needs a service via vt+B8h, hidden flag vt+19Ch). Port that order; keep "not auto-attacked while disguised".
   - A disguised Hit man (vt+19Ch) inside someone's sight is visible but never auto-attacked, by unit AI or computer players; the human can still attack him manually. Once he loses the disguise he is a normal target. Check `UnitAI.Think` (it currently skips hidden units entirely, which matches the auto-attack part) and that hidden Hit men are still drawn.
 
 - [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.

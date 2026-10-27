@@ -52,13 +52,12 @@ public partial class Unit
         Think();
     }
 
-    private bool InRange(Node2D target) => MapTileMath.GetDistanceExact(this, target) <= CanAttack.AttackRange;
+    private bool InRange(Node2D target) => Sees(target) && MapTileMath.GetDistanceExact(this, target) <= CanAttack.AttackRange;
 
     private void Think()
     {
         Unit passive = null, active = null;
         float passiveDist = float.MaxValue, activeDist = float.MaxValue;
-        var vision = _unitInstance?.VisionRadius ?? 10;
         foreach (var node in GetTree().GetNodesInGroup(GroupName))
         {
             if (node is not Unit other || other == this || other.IsDead || other.IsArrested)
@@ -67,9 +66,9 @@ public partial class Unit
                 continue;
             if (other.CanAttack != null && !other.CanAttack.CheckStealth(TeamColor))
                 continue;
-            var d = MapTileMath.GetDistanceExact(this, other);
-            if (d > vision)
+            if (!Sees(other))
                 continue;
+            var d = MapTileMath.GetDistanceExact(this, other);
             if (other.IsFighting)
             {
                 if (d < activeDist) { activeDist = d; active = other; }
