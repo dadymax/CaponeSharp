@@ -8,6 +8,8 @@ public static class TileMapGenerator
 {
     public static readonly StringName CompanyLayerName = "company";
     public static readonly StringName TileNonWalkable = "nonWalkable";
+    /// <summary>Map meta: cells that block sight (building letters B C M H D G P; the ground classes are see-through).</summary>
+    public static readonly StringName MetaOpaque = "opaqueCells";
     public static readonly StringName MetaNameBases = "Bases";
 
     private const string CompanyScenePath = "res://Buildings/Company.tscn";
@@ -51,6 +53,7 @@ public static class TileMapGenerator
 
         var businesses = OriginalData.Instance.Businesses;
         var bldngCounter = 0;
+        var opaque = new Godot.Collections.Array<Vector2I>();
         foreach (var vec in map.BlockPlacement)
         {
             var blockPosition = new Vector2I(vec.X, vec.Y);
@@ -116,6 +119,8 @@ public static class TileMapGenerator
                     var actualBlockPosition = MapTileMath.Add(tileMap, Vector2I.Zero, blockPosition);
                     var actual = MapTileMath.Add(tileMap, actualBlockPosition, bldngTilePosition);
                     cellOf[new Vector2I(x, yInverted)] = actual;
+                    if ("BCMHDGP".IndexOf(bldngChar) >= 0)
+                        opaque.Add(actual);
 
                     switch (bldngChar)
                     {
@@ -185,6 +190,7 @@ public static class TileMapGenerator
         }
 
         tileMap.SetMeta(TileNonWalkable, nonWalkableMap);
+        tileMap.SetMeta(MetaOpaque, opaque);
         tileMap.SetMeta(MetaNameBases, bases);
         return tileMap;
     }

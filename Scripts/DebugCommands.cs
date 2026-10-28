@@ -93,6 +93,16 @@ public partial class DebugCommands : Node
         return $"{unit.UnitType}@{unit.Cell} {(force ? "force go" : "go")} -> ({x}, {y}) mode {unit.MoveMode}";
     }
 
+    /// <summary>Turns the fog of war on or off; reports visible cells and hidden units / companies in fog.</summary>
+    public string Fog(bool on)
+    {
+        FogOfWar.Enabled = on;
+        FogOfWar.Instance?.Refresh();
+        var units = Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead).ToList();
+        var companies = Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().ToList();
+        return $"{FogOfWar.Instance?.Describe()}\nfog {on}: visible cells {FogOfWar.Instance?.VisibleCount}, hidden units {units.Count(u => !u.Visible)}/{units.Count}, companies in fog {companies.Count(c => c.InFog)}/{companies.Count}";
+    }
+
     /// <summary>Order mode, movement and target of every player unit.</summary>
     public string Orders() =>
         string.Join("\n", PlayerFighters().Select(u =>

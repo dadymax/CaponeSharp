@@ -85,13 +85,31 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         }
     }
 
-    /// <summary>Is <paramref name="other"/> inside this unit's vision square (the (2r+1)² grid at +0E4h)?</summary>
+    private bool[] _sightGrid;
+    private Vector2I _sightCell = new(int.MinValue, int.MinValue);
+    private int _sightRadius = -1;
+
+    /// <summary>
+    /// The sight grid (+0E4h), rebuilt like the unit tick does (0x42AB79) only when the cell or the radius changed.
+    /// </summary>
+    public bool[] SightGrid(out Vector2I center, out int radius)
+    {
+        center = Map.LocalToMap(Position);
+        radius = CurrentVision;
+        if (_sightGrid == null || center != _sightCell || radius != _sightRadius)
+        {
+            _sightGrid = Vision.Build(center, radius);
+            _sightCell = center;
+            _sightRadius = radius;
+        }
+        return _sightGrid;
+    }
+
+    /// <summary>Is <paramref name="other"/>'s cell visible in this unit's sight grid (sub_42B750)?</summary>
     public bool Sees(Node2D other)
     {
-        var a = Map.LocalToMap(Position);
-        var b = Map.LocalToMap(other.Position);
-        var r = CurrentVision;
-        return Mathf.Abs(a.X - b.X) <= r && Mathf.Abs(a.Y - b.Y) <= r;
+        var grid = SightGrid(out var center, out var r);
+        return Vision.Visible(grid, center, r, Map.LocalToMap(other.Position));
     }
 
     public void SetType(UnitCommon.UnitType type)

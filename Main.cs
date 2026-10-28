@@ -126,6 +126,8 @@ public partial class Main : Node2D
 			return;
 		Map.Name = "Map";
 		MapTileMath.Tilemap = Map;
+		Vision.Init(Map);
+		Map.AddChild(new FogOfWar { Name = "FogOfWar" });
 		AddChild(Map);
 
 		campaignManager.TileMap = Map;
@@ -334,8 +336,15 @@ public partial class Main : Node2D
 			CollideWithAreas = true,
 			Position = globalPoint,
 		};
-		var results = GetViewport().World2D.DirectSpaceState.IntersectPoint(query, 1);
-		return results.Count > 0 ? results[0]["collider"].AsGodotObject() : null;
+		// Units hidden by the fog of war can't be picked.
+		foreach (var hit in GetViewport().World2D.DirectSpaceState.IntersectPoint(query, 8))
+		{
+			var collider = hit["collider"].AsGodotObject();
+			if (collider is Unit { Visible: false })
+				continue;
+			return collider;
+		}
+		return null;
 	}
 
 	private void SetupGui()

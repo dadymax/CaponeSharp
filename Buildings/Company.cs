@@ -606,9 +606,40 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
                     ? CompanyCommon.CompanyType.SupportMoney : CompanyCommon.CompanyType.SupportFire,
                 _ => CompanyCommon.CompanyType.Occupied,
             };
+        if (InFog)
+        {
+            _signPending = true; // out of the player's sight: keep showing the last seen sign
+            return;
+        }
+        ApplySign();
+    }
+
+    private void ApplySign()
+    {
+        _signPending = false;
         _company?.SetSignType(SignType);
         _animShift = SignType == CompanyCommon.CompanyType.Free ? new Vector2I(0, -10) : new Vector2I(0, -30);
         Reinit();
+    }
+
+    private bool _signPending;
+    private bool _inFog;
+
+    /// <summary>
+    /// Out of the local player's sight (<see cref="FogOfWar"/>): the sign keeps its last seen owner and type until the
+    /// company is seen again (user, from the original game).
+    /// </summary>
+    public bool InFog
+    {
+        get => _inFog;
+        set
+        {
+            if (_inFog == value)
+                return;
+            _inFog = value;
+            if (!value && _signPending)
+                ApplySign();
+        }
     }
 
     public void Reinit()
