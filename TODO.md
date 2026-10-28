@@ -300,7 +300,9 @@ is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
   (`Unit.ChangeOwner`), "%s switches sides." (29,19).
 - MCP-tested in episode 15: beer legalized; investigation + rumour on Дион О'Брайен (his type factors 0.6); a snitch
   planted and bought (switched sides, 200 000 paid). Not tested: the FBI visit on the local player (the AI doesn't
-  buy services). Open: computer players using services; the original's FBI-visit progress box; HQ repair.
+  buy services). Open: the original's FBI-visit progress box; HQ repair.
+- [ ] FUTURE — do not start until the user explicitly asks: computer players using HQ services (FBI visit, rumours,
+  investigations, snitches, legalization). The AI code read so far (sub_461510 family) never calls them.
 
 ## Elimination and last player standing (2026-10-27)
 
