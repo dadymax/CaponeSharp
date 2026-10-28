@@ -63,6 +63,54 @@ internal static class ScreenPictures
 }
 
 /// <summary>
+/// Main menu (sub_408F86 loads, sub_4090D0 draws): MainMenu.bmp with five 283×42 buttons at x 257 and y from the table
+/// at 0x47698C (152, 237, 321, 407, 491): Campaign, Network game, Settings, Developers, Exit. MainMeBu.bmp holds the
+/// lit picture of each in rows 0–4 and the pressed one in rows 5–9.
+/// Only Campaign and Exit work; Network game, Settings and Developers are left for later (user: only on request).
+/// </summary>
+public partial class MainMenuScreen : Control
+{
+    public static readonly int[] ButtonY = { 152, 237, 321, 407, 491 };
+    public const int ButtonX = 257;
+    public const int ButtonWidth = 283;
+    public const int ButtonHeight = 42;
+    public const int Campaign = 0, Exit = 4;
+
+    private Texture2D _background;
+
+    public event Action CampaignChosen;
+    public event Action ExitChosen;
+
+    public MainMenuScreen() => Name = "MainMenu";
+
+    public override void _Ready()
+    {
+        ProcessMode = ProcessModeEnum.Always;
+        SetAnchorsPreset(LayoutPreset.FullRect);
+        _background = ScreenPictures.Load("MAINMENU.BMP");
+        var buttons = ScreenPictures.Load("MAINMEBU.BMP");
+        if (buttons == null)
+            return;
+        foreach (var (index, action) in new[] { (Campaign, (Action)(() => CampaignChosen?.Invoke())), (Exit, () => ExitChosen?.Invoke()) })
+        {
+            var y = ButtonY[index];
+            var button = ScreenPictures.Button(new Vector2(ButtonX, y),
+                _background != null ? ScreenPictures.Part(_background, ButtonX, y, ButtonWidth, ButtonHeight) : null,
+                ScreenPictures.Part(buttons, 0, ButtonHeight * index, ButtonWidth, ButtonHeight),
+                ScreenPictures.Part(buttons, 0, ButtonHeight * (index + 5), ButtonWidth, ButtonHeight), action);
+            button.Name = index == Campaign ? "Campaign" : "Exit";
+            AddChild(button);
+        }
+    }
+
+    public override void _Draw()
+    {
+        if (_background != null)
+            DrawTexture(_background, Vector2.Zero);
+    }
+}
+
+/// <summary>
 /// Episode briefing (sub_464AE0 draws, sub_4644A1 reads the texts): ScenDisp.bmp; SCENARIONAME centred at (410, 70)
 /// font 4 yellow; up to 14 STORYTEXT lines at (183, 109 + 15i) and 3 OBJECTIVETEXT lines at (183, 357 + 15i), font 3
 /// green, width 525; the MAP file name at (179, 421) font 2 green; one 7-pixel mark per finished episode on the bar at

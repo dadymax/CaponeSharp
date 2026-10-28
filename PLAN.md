@@ -122,7 +122,7 @@ From `ep1.epi` and the EXE:
 - HQ services: legalization, bribing investigations, FBI visit, investigations, rumours, snitch rumour, announced death, FBI snitch + order 0Ch.
 - Parked until the user asks: computer players using HQ services.
 
-**M12 — Main menu** ☐ (next in line; build when asked)
+**M12 — Main menu** ☑ (2026-10-29: `MainMenuScreen`; Campaign and Exit)
 - Screen with the background from `MAINMENU.bmp` and the button graphics from `MAINMEBU.bmp` (see TODO §3 for the file list).
 - Five buttons: Campaign, Network game, Settings, Developers, Exit.
 - Only **Campaign** (starts the campaign, i.e. the briefing of the current episode) and **Exit** are to be built.

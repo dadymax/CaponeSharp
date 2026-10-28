@@ -59,7 +59,8 @@ public partial class Main : Node2D
 		}
 		CampaignProgress.Load();
 		var episode = CampaignProgress.Current;
-		if (PendingEpisode > 0)
+		var afterEndScreen = PendingEpisode > 0;
+		if (afterEndScreen)
 			episode = PendingEpisode;
 		else
 			foreach (var arg in args)
@@ -95,8 +96,10 @@ public partial class Main : Node2D
 			if (scenarioTest)
 				AddChild(new ScenarioTest(episode));
 		}
-		else
+		else if (afterEndScreen)
 			ShowBriefing(episode);
+		else
+			ShowMainMenu(episode);
 	}
 
 	private CanvasLayer AddScreenLayer()
@@ -118,9 +121,26 @@ public partial class Main : Node2D
 			layer.QueueFree();
 			StartEpisode(episode);
 		};
-		// TODO (M7): the main menu (MAINMENU.bmp); for now "Back" leaves the game.
-		screen.Back += () => GetTree().Quit();
+		screen.Back += () =>
+		{
+			layer.QueueFree();
+			ShowMainMenu(episode);
+		};
 		layer.AddChild(screen);
+	}
+
+	/// <summary>Main menu (PLAN M12): Campaign opens the briefing of the current episode, Exit leaves the game.</summary>
+	private void ShowMainMenu(int episode)
+	{
+		var layer = AddScreenLayer();
+		var menu = new MainMenuScreen();
+		menu.CampaignChosen += () =>
+		{
+			layer.QueueFree();
+			ShowBriefing(episode);
+		};
+		menu.ExitChosen += () => GetTree().Quit();
+		layer.AddChild(menu);
 	}
 
 	/// <summary>

@@ -22,7 +22,10 @@ Play (window):
 
     ..\godottry\godot\Godot_v4.7.2-stable_mono_win64_console.exe --path .
 
-Start the episode straight away, without the briefing screen:
+The game opens on the main menu: "Кампания" (Campaign) shows the briefing of the current episode, "Выход"
+(Exit) quits. Network game, Settings and Developers do nothing yet.
+
+Start the episode straight away, without the menu and the briefing screen:
 
     ..\godottry\godot\Godot_v4.7.2-stable_mono_win64_console.exe --path . -- --skip-briefing
 
@@ -95,7 +98,7 @@ computer opponents (extortion, recruiting, conversions, attacks); HQ services;
 raids, demolition, brownout; victory conditions, defeat, elimination,
 last player standing; deserting unpaid gangsters.
 
-Known missing parts: main menu, statistics chart on the end screen, many sounds,
+Known missing parts: Network game / Settings / Developers in the main menu, statistics chart on the end screen, many sounds,
 Thief stealing, Cadillac passengers, the original tile-by-tile movement
 (units can stand on the same cell), rubble after demolition.
 Full list: TODO.md and PLAN.md.
