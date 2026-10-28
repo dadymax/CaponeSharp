@@ -581,8 +581,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   under 4 pixels is a click.
 - [ ] **HQ of a bankrupt player.** The original's sub_43B677 removes the player object; what happens to its HQ
   building is not traced. sharptry removes it (`Company.RemoveHq`), consistent with "an HQ can't be captured".
-- [ ] **HQ placement.** An HQ must stand on a medium standalone building — letter B in the block description map
-  (Chicago.tile block rows) — not on any company cell.
+- [x] **HQ placement.** An HQ must stand on a medium standalone building — letter B in the block description map
+  (Chicago.tile block rows) — not on any company cell. Done 2026-10-29: the HQ takes the B cell nearest to the
+  start point (original coordinates, within 12 cells) that no other HQ took. On most maps the start point itself is a
+  G cell one row off its B (original y − 1); SLUM_CITY is one row the other way, LOST / CAPONECITY / QUARANTINE /
+  SMALLNEIGHBORHOOD up to 8 cells. Unit tests `MapTests` check every map.
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 

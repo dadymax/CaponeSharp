@@ -54,6 +54,8 @@ public static class TileMapGenerator
         var businesses = OriginalData.Instance.Businesses;
         var bldngCounter = 0;
         var opaque = new Godot.Collections.Array<Vector2I>();
+        // Medium standalone buildings (letter B): original map cell -> map cell.
+        var mediumBuildings = new Dictionary<Vector2I, Vector2I>();
         foreach (var vec in map.BlockPlacement)
         {
             var blockPosition = new Vector2I(vec.X, vec.Y);
@@ -121,6 +123,8 @@ public static class TileMapGenerator
                     cellOf[new Vector2I(x, yInverted)] = actual;
                     if ("BCMHDGP".IndexOf(bldngChar) >= 0)
                         opaque.Add(actual);
+                    if (bldngChar == 'B')
+                        mediumBuildings[blockPosition + bldngTilePosition] = actual;
 
                     switch (bldngChar)
                     {
@@ -169,7 +173,7 @@ public static class TileMapGenerator
             bldngCounter++;
         }
 
-        var bases = PlaceBases(tileMap, map, baseCount, randomBases, companyScene);
+        var bases = PlaceBases(tileMap, map, baseCount, randomBases, companyScene, mediumBuildings);
 
         var nonWalkableMap = new Godot.Collections.Array<Vector2I>();
         foreach (var coords in tileMap.GetUsedCells())
@@ -195,16 +199,20 @@ public static class TileMapGenerator
         return tileMap;
     }
 
+    /// <summary>How far (cells) from a start point the HQ's medium building may be.</summary>
+    public const int BaseSearchRadius = 12;
+
     /// <summary>
-    /// Turns the companies at the first <paramref name="baseCount"/> start points (in file order, or shuffled for RANDOM 1)
-    /// into HQs. Returns [cell, company] pairs in that order; the caller hands them to the players that have a base.
+    /// The first <paramref name="baseCount"/> start points (in file order, or shuffled for RANDOM 1) get an HQ. An HQ
+    /// stands on a medium standalone building — block letter B (user, from the original) — the one nearest to the start
+    /// point that no other HQ took; the start points of most maps are one cell off it. Returns [cell, company] pairs in
+    /// that order; the caller hands them to the players that have a base.
     /// </summary>
     private static Godot.Collections.Array PlaceBases(TileMapLayer tileMap, OriginalMaps.Map map, int baseCount,
-        bool randomBases, PackedScene companyScene)
+        bool randomBases, PackedScene companyScene, Dictionary<Vector2I, Vector2I> mediumBuildings)
     {
-        var startPoints = new List<Vector2I>();
-        foreach (var original in map.StartPoints)
-            startPoints.Add(MapTileMath.FromOriginal(tileMap, original));
+        // Searched in original coordinates: the isometric map cells are skewed against them.
+        var startPoints = new List<Vector2I>(map.StartPoints);
         if (randomBases)
             Shuffle(startPoints);
         if (baseCount > startPoints.Count)
@@ -215,7 +223,17 @@ public static class TileMapGenerator
         {
             if (bases.Count >= baseCount)
                 break;
-            var coords = startPoint;
+            Vector2I coords;
+            if (NearestFree(mediumBuildings, startPoint) is { } original)
+            {
+                coords = mediumBuildings[original];
+                mediumBuildings.Remove(original);
+            }
+            else
+            {
+                coords = MapTileMath.FromOriginal(tileMap, startPoint);
+                GD.PrintErr($"TileMapGenerator: {map.FileName}: no medium building (B) near start point {startPoint}");
+            }
             var td = tileMap.GetCellTileData(coords);
             if (td == null)
             {
@@ -223,8 +241,7 @@ public static class TileMapGenerator
                 continue;
             }
 
-            // The original puts the HQ building (class 9, sub_415090) right on the start point (sub_404098);
-            // a business that stood there is replaced.
+            // The HQ building (class 9, sub_415090, made by sub_404098) replaces a business that stood there.
             var company = GetCompany(td);
             if (company == null)
             {
@@ -235,6 +252,24 @@ public static class TileMapGenerator
             bases.Add(new Godot.Collections.Array { coords, company });
         }
         return bases;
+    }
+
+    private static Vector2I? NearestFree(Dictionary<Vector2I, Vector2I> cells, Vector2I from)
+    {
+        Vector2I? best = null;
+        var bestDistance = BaseSearchRadius * BaseSearchRadius + 1;
+        for (var dy = -BaseSearchRadius; dy <= BaseSearchRadius; dy++)
+            for (var dx = -BaseSearchRadius; dx <= BaseSearchRadius; dx++)
+            {
+                var d = dx * dx + dy * dy;
+                var cell = from + new Vector2I(dx, dy);
+                if (d < bestDistance && cells.ContainsKey(cell))
+                {
+                    bestDistance = d;
+                    best = cell;
+                }
+            }
+        return best;
     }
 
     public static Vector2[] GetStandartTileVertices(Vector2 margin)
