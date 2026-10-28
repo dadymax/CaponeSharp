@@ -36,7 +36,8 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
     {
         // Both sides count as fighting for the next game hour (unit vt+11Ch).
         (GetParent()?.GetParent() as Unit)?.MarkFighting();
-        (attacker?.GetParent()?.GetParent() as Unit)?.MarkFighting();
+        if (attacker != null && IsInstanceValid(attacker))
+            (attacker.GetParent()?.GetParent() as Unit)?.MarkFighting();
         var crit = false;
         if (EvasionFactor > 0)
         {
@@ -56,10 +57,11 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         HP = Mathf.Max(0, HP - damage);
         if (HP == 0)
         {
-            var attackerEntity = attacker?.GetParent()?.GetParent() as IGameEntity;
-            if (attackerEntity != null)
-                EmitSignal(SignalName.HPisZERO, attackerEntity.TeamColor);
-            if (attacker != null)
+            // Destroyed even when the attacker is unknown or already gone (a bomb, a test hit).
+            var known = attacker != null && IsInstanceValid(attacker);
+            var attackerEntity = known ? attacker.GetParent()?.GetParent() as IGameEntity : null;
+            EmitSignal(SignalName.HPisZERO, attackerEntity?.TeamColor ?? Teams.NeutralTeamColor);
+            if (known)
                 attacker.Target = null;
         }
     }

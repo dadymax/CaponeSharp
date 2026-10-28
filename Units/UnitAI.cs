@@ -169,7 +169,7 @@ public partial class Unit
     /// Enemy players' units; a rogue unit and everyone around it are enemies to each other; a deserter and every
     /// player's unit are enemies (deserters leave each other and the police alone).
     /// </summary>
-    private bool IsHostileTo(Unit other)
+    internal bool IsHostileTo(Unit other)
     {
         if (IsRogue || other.IsRogue)
             return true;

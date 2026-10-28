@@ -145,6 +145,10 @@ public partial class PoliceRaid : Node
         Name = "PoliceRaid";
     }
 
+    public string Describe() =>
+        $"raid car at {(IsInstanceValid(_car) ? _car.Cell.ToString() : "-")}, moving {(IsInstanceValid(_car) && _car.IsMoving)}, state {_state}, "
+        + $"target {(IsInstanceValid(_company) ? _company.Cell.ToString() : "-")}";
+
     public override void _PhysicsProcess(double delta)
     {
         if (!IsInstanceValid(_car) || _car.IsDead)

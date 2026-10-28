@@ -63,6 +63,9 @@ public partial class GameClock : Node
     /// <summary>Number of whole turns (hours) since the start.</summary>
     public long Turn => Minute / TurnMinutes;
 
+    /// <summary>Scheduled events that threw (checked by the scenario test).</summary>
+    public static int EventErrors { get; private set; }
+
     private readonly PriorityQueue<Action, (long minute, long seq)> _events = new();
     private long _sequence;
     private long _lastTurn;
@@ -83,9 +86,11 @@ public partial class GameClock : Node
             Engine.TimeScale = _speed;
     }
 
-    /// <summary>Restart the clock at minute 0 and drop all scheduled events (new scenario).</summary>
+    /// <summary>Restart the clock at minute 0 and drop all scheduled events (new scenario). The end of the previous
+    /// episode paused the clock; the new one starts running.</summary>
     public void Reset()
     {
+        Paused = false;
         Minutes = 0;
         _lastTurn = 0;
         _events.Clear();
@@ -119,6 +124,7 @@ public partial class GameClock : Node
             }
             catch (Exception e)
             {
+                EventErrors++;
                 GD.PushError($"GameClock: event at minute {when.minute} failed: {e}");
             }
         }

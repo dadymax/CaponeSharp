@@ -42,7 +42,12 @@ public partial class Organisation
     public Team Team { get; }
     /// <summary>Chosen primary training center (HQ +0CEh, set by company command 12 via vt+90h), or null.</summary>
     public Company PrimaryCenter { get; set; }
-    public long Cash { get; set; }
+    public long Cash { get; private set; }
+    /// <summary>Ledger for the scenario checks: starting cash, money kept from deposits, money spent, money bribed.</summary>
+    public long StartCash { get; }
+    public long TotalIn { get; private set; }
+    public long TotalOut { get; private set; }
+    public long TotalBribed { get; private set; }
     /// <summary>Weekly net income ("Доходы"), as of the last hourly update.</summary>
     public long NetIncome { get; private set; }
     /// <summary>Weekly income of the player's companies.</summary>
@@ -93,7 +98,7 @@ public partial class Organisation
     public Organisation(Team team, long funds)
     {
         Team = team;
-        Cash = funds;
+        Cash = StartCash = funds;
         NetIncome = funds; // the constructor stores the funds in +14h too
     }
 
@@ -144,6 +149,7 @@ public partial class Organisation
         if (CanAfford(amount) || NetIncome >= 0 || HasGangsters())
         {
             Cash -= amount;
+            TotalOut += amount;
             return true;
         }
         GD.Print($"Organisation: {Team.PlayerName} is out of funds and eliminated");
@@ -212,7 +218,13 @@ public partial class Organisation
                 unit.Vanish();
         }
         foreach (var company in tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Team).ToList())
-            company.ReleaseToNeutral();
+        {
+            if (company.IsHq)
+                company.RemoveHq();
+            else
+                company.ReleaseToNeutral();
+        }
+        Team.HqCompany = null;
         if (PrimaryCenter != null)
             PrimaryCenter = null;
     }
@@ -267,6 +279,8 @@ public partial class Organisation
             kept = amount - profit + remaining;
         }
         Cash += kept;
+        TotalIn += kept;
+        TotalBribed += amount - kept;
         return kept;
     }
 

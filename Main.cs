@@ -32,7 +32,8 @@ public partial class Main : Node2D
 
 	/// <summary>
 	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
-	/// --skip-briefing starts the episode at once; --smoke-test checks all original data and quits with exit code 0/1.
+	/// --skip-briefing starts the episode at once; --smoke-test checks all original data and quits with exit code 0/1;
+	/// --scenario-test[=1,4,...] plays episodes headless and checks game rules (ScenarioTest).
 	/// </summary>
 	public override void _EnterTree() => Instance = this;
 
@@ -55,6 +56,17 @@ public partial class Main : Node2D
 					episode = n;
 		var skipBriefing = System.Array.IndexOf(args, "--skip-briefing") >= 0;
 		PendingEpisode = 0;
+		var scenarioTest = ScenarioTest.Requested(args);
+		if (scenarioTest)
+		{
+			episode = ScenarioTest.NextEpisode(args);
+			if (episode == 0)
+			{
+				GetTree().Quit(ScenarioTest.Finish());
+				return;
+			}
+			skipBriefing = true;
+		}
 
 		YSortEnabled = true;
 		SetupGui();
@@ -65,7 +77,11 @@ public partial class Main : Node2D
 		var count = _campaignManager.CurrentCampaign.GetScenarioCount();
 		episode = Mathf.Clamp(episode, 1, Mathf.Max(1, count));
 		if (skipBriefing)
+		{
 			StartEpisode(episode);
+			if (scenarioTest)
+				AddChild(new ScenarioTest(episode));
+		}
 		else
 			ShowBriefing(episode);
 	}
@@ -100,6 +116,11 @@ public partial class Main : Node2D
 	/// </summary>
 	public void ShowEndScreen(bool won, string text, int episode)
 	{
+		if (ScenarioTest.Instance != null)
+		{
+			ScenarioTest.Instance.EpisodeEnded(won, text);
+			return;
+		}
 		var count = _campaignManager.CurrentCampaign.GetScenarioCount();
 		if (won)
 			CampaignProgress.Won(episode, count);

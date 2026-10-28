@@ -128,7 +128,7 @@ From `ep1.epi` and the EXE:
 - Only **Campaign** (starts the campaign, i.e. the briefing of the current episode) and **Exit** are to be built.
 - **Network game, Settings, Developers: TODO in the future — do not work on them until the user explicitly asks.**
 
-**M13 — Automated tests** ☐
+**M13 — Automated tests** ◐ (scenario checks done 2026-10-29; unit tests next)
 - **Scenario checks** (`-- --scenario-test`, headless, like `--smoke-test`): load an episode without the briefing, run the
   clock fast for N game days, and check invariants after each game hour:
   - cash and net income add up with the logged income, wages and spending;

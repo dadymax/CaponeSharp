@@ -150,6 +150,23 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         QueueFree();
     }
 
+    /// <summary>
+    /// The owner was eliminated another way (bankruptcy): an HQ can't belong to nobody or be captured, so the building
+    /// is removed. Assumption — the original's sub_43B677 only removes the player object; see TODO.
+    /// </summary>
+    public void RemoveHq()
+    {
+        if (!IsHq)
+            return;
+        GD.Print($"Company: HQ of {OwnerTeam?.PlayerName} removed with its owner");
+        if (OwnerTeam?.HqCompany == this)
+            OwnerTeam.HqCompany = null;
+        IsHq = false;
+        OwnerTeam = null;
+        RemoveFromGroup(GroupName);
+        QueueFree();
+    }
+
     private void EnsureComponents(CompanyCommon.CompanyType type)
     {
         if (_company != null)

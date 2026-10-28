@@ -30,6 +30,13 @@ Quick data check (no window; prints "Smoke test done: 0 failure(s)"):
 
     ..\godottry\godot\Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -- --smoke-test
 
+Scenario checks (no window, about 20 s; plays episodes 1, 4, 8, 13, 15 fast and checks game rules;
+prints "Scenario test done: 0 failure(s)"):
+
+    ..\godottry\godot\Godot_v4.7.2-stable_mono_win64_console.exe --headless --fixed-fps 60 --path . -- --scenario-test
+
+Options: --scenario-test=4,8 (episodes), --days=N (game days per episode), --speed=N.
+
 Or open the folder in the Godot editor (same .exe without arguments) and press F5.
 
 
