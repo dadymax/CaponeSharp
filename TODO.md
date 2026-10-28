@@ -575,8 +575,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   building and disappears from the map for a while, then reappears carrying the money and walks on to the next one.
   When it reaches the HQ it disappears for good (delivered). Today it stays visible next to the building.
 
-- [ ] **Mass selection.** (1) The drag selection must be a rectangle on screen. (2) It selects units only — never
-  companies or collectors (couriers).
+- [x] **Mass selection.** (1) The drag selection must be a rectangle on screen. (2) It selects units only — never
+  companies or collectors (couriers). Done 2026-10-29: a box is drawn while dragging (`SelectionBox`); it picks the
+  player's own gangsters whose position is inside (no companies, collectors, police or other players' units); a drag
+  under 4 pixels is a click.
 - [ ] **HQ of a bankrupt player.** The original's sub_43B677 removes the player object; what happens to its HQ
   building is not traced. sharptry removes it (`Company.RemoveHq`), consistent with "an HQ can't be captured".
 - [ ] **HQ placement.** An HQ must stand on a medium standalone building — letter B in the block description map

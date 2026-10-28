@@ -11,6 +11,11 @@ public partial class Main : Node2D
 	private readonly List<ISelectable> _selected = new();
 	private bool _isMouseDrag;
 	private Vector2 _dragStartGlobal;
+	private Vector2 _dragStartScreen;
+	private SelectionBox _selectionBox;
+
+	/// <summary>A drag shorter than this (screen pixels) is a click.</summary>
+	private const float DragThreshold = 4f;
 	private CampaignManager _campaignManager;
 
 	public static Main Instance { get; private set; }
@@ -75,6 +80,8 @@ public partial class Main : Node2D
 		}
 
 		YSortEnabled = true;
+		_selectionBox = new SelectionBox { Name = "SelectionBox" };
+		AddChild(_selectionBox);
 		SetupGui();
 
 		_campaignManager = new CampaignManager();
@@ -179,7 +186,10 @@ public partial class Main : Node2D
 	{
 		if (@event is InputEventMouseMotion motion && Map != null)
 		{
-			UpdateMapHint(GetCanvasTransform().AffineInverse() * motion.Position);
+			var global = GetCanvasTransform().AffineInverse() * motion.Position;
+			UpdateMapHint(global);
+			if (_isMouseDrag && PendingOrder == OrderMode.None && motion.Position.DistanceTo(_dragStartScreen) >= DragThreshold)
+				_selectionBox.Show(ToLocal(_dragStartGlobal), ToLocal(global));
 			return;
 		}
 		if (@event is not InputEventMouseButton mouse || Map == null)
@@ -202,12 +212,14 @@ public partial class Main : Node2D
 		{
 			_isMouseDrag = true;
 			_dragStartGlobal = eventGlobal;
+			_dragStartScreen = mouse.Position;
 			return;
 		}
 
 		if (!_isMouseDrag)
 			return;
 		_isMouseDrag = false;
+		_selectionBox.Hide();
 		if (PendingOrder != OrderMode.None)
 		{
 			ExecutePendingOrder(eventGlobal);
@@ -215,11 +227,10 @@ public partial class Main : Node2D
 		}
 		ClearSelection();
 
-		var dragEndGlobal = eventGlobal;
-		if (dragEndGlobal == _dragStartGlobal)
-			SelectAtPoint(dragEndGlobal);
+		if (mouse.Position.DistanceTo(_dragStartScreen) < DragThreshold)
+			SelectAtPoint(eventGlobal);
 		else
-			SelectInRect(_dragStartGlobal, dragEndGlobal);
+			SelectInRect(_dragStartGlobal, eventGlobal);
 	}
 
 	/// <summary>
@@ -298,21 +309,20 @@ public partial class Main : Node2D
 		}
 	}
 
+	/// <summary>
+	/// Box selection (user): the screen rectangle picks only the player's own gangsters standing in it — never
+	/// companies, collectors or the police.
+	/// </summary>
 	private void SelectInRect(Vector2 globalA, Vector2 globalB)
 	{
 		var rect = new Rect2(globalA, Vector2.Zero).Expand(globalB);
-		var query = new PhysicsShapeQueryParameters2D
-		{
-			CollideWithBodies = true,
-			Shape = new RectangleShape2D { Size = rect.Size },
-			// The query shape is centred on the transform origin.
-			Transform = new Transform2D(0, rect.GetCenter()),
-		};
-		foreach (var result in GetViewport().World2D.DirectSpaceState.IntersectShape(query, 256))
-			if (result["collider"].AsGodotObject() is ISelectable { Selectable: true } selectable)
-				Select(selectable);
+		foreach (var node in GetTree().GetNodesInGroup(Unit.GroupName))
+			if (node is Unit { Selectable: true } unit && IsCommandable(unit) && rect.HasPoint(unit.GlobalPosition))
+				Select(unit);
 
 		GuiGameback.UpdateSelectionIcon(_selected.Count > 0 ? _selected[0] as Node2D : null);
+		if (_selected.Count > 0 && _selected[0] is Unit first)
+			UnitVoice.Play(first, UnitVoice.Kind.Select);
 	}
 
 	private void Select(ISelectable selectable)
