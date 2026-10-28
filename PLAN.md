@@ -111,6 +111,17 @@ From `ep1.epi` and the EXE:
 **M11 — Computer players** ✅ (`ComputerPlayer`: AI HQ sub_461510 with the 3-hour cycles, per-kind parameters; MCP-tested episodes 4, 13, 15)
 - Extortion, recruiting, business conversion and attacks on the human HQ as in the original AI.
 
+**Done after M11 (2026-10-27/28; details in TODO.md):**
+- Elimination: HQ destroyed (1300 HP) → owner out; last player standing wins (19,3); eliminated players' units leave and companies go back to unowned (`Organisation.RogueUnits` option prepared).
+- Unpaid gangsters desert (overdraft check sub_42A535) and fight every player.
+- Vision: walking / standing radius (Sniper 8 / 9), shots need the target in sight (sub_42E385, sub_42B750).
+- Disguise order (FBI service, 60 h) and the Hit man's own hiding (30 h after a shot); exposed Hit man does 30 damage.
+- Order modes: Go 2, Attack 3, Force Go 0, Force Attack 1; patrol legs fight as mode 3.
+- Fog of war with the EXE line of sight; fogged companies keep their last seen state.
+- Order 0Bh "Ask cops to arrest gangster" on others' units.
+- HQ services: legalization, bribing investigations, FBI visit, investigations, rumours, snitch rumour, announced death, FBI snitch + order 0Ch.
+- Parked until the user asks: computer players using HQ services.
+
 **M12 — Main menu** ☐ (next in line; build when asked)
 - Screen with the background from `MAINMENU.bmp` and the button graphics from `MAINMEBU.bmp` (see TODO §3 for the file list).
 - Five buttons: Campaign, Network game, Settings, Developers, Exit.
