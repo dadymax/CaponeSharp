@@ -553,6 +553,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   building and disappears from the map for a while, then reappears carrying the money and walks on to the next one.
   When it reaches the HQ it disappears for good (delivered). Today it stays visible next to the building.
 
+- [ ] **Mass selection.** (1) The drag selection must be a rectangle on screen. (2) It selects units only — never
+  companies or collectors (couriers).
+- [ ] **HQ placement.** An HQ must stand on a medium standalone building — letter B in the block description map
+  (Chicago.tile block rows) — not on any company cell.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
