@@ -237,7 +237,17 @@ Known gaps in the brick (do later):
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
 - Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
 - Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).
-- Lawyers (HQ items 0x24/0x27/0x29) and informers (0x2C/0x31/0x34, `sub_42C503`) need M6 items; `Organisation.Items` is empty.
+- Lawyers are police services 29h / 27h / 24h (200 000 / 75 000 / 10 000 bribed, 1 point): the police job uses the
+  best one the arrested gangster's owner can use (70 / 50 / 30 % release, 28,1) — already working. 2Ch / 31h / 34h are
+  the "ask cops to arrest gangster" services (order 0Bh), not informers.
+- Orders on another player's company (`Scripts/Economy/CompanyServices.cs`, menu sub_421370, actions sub_421CF5,
+  commands sub_421E40): raid (slot 5, 30,13/14, police 26h/2Bh/2Fh in the slums, 32h/35h in the middle class by price
+  tier; raid job sub_445CA4/sub_445D72 sends a car, "Cops raid your business !" 28,0, after 15 minutes the business
+  becomes an unowned legal company, sub_422D82); demolish (slot 4, 30,15/16, slum businesses, politician 14h/18h/1Dh;
+  30,20/30,21; HP 0 and removal, sub_422DE0); brownout (slot 3, 30,17/18, any company of a powered block, politician
+  1Ch 2 weeks / 19h 1 week / 15h 3.5 days via block command 1 sub_420150; block vt+18Ch = powered). MCP-tested in
+  episode 15: raid closed an Интим-салон, demolition removed a Собачьи бега, brownout cut block 10 for 2 weeks.
+  Open: the rubble graphic after demolition (company vt+30h(40h)).
 - UNIT flag A = 0 → salary 0 is assumed (`CampaignManager.SpawnUnit`).
 - Smoke test leaks nodes (RID warnings at exit).
 

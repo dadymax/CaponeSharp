@@ -222,6 +222,19 @@ public partial class ActionBar : Control
                 Set(action.Slot, action.Icon, action.Text, () => action.Run());
             return;
         }
+        if (company != null && IsInstanceValid(company) && company.IsEconomic && company.OwnerTeam != player && player?.Org != null)
+        {
+            // Another player's (or nobody's) company (sub_421370): raid, demolish, brownout.
+            var actions = CompanyServices.Menu(player, company);
+            var otherKey = $"othercompany|{company.GetInstanceId()}|{string.Join(",", actions.Select(a => a.Slot + a.Text))}";
+            if (!force && otherKey == _shown)
+                return;
+            _shown = otherKey;
+            ClearSlots();
+            foreach (var action in actions)
+                Set(action.Slot, action.Icon, action.Text, () => action.Run());
+            return;
+        }
         var own = company != null && IsInstanceValid(company) && company.IsEconomic && company.OwnerTeam == player && player != null;
         if (!own || company != _submenuCompany)
             _submenuCompany = null;

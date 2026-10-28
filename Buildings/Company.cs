@@ -561,6 +561,20 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         SetOwnerTeam(null);
     }
 
+    /// <summary>
+    /// Demolished (HP 0, vt+FCh sub_422DE0): the company leaves the world. TODO: the original also calls vt+30h(40h)
+    /// (probably the rubble graphic); the block tile still shows the building here.
+    /// </summary>
+    public void Demolish()
+    {
+        GD.Print($"Company {CompanyName} demolished");
+        if (OwnerTeam != null)
+            SetOwnerTeam(null);
+        Block?.Companies.Remove(this);
+        RemoveFromGroup(GroupName);
+        QueueFree();
+    }
+
     // ---- ownership (vt+74h, sub_4211F0) ------------------------------------------------------------------------------
 
     /// <summary>Change owner; a neutral company loses its uncollected cash, and the block registers the new owner.</summary>

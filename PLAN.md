@@ -100,7 +100,7 @@ From `ep1.epi` and the EXE:
   success/failure screens (`GameWin*`, `GAMEOVER*`), next episode / replay.
 - Camera starts on the player's HQ. ✅
 
-**M8 — Police and losses** ◐ (play-tested: car dispatch, arrest, jail, resign when unpaid; arrest on "owner calls the cops", jail, unit death/corpse; lawyers need M6 items)
+**M8 — Police and losses** ◐ (play-tested: car dispatch, arrest, jail, resign when unpaid; arrest on "owner calls the cops", jail, unit death/corpse; lawyers (police services 29h/27h/24h, 70/50/30 %); police raids, demolition and brownout on others' companies)
 - Police station behaviour and arrests needed by episode 1; unit death/removal.
 
 **M9 — Recruit panel** ✅ (recruit column, training with blood bar, pay on arrival; MCP-tested Thug, army-favour gating)

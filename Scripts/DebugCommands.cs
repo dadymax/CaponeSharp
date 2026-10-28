@@ -243,6 +243,8 @@ public partial class DebugCommands : Node
         {
             "unit" => Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => u.OwnerTeam == Player).ElementAtOrDefault(index),
             "company" => Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == Player && c.IsEconomic).ElementAtOrDefault(index),
+            "enemybusiness" => Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam != null && c.OwnerTeam != Player && c.IsEconomic
+                && c.BusinessType != OriginalBusinessTable.BusinessType.Legal && (c.Block?.District ?? 3) == 0).ElementAtOrDefault(index),
             "neutral" => Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(c => c.OwnerTeam == null && c.IsEconomic).ElementAtOrDefault(index),
             "enemy" => Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && u.OwnerTeam != null && u.OwnerTeam != Player
                 && u.UnitType is UnitCommon.UnitType.Thug or UnitCommon.UnitType.Pistol).ElementAtOrDefault(index),
