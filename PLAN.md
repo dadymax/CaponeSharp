@@ -111,6 +111,12 @@ From `ep1.epi` and the EXE:
 **M11 — Computer players** ✅ (`ComputerPlayer`: AI HQ sub_461510 with the 3-hour cycles, per-kind parameters; MCP-tested episodes 4, 13, 15)
 - Extortion, recruiting, business conversion and attacks on the human HQ as in the original AI.
 
+**M12 — Main menu** ☐ (next in line; build when asked)
+- Screen with the background from `MAINMENU.bmp` and the button graphics from `MAINMEBU.bmp` (see TODO §3 for the file list).
+- Five buttons: Campaign, Network game, Settings, Developers, Exit.
+- Only **Campaign** (starts the campaign, i.e. the briefing of the current episode) and **Exit** are to be built.
+- **Network game, Settings, Developers: TODO in the future — do not work on them until the user explicitly asks.**
+
 ## Definition of done for episode 1
 
 - [x] Starts with the briefing; the map, base and two gangsters come from the original data (not compared side by side with the running original).

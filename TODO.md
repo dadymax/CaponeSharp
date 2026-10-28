@@ -421,7 +421,7 @@ Still open from this part:
 
 ## 3. Screens and UI from PICS (P1)
 
-- [ ] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp`; new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
+- [ ] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp` (PLAN M12: buttons Campaign, Network game, Settings, Developers, Exit; build only Campaign and Exit — Network game, Settings and Developers are FUTURE, explicit user command only); new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
 - [ ] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
 - [ ] End screens: `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
 - [ ] In-game windows for the menu stubs: `HelpWin.bmp` (tips), `InfoWin.bmp` (statistics/messages), `MoneyWin.bmp` = the **spending window** with the bribe sliders (see §5).
