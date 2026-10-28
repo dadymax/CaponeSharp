@@ -241,6 +241,13 @@ Known gaps in the brick (do later):
   from the EXE (the hand-written `attackRate` in units.json is gone); a Sniper re-aims on a new target; only the
   Thompson man (+30h) shoots from a car; shot sounds by type (table 0x484554). Still simplified: the shot object
   `sub_438873` (hit roll, projectile) and `CanAttack.HitOnce` for extortion hits (unit vt+104h).
+- The shot sub_438873 (done 2026-10-29, `CanAttack.Fire`): round(rate) bullets (Thompson 6), area table +26h − 1
+  (Shotgun, Terrorist 3×3, friends included), stray +28h (Thompson 50 %), hit roll +0Ch (×0.2 from a car), damage
+  min + random(max − min); hits reset the victim's aim; the Terrorist dies with his blast; extortion hits are
+  ordinary attack steps (vt+104h = sub_42BD15). Removed: the old Sniper/Raid/Bomb/Thompson abilities and the
+  evasion roll (not in the EXE). On the target's own cell the bullet meets the target (units may share cells here).
+  Balance changed: in the idle scenario run episode 15 is no longer lost on day 4 (the AI attack stalls on the
+  player's units). To compare with the running original.
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
 - Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
 - Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).

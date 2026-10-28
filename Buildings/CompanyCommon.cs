@@ -44,7 +44,7 @@ public partial class CompanyCommon : Node
 
     public CompanyCommon(CompanyType type)
     {
-        CanBeAttacked = new CanBeAttacked { EvasionFactor = 0 };
+        CanBeAttacked = new CanBeAttacked();
         AddChild(CanBeAttacked);
         SetSignType(type);
     }

@@ -2,7 +2,7 @@ using Godot;
 
 namespace Capone;
 
-/// <summary>Health component with evasion. Emits HPisZERO with the attacker's team colour.</summary>
+/// <summary>Health component (object +20h HP, sub_438710). Emits HPisZERO with the attacker's team colour.</summary>
 public partial class CanBeAttacked : Node2D, IJsonConfigurable
 {
     public const string JsonKey = "can_be_attacked";
@@ -14,7 +14,6 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
     /// <summary>The unit that hit last (the killer, when HP reached 0).</summary>
     public Unit LastAttacker { get; private set; }
     public int HealRate { get; set; } = 1;
-    [Export] public int EvasionFactor { get; set; } = 5;
     [Export] public bool DisplayHP { get; set; } = true;
 
     public Rect2I Rect { get; private set; }
@@ -27,7 +26,7 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         switch (key)
         {
             case "maxHP": MaxHP = JsonUtil.ToInt(value); break;
-            case "EvasionFactor": EvasionFactor = JsonUtil.ToInt(value); break;
+            case "EvasionFactor": break; // not in the original: hits are decided by the shot (sub_438873)
             case "HealRate": HealRate = JsonUtil.ToInt(value); break;
             case "DisplayHP": DisplayHP = value.AsBool(); break;
             default: GD.PushWarning($"CanBeAttacked: unknown json key '{key}'"); break;
@@ -40,22 +39,11 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         (GetParent()?.GetParent() as Unit)?.MarkFighting();
         if (attacker != null && IsInstanceValid(attacker))
             (attacker.GetParent()?.GetParent() as Unit)?.MarkFighting();
-        var crit = false;
-        if (EvasionFactor > 0)
-        {
-            // damage = 5, evasion = 5 => about 50 % to evade
-            if ((int)(GD.Randi() % (uint)EvasionFactor) * 2 + 1 > damage)
-            {
-                // Evaded, unless the 1 % "lucky hit" happens.
-                if (GD.Randi() % 100 + 1 < 99)
-                    return;
-                crit = true; // a lucky hit can't also be a lucky miss
-            }
-
-            if (!crit && GD.Randi() % 100 + 1 < 2)
-                return; // 1 % lucky miss
-        }
-
+        // sub_42BC00: a unit that is hit loses its aim.
+        (GetParent()?.GetParent() as Unit)?.CanAttack?.OnHit();
+        // sub_438710: the HP change itself — no evasion (whether a bullet hits is decided by the shot, sub_438873).
+        if (HP <= 0)
+            return;
         HP = Mathf.Max(0, HP - damage);
         if (HP == 0)
         {

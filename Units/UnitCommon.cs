@@ -183,11 +183,7 @@ public partial class UnitCommon : Node
             ? JsonUtil.FillFromJson(new CanBeAttacked(), cba)
             : new CanBeAttacked();
         if (CanBeAttacked != null && Stats != null)
-        {
             CanBeAttacked.MaxHP = Stats.MaxHP;
-            // The original has no evasion: the attacker's hit chance decides.
-            CanBeAttacked.EvasionFactor = 0;
-        }
 
         if (record.Components.TryGetValue(CanHoldMoney.JsonKey, out var chm))
             CanHoldMoney = JsonUtil.FillFromJson(new CanHoldMoney(), chm);
