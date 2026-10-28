@@ -126,7 +126,7 @@ public partial class Unit
         float passiveDist = float.MaxValue, activeDist = float.MaxValue;
         foreach (var node in GetTree().GetNodesInGroup(GroupName))
         {
-            if (node is not Unit other || other == this || other.IsDead || other.IsArrested)
+            if (node is not Unit other || other == this || other.IsDead || other.IsArrested || other.InsideBuilding)
                 continue;
             if (!IsHostileTo(other))
                 continue;

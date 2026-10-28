@@ -30,7 +30,7 @@ public partial class RaidAbility : Node
         var myColor = _unitParent.TeamColor;
         foreach (var node in GetTree().GetNodesInGroup(Unit.GroupName))
         {
-            if (node is not Unit unit || unit.CanBeAttacked == null || !IsInArea(unit))
+            if (node is not Unit unit || unit.CanBeAttacked == null || unit.IsArrested || unit.InsideBuilding || !IsInArea(unit))
                 continue;
             if (unit.TeamColor == myColor)
                 continue;

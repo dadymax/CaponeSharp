@@ -124,7 +124,8 @@ public partial class FogOfWar : Node
         }
 
         foreach (var unit in units)
-            unit.Visible = !enabled || IsFriendly(player, unit.OwnerTeam) || _visible.Contains(_map.LocalToMap(unit.Position));
+            unit.Visible = !unit.IsArrested && !unit.InsideBuilding
+                           && (!enabled || IsFriendly(player, unit.OwnerTeam) || _visible.Contains(_map.LocalToMap(unit.Position)));
         foreach (var company in companies)
         {
             company.InFog = enabled && !_visible.Contains(_map.LocalToMap(company.Position));

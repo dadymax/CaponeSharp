@@ -108,6 +108,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// <summary>Is <paramref name="other"/>'s cell visible in this unit's sight grid (sub_42B750)?</summary>
     public bool Sees(Node2D other)
     {
+        if (other is Unit { InsideBuilding: true } or Unit { IsArrested: true })
+            return false;
         var grid = SightGrid(out var center, out var r);
         return Vision.Visible(grid, center, r, Map.LocalToMap(other.Position));
     }
@@ -515,6 +517,34 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             });
         else
             QueueFree();
+    }
+
+    /// <summary>
+    /// Inside a building (user, from the original game): a collector goes into the company while it takes the money,
+    /// and into the HQ when it delivers. Hidden, not targetable and not hit until it comes out.
+    /// </summary>
+    public bool InsideBuilding { get; private set; }
+
+    public void EnterBuilding()
+    {
+        if (IsDead || InsideBuilding)
+            return;
+        InsideBuilding = true;
+        Selected = false;
+        StopMoving();
+        Visible = false;
+        _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
+    }
+
+    /// <summary>Comes out where it went in; the fog of war decides whether it is shown.</summary>
+    public void ExitBuilding()
+    {
+        if (!InsideBuilding)
+            return;
+        InsideBuilding = false;
+        Visible = FogOfWar.Instance == null;
+        FogOfWar.Instance?.Refresh();
+        _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
     }
 
     /// <summary>Taken by the police: hidden and inactive until jailed or released.</summary>

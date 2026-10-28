@@ -572,9 +572,13 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   visible; the player has to reveal the map to find them. Once seen, a company keeps its last seen state in the fog
   (as now). Done 2026-10-29: `Company.Discovered`, set by `FogOfWar`; undiscovered companies are hidden and can't be
   clicked or hovered (their building tiles stay on the darkened map).
-- [ ] **Collector visits.** When a collector (courier) takes money from a company or business, it "enters" the
+- [x] **Collector visits.** When a collector (courier) takes money from a company or business, it "enters" the
   building and disappears from the map for a while, then reappears carrying the money and walks on to the next one.
   When it reaches the HQ it disappears for good (delivered). Today it stays visible next to the building.
+  Done 2026-10-29: `Unit.EnterBuilding` / `ExitBuilding`; the collector is inside during the job's hour wait at each
+  company (sub_428D62) and, after delivering, inside the HQ until its next round (so it vanishes at the HQ; the EXE
+  job keeps serving the block from there). Inside units are hidden, not targeted and not hit by area attacks. Also
+  fixed: the fog refresh showed arrested units again.
 
 - [x] **Mass selection.** (1) The drag selection must be a rectangle on screen. (2) It selects units only — never
   companies or collectors (couriers). Done 2026-10-29: a box is drawn while dragging (`SelectionBox`); it picks the

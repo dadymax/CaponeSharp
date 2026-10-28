@@ -7,6 +7,7 @@ namespace Capone;
 /// A collector's autopilot for one city block: the original collector job (vtable off_483DC0, constructor sub_428CF0,
 /// step sub_428D62). The step runs whenever the collector arrives (or can't get any further):
 /// <list type="bullet">
+/// <item>The collector goes inside the company or HQ while it waits there (hidden, user from the original game).</item>
 /// <item>At the owner's company: take its uncollected money (the first pickup re-enables the block's income for this
 /// owner), wait an hour, walk to the owner's next company in the block, or home when there is none left.</item>
 /// <item>At the HQ or a cash-out business (catalogue +28h = 3): deposit the money, heal, and start the next round
@@ -95,6 +96,7 @@ public partial class CollectorJob : Node
             if (IsCashPoint(_target))
             {
                 Deliver(owner);
+                _collector.EnterBuilding(); // stays inside until the next round
                 _scanIndex = 0;
                 _target = NextCompany(owner);
                 if (_target == null)
@@ -110,6 +112,7 @@ public partial class CollectorJob : Node
             if (_target is Company company && company.OwnerTeam == owner)
             {
                 _collector.CarriedMoney += company.TakeUncollected();
+                _collector.EnterBuilding(); // inside for the hour's wait
                 if (!_pickedUp)
                 {
                     _pickedUp = true;
@@ -140,6 +143,8 @@ public partial class CollectorJob : Node
     {
         if (_finished || !IsInstanceValid(this))
             return;
+        if (!_collector.IsDead)
+            _collector.ExitBuilding();
         if (_target == null || !IsInstanceValid(_target) || _collector.IsDead)
         {
             Step();
