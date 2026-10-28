@@ -287,7 +287,10 @@ is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
   politician's × 0.75 (dbl_488850). Slots 1–3: legalize business type 1–3 one step (17,5…22 by type and level:
   beer / wine / spirits, magazines / peep shows / bordellos, lottery / bookmaking / gambling; services 1Bh, 1Eh, 21h
   = politician 2 000 000/200, 4 500 000/400, 6 000 000/600), "… has been legalized." (17,39…47). Slot 4 "Set as
-  primary training center" (17,24) and slot 5 Repair (17,23) are not ported for the HQ yet.
+  primary training center" (17,24, icon 0xD45, command 0Ch): shown while another center is primary (and the HQ has no
+  job but training), makes the HQ primary again. Slot 5 Repair (17,23, icon 0xAD6, command 1 → repair job sub_4289A0
+  via HQ vt+BCh sub_415D24): free for the HQ (cost per HP vt+160h sub_402C20 = 0); MCP-tested 1000 → 1030 HP in 6
+  game hours, no money spent.
 - Another player's HQ: slot 0 FBI "talk" to the boss (17,25/26, 11h FBI 2 000 000/100): 30 game hours during which
   the victim, if local, can't give input (main window +0A40h) and sees "FBI \"visits\" you ..." (20,2) with progress;
   slot 1 Mayor investigations (17,27/28, 16h 500 000/20): two weeks, income × 0.85, 20,27; slot 2 evil rumour
@@ -300,7 +303,7 @@ is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
   (`Unit.ChangeOwner`), "%s switches sides." (29,19).
 - MCP-tested in episode 15: beer legalized; investigation + rumour on Дион О'Брайен (his type factors 0.6); a snitch
   planted and bought (switched sides, 200 000 paid). Not tested: the FBI visit on the local player (the AI doesn't
-  buy services). Open: the original's FBI-visit progress box; HQ repair.
+  buy services). Open: the original's FBI-visit progress box.
 - [ ] FUTURE — do not start until the user explicitly asks: computer players using HQ services (FBI visit, rumours,
   investigations, snitches, legalization). The AI code read so far (sub_461510 family) never calls them.
 
