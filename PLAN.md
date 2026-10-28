@@ -128,6 +128,25 @@ From `ep1.epi` and the EXE:
 - Only **Campaign** (starts the campaign, i.e. the briefing of the current episode) and **Exit** are to be built.
 - **Network game, Settings, Developers: TODO in the future — do not work on them until the user explicitly asks.**
 
+**M13 — Automated tests** ☐
+- **Scenario checks** (`-- --scenario-test`, headless, like `--smoke-test`): load an episode without the briefing, run the
+  clock fast for N game days, and check invariants after each game hour:
+  - cash and net income add up with the logged income, wages and spending;
+  - no company or unit belongs to an eliminated player;
+  - a computer player keeps its minimum number of Thugs;
+  - an HQ has at most 1300 HP and is never captured;
+  - a raided business ends as an unowned legal company; a demolished one is gone;
+  - deserters are hostile to every player.
+  Episodes to cover: 1 (tutorial), 4 (first opponent), 13 (aggressive opponent), 15 (two HQs), 8 (six players).
+  Each check prints PASS/FAIL; the run ends with "N failure(s)" and a non-zero exit code on failure.
+- **Unit tests** (xUnit project `Tests/`, `dotnet test`) for the pure rules ported from the EXE:
+  `Vision.Build` line of sight (opaque letters, Sniper 8/9), `BusinessRules` (tiers, prices, licences), income factors
+  (rumour ×0.7, investigation ×0.85, brownout), raid / demolish / brownout service choice, extortion chance, VCOND
+  evaluation, order-mode rules, computer-player strategy choices. Code tied to the clock, the scene tree or the
+  `Teams` statics gets its pure part extracted first (inputs passed in), only when that code is touched.
+- After each brick: build, `--smoke-test`, `--scenario-test`, `dotnet test`; MCP play-tests only for what is drawn or
+  clicked.
+
 ## Definition of done for episode 1
 
 - [x] Starts with the briefing; the map, base and two gangsters come from the original data (not compared side by side with the running original).
