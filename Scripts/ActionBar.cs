@@ -115,6 +115,8 @@ public partial class ActionBar : Control
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
     private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484, DisguiseIcons = 0x4844EC;
+    /// <summary>Order 0Bh icon tile (sub_42D2C1 pushes 0AD8h).</summary>
+    private const int ArrestIcon = 0xAD8;
 
     private static int TypeIcon(uint table, UnitCommon.UnitType type) =>
         OriginalExe.Instance.IsLoaded ? (int)OriginalExe.Instance.ReadU32(table + (uint)type * 4) : 0;
@@ -167,6 +169,25 @@ public partial class ActionBar : Control
                 _actions[i] = null;
             }
             BuildUnitMenu(selectedUnit);
+            return;
+        }
+        if (GuiGameback.Instance?.SelectedNode is Unit otherUnit && IsInstanceValid(otherUnit) && !otherUnit.IsDead
+            && otherUnit.OwnerTeam != Teams.GetCurrentPlayerTeam())
+        {
+            // Another player's (or nobody's) unit: order 0Bh "Ask cops to arrest gangster" in slot 0 (sub_42D2C1).
+            var reportable = otherUnit.CanBeReportedBy(Teams.GetCurrentPlayerTeam());
+            var otherKey = $"other|{otherUnit.GetInstanceId()}|{reportable}";
+            if (!force && otherKey == _shown)
+                return;
+            _shown = otherKey;
+            for (var i = 0; i < SlotCount; i++)
+            {
+                _slots[i].Visible = false;
+                _actions[i] = null;
+            }
+            if (reportable)
+                Set(0, ArrestIcon, OriginalTexts.Instance.Get(29, 11),
+                    () => otherUnit.ReportToPolice(Teams.GetCurrentPlayerTeam()));
             return;
         }
         var company = GuiGameback.Instance?.SelectedNode as Company;

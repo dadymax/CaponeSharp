@@ -216,6 +216,13 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   a target. Computer players use the same orders (home: Go, attacks: Attack).
 - Patrol legs fight with mode 3: opening fire ends the leg, the patrol waits its hour and turns back (sub_4293C7);
   waiting at an end, the unit shoots what comes in range but doesn't chase. MCP-tested in episode 4.
+- Another player's unit (menu sub_42D2C1): order 0Bh "Ask cops to arrest gangster" (29,11, slot 0, icon 0xAD8) is done
+  (`Unit.ReportToPolice`): gate sub_42CCE5 / handler sub_42C503 — police service 2Ch for Thug and Pistol man (500 000,
+  30 points), 31h for Shotgun / Terrorist / Thompson (2 000 000, 40), 34h for any (4 000 000, 60; only checked, not
+  paid), then a police car with "lawyers can't help" (sub_4460C5 with 1). MCP-tested in episode 4 (30 points paid, car
+  sent). Order 0Ch "Pay snitch to switch sides ($200.000)" (29,12, slot 1, icon table 0x4844EC) needs unit +0D8h =
+  2 000 000 (vt+1E4h sub_42CED7), set by the FBI snitch service: the buyer pays 200 000 and takes the unit ("%s
+  switches sides.", 29,19). Not ported until the snitch service is.
 - Open: mode 4 (action 4 is not on the menu), enemy buildings, police targeting, the
   Terrorist/Cadillac chase rule.
 - Movement (for the "units stack on one cell" issue): the original walks tile by tile. sub_427EF5 picks the next
