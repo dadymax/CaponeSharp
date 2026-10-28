@@ -79,11 +79,13 @@ public static class TileMapGenerator
                 }
 
             var tmpImage = Image.CreateEmpty(standartTile.X * block.X, maximumY * block.Y, false, Image.Format.Rgba8);
+            var flat = new bool[block.X, block.Y];
             counter = block.Pos;
             for (var x = 0; x < block.X; x++)
                 for (var y = 0; y < block.Y; y++)
                 {
                     var tileDesc = ct.Tiles[counter];
+                    flat[x, y] = tileDesc.Size.Y <= standartTile.Y;
                     var bmpImage = bmps.Bmps[ct.Bmps[tileDesc.BmpInd]].Body;
                     counter++;
                     tmpImage.BlitRect(bmpImage, new Rect2I(tileDesc.Pairs[0], tileDesc.Size),
@@ -116,6 +118,10 @@ public static class TileMapGenerator
                     atlas.CreateTile(bldngTilePosition);
                     var td = atlas.GetTileData(bldngTilePosition, 0);
                     td.TextureOrigin = margin;
+                    // Flat ground (a picture one floor tile high) is drawn under everything; only the tall pictures
+                    // (buildings, trees, lamps) are sorted by y with the units, so a tile in front can't cover a unit's feet.
+                    if (flat[x, y])
+                        td.ZIndex = GroundZ;
                     td.SetCustomData(TileNonWalkable, true);
 
                     var actualBlockPosition = MapTileMath.Add(tileMap, Vector2I.Zero, blockPosition);
@@ -198,6 +204,9 @@ public static class TileMapGenerator
         tileMap.SetMeta(MetaNameBases, bases);
         return tileMap;
     }
+
+    /// <summary>Draw layer of flat ground tiles: below units and tall tiles (z 0).</summary>
+    public const int GroundZ = -1;
 
     /// <summary>How far (cells) from a start point the HQ's medium building may be.</summary>
     public const int BaseSearchRadius = 12;

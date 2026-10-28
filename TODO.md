@@ -566,8 +566,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 ## Bugs to fix (reported by the user, 2026-10-28)
 
-- [ ] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it
+- [x] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it
   is drawn over the unit sprite at some points: Y / Z sorting is wrong for the isometric map (units vs. block tiles).
+  Done 2026-10-29: flat ground tiles (picture one floor tile high, 19 px — most R/S/F/G and every B/M/H cell) are
+  drawn on z −1 under everything; only tall pictures (buildings, trees, lamps) are y-sorted with the units, so the
+  diamond of the cell in front no longer covers a unit's feet. Watch for remaining cases on tall road tiles.
 - [x] **Companies hidden until discovered.** At the start of an episode companies under the fog of war must not be
   visible; the player has to reveal the map to find them. Once seen, a company keeps its last seen state in the fog
   (as now). Done 2026-10-29: `Company.Discovered`, set by `FogOfWar`; undiscovered companies are hidden and can't be
