@@ -47,7 +47,8 @@ public partial class Unit
         _nextThink = clock.Minute + ThinkMinutes;
         if (MoveMode != null && !IsMoving)
             MoveMode = null; // the move order reached its end
-        if (!ThinksForItself || CurrentOrder != null)
+        // A patrol leg is a move order with mode 3 (sub_4292E0); other orders (extortion…) don't fight.
+        if (!ThinksForItself || (CurrentOrder != null && CurrentOrder is not PatrolOrder))
             return;
         if (Stance == 0)
             Stance = DefaultStance;
@@ -84,8 +85,21 @@ public partial class Unit
     /// <summary>Order-mode rules while the order runs (sub_42AA86 switch at 0x42AF52). Returns true if handled.</summary>
     private bool ThinkUnderOrder(Unit nearest)
     {
-        if (MoveMode is not { } mode || !IsMoving)
+        var patrol = CurrentOrder is PatrolOrder;
+        var orderMode = patrol ? 3 : MoveMode;
+        if (orderMode is not { } mode)
             return false;
+        if (!IsMoving)
+        {
+            if (!patrol)
+                return false;
+            // Waiting at an end of the patrol: shoot what comes in range, don't chase.
+            if (nearest != null && InRange(nearest) && CanAttack.TargetParent is not Unit { IsDead: false })
+                CanAttack.Target = nearest.CanBeAttacked;
+            return true;
+        }
+        if (patrol)
+            _orderTarget = null;
         var target = _orderTarget is { IsDead: false } t && IsInstanceValid(t) ? t : null;
         Unit fireAt = mode switch
         {

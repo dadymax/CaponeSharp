@@ -214,7 +214,9 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   (chase). Opening fire drops the order (order vt+7Ch = sub_428470) and the unit continues with its idle stance.
   MCP-tested in episode 4: a Go stopped 5 tiles (its range) from a deserter and shot it; a Force Go walked on without
   a target. Computer players use the same orders (home: Go, attacks: Attack).
-- Open: mode 4 (action 4 is not on the menu), Patrol legs fighting (mode 3), enemy buildings, police targeting, the
+- Patrol legs fight with mode 3: opening fire ends the leg, the patrol waits its hour and turns back (sub_4293C7);
+  waiting at an end, the unit shoots what comes in range but doesn't chase. MCP-tested in episode 4.
+- Open: mode 4 (action 4 is not on the menu), enemy buildings, police targeting, the
   Terrorist/Cadillac chase rule.
 - Movement (for the "units stack on one cell" issue): the original walks tile by tile. sub_427EF5 picks the next
   direction by scoring the neighbour cells with sub_427CC0: 6 the destination, 0 blocked, 4/5 free (5 for tile class

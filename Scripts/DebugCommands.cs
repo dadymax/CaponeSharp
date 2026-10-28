@@ -103,10 +103,20 @@ public partial class DebugCommands : Node
         return $"{FogOfWar.Instance?.Describe()}\nfog {on}: visible cells {FogOfWar.Instance?.VisibleCount}, hidden units {units.Count(u => !u.Visible)}/{units.Count}, companies in fog {companies.Count(c => c.InFog)}/{companies.Count}";
     }
 
+    /// <summary>Patrol order for the player's unit number <paramref name="index"/> between its cell and (x, y).</summary>
+    public string Patrol(int index, int x, int y)
+    {
+        var unit = PlayerFighters().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.SetOrder(new PatrolOrder(unit, unit.Cell, new Vector2I(x, y)));
+        return $"{unit.UnitType}@{unit.Cell} patrols to ({x}, {y})";
+    }
+
     /// <summary>Order mode, movement and target of every player unit.</summary>
     public string Orders() =>
         string.Join("\n", PlayerFighters().Select(u =>
-            $"{u.UnitType}@{u.Cell} mode {u.MoveMode?.ToString() ?? "-"} moving {u.IsMoving} target {(u.CanAttack?.TargetParent as Unit)?.UnitType.ToString() ?? "-"} HP {u.CanBeAttacked?.HP}"));
+            $"{u.UnitType}@{u.Cell} order {u.CurrentOrder?.Name ?? "-"} mode {u.MoveMode?.ToString() ?? "-"} moving {u.IsMoving} target {(u.CanAttack?.TargetParent as Unit)?.UnitType.ToString() ?? "-"} HP {u.CanBeAttacked?.HP}"));
 
     public string GoTo(int index, int x, int y)
     {
