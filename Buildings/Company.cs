@@ -482,14 +482,14 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     /// <summary>A conversion or repair job runs (company vt+9Ch).</summary>
     public bool Busy => UnderConstruction || Repairing;
 
-    /// <summary>vt+160h (sub_422F13): price / max HP × 0.5 per hit point.</summary>
-    public long RepairCostPerHp => Entry == null || MaxHp <= 0 ? 0 : (long)(Entry.Price / MaxHp * 0.5);
+    /// <summary>vt+160h (sub_422F13): price / max HP × 0.5 per hit point; the HQ building repairs for free (sub_402C20).</summary>
+    public long RepairCostPerHp => IsHq || Entry == null || MaxHp <= 0 ? 0 : (long)(Entry.Price / MaxHp * 0.5);
 
     /// <summary>Menu "Repair ($%ld)" (30,6): missing HP × cost per HP.</summary>
     public long RepairCost => (MaxHp - Hp) * RepairCostPerHp;
 
-    public bool CanRepair => IsEconomic && OwnerTeam != null && !Busy
-                             && BusinessType != OriginalBusinessTable.BusinessType.Legal && Hp < MaxHp;
+    public bool CanRepair => OwnerTeam != null && !Busy && Hp < MaxHp
+                             && (IsHq || (IsEconomic && BusinessType != OriginalBusinessTable.BusinessType.Legal));
 
     /// <summary>
     /// Repair job: every game hour heal 5 HP and charge the owner one HP's cost (as the original does), until full;

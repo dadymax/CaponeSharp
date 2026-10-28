@@ -151,6 +151,20 @@ public static class HqServices
                 list.Add(new MenuAction(type, icons[type - 1], PointsText(5 + (type - 1) * 6 + level * 2, Legalize[level]),
                     () => Legalization(player, t)));
             }
+            // Slot 4, command 0Ch "Set as primary training center" (17,24): shown while another center is the primary one.
+            if (Training.PrimaryCenter(player) != hq)
+                list.Add(new MenuAction(4, 0xD45, OriginalTexts.Instance.Get(17, 24), () =>
+                {
+                    org.PrimaryCenter = null; // vt+90h(HQ): the HQ is the default center
+                    return true;
+                }));
+            // Slot 5, command 1 "Repair" (17,23): free for the HQ (repair job sub_4289A0, cost per HP sub_402C20 = 0).
+            if (hq.CanRepair)
+                list.Add(new MenuAction(5, 0xAD6, OriginalTexts.Instance.Get(17, 23), () =>
+                {
+                    hq.StartRepair();
+                    return true;
+                }));
             return list;
         }
         var victim = target.Org;
