@@ -431,6 +431,22 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
     Shotgun man, FBI points paid, label shown). The Shotgun man's black portrait: fixed ("Shotgun man face", now checked by the smoke test).
   - A disguised Hit man (vt+19Ch) inside someone's sight is visible but never auto-attacked, by unit AI or computer players; the human can still attack him manually. Once he loses the disguise he is a normal target. Check `UnitAI.Think` (it currently skips hidden units entirely, which matches the auto-attack part) and that hidden Hit men are still drawn.
 
+  - RE findings (2026-10-28, not implemented yet):
+    - Sight grid: (2r+1)² bytes per object, rebuilt by sub_447870(world, grid, cell, r) when the cell or radius
+      changes (units in the tick sub_42AA86 at 0x42AB79; own buildings in sub_4393C6; businesses with catalogue
+      +28h = 7 in sub_423500). Special routines for r = 3, 4, 8, 9, generic sub_447660: all cells visible, then ring
+      by ring (2..r) a cell is hidden unless a neighbour one step back toward the centre (sub_4471D0 picks one or two,
+      by which axis dominates) is visible, see-through and within r by straight-line distance (sub_4470D0). The
+      target cell itself is not tested, so walls facing you are seen and what is behind them is not.
+    - See-through = map object vt+168h: 1 for the ground classes with vtables 0x475C48, 0x47CAA8, 0x47CDB0, 0x47CF28,
+      0x47D0BC, 0x47D230, 0x47D514, 0x48D30C (sub_402C90); 0 for companies (sub_423A10), the HQ building
+      (sub_416780) and classes 0x475790, 0x475A90, 0x47CC3C, 0x47D3A4. Map which class is which block letter.
+    - Buildings see 4 tiles (company vt+0E8h sub_4234C0, HQ building sub_415150). sub_4393C6 runs for the local
+      player's buildings and marks every visible tile (tile vt+0D8h / vt+0E0h) and the objects on it.
+    - Godot map: DiamondRight isometric, original (x, y) = Godot cell (x, −y), so the grid works on Godot cells.
+    - Plan: Scripts/Vision.cs (grid per radius with the rule above, cached per unit until its cell or radius changes),
+      a per-frame visibility set for the local player and allies, `Unit.Sees` using the grid (sub_42B750 checks it),
+      a dark overlay on unseen cells, enemy units hidden there, companies keeping their last seen sign.
 - [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.
 - [ ] **Police actions**: "Ask Cops to raid the business (N police favour points)", "Ask cops to arrest gangster". Police are also on the map: unit "Sergeant", building "Police Station". Episode 1 tips say the police arrest your gangsters. Needs police units + arrest logic.
 - [ ] **Army**: "Recruit gun man / shotgun man / thompson man / sniper / hitman / terrorist / thief / cadillac ($X and N Army favour points)". This matches `ArmyFavor` in `units.json`; enforce it on recruit. "Bribe the army to find and recruit a sniper."
