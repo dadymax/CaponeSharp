@@ -136,7 +136,7 @@ public partial class PanelInfo : Control
                 break;
             case Unit unit:
                 Text(unit.DisplayName, InfoX, 0x18B, InfoWidth, 2, relation);
-                Text(UnitKind(unit), InfoX, 0x1A3, InfoWidth, 3, relation);
+                Text(UnitKind(unit) + (unit.IsDisguised ? OriginalTexts.Instance.Get(5, 12) : ""), InfoX, 0x1A3, InfoWidth, 3, relation);
                 if (own)
                 {
                     if (unit.Salary != 0)

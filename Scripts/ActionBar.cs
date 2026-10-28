@@ -114,7 +114,7 @@ public partial class ActionBar : Control
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
-    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484;
+    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484, DisguiseIcons = 0x4844EC;
 
     private static int TypeIcon(uint table, UnitCommon.UnitType type) =>
         OriginalExe.Instance.IsLoaded ? (int)OriginalExe.Instance.ReadU32(table + (uint)type * 4) : 0;
@@ -142,6 +142,9 @@ public partial class ActionBar : Control
         // Slot 5: order 8 "Patrol" (29,8) between the unit's cell and the clicked cell (PatrolOrder).
         if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
             Set(5, TypeIcon(PatrolIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 8), () => Arm(Main.OrderMode.Patrol));
+        // Slot 4: order 0Ah "Disguise" (29,10), an immediate command (sub_42C0C0) gated by sub_42CCE5.
+        if (unit.CanDisguise)
+            Set(4, TypeIcon(DisguiseIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 10), () => unit.Disguise());
         // Order 3 "Stand Ground" (29,4): its icon table 0x484380 holds tile 0x38 ("Button upgrade up", blank) for every
         // type, so the original most likely hides it via vt+1C4h(3); not shown until that gate is decoded.
         return true;
@@ -154,7 +157,7 @@ public partial class ActionBar : Control
             && selectedUnit.OwnerTeam == Teams.GetCurrentPlayerTeam() && !selectedUnit.IsDead
             && selectedUnit.UnitType is not UnitCommon.UnitType.Collector)
         {
-            var unitKey = $"unit|{selectedUnit.GetInstanceId()}|{Input.IsKeyPressed(Key.Shift)}";
+            var unitKey = $"unit|{selectedUnit.GetInstanceId()}|{Input.IsKeyPressed(Key.Shift)}|{selectedUnit.CanDisguise}";
             if (!force && unitKey == _shown)
                 return;
             _shown = unitKey;

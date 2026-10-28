@@ -68,7 +68,6 @@ public partial class CanAttack : Node, IJsonConfigurable
 
     private SniperAbility _sniperAbility;
     private RaidAbility _raidAbility;
-    private HitmanStealth _hitmanStealth;
     private BombAbility _bombAbility;
     private ThompsonAbility _thompsonAbility;
 
@@ -102,11 +101,15 @@ public partial class CanAttack : Node, IJsonConfigurable
     /// <summary>
     /// Random damage for the current target. Like Unit::GetMinDamage/GetMaxDamage (0x42C890/0x42C960):
     /// unit damage only against units other than the Cadillac; buildings and Cadillacs take building damage.
-    /// TODO: the Hit man's fixed 20 damage after a time check (see TODO.md).
+    /// An exposed Hit man does 30 to units (see <see cref="Unit.ExposedHitmanDamage"/>).
     /// </summary>
-    public int RollDamage()
+    public int RollDamage() => RollDamage(TargetParent);
+
+    private int RollDamage(Node2D target)
     {
-        var againstUnit = TargetParent is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
+        var againstUnit = target is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
+        if (againstUnit && _thisParent is Unit { UnitType: UnitCommon.UnitType.Hitman } hitman && hitman.IsExposed)
+            return Unit.ExposedHitmanDamage;
         var (min, max) = againstUnit ? (DamageMin, DamageMax) : (BuildingDamageMin, BuildingDamageMax);
         return max <= min ? min : GD.RandRange(min, max);
     }
@@ -124,9 +127,6 @@ public partial class CanAttack : Node, IJsonConfigurable
     public UnitCommon.UnitType GetUnitType() =>
         _thisParent is Unit unit ? unit.UnitType : UnitCommon.UnitType.Thug;
 
-    /// <summary>Hitman: is this unit visible to the target's team?</summary>
-    public bool CheckStealth(Color targetColor) => _hitmanStealth?.IsVisibleToEnemy(targetColor) ?? true;
-
     /// <summary>Attack the current target, applying the unit type's special ability.</summary>
     public void AttackTarget()
     {
@@ -140,13 +140,6 @@ public partial class CanAttack : Node, IJsonConfigurable
         }
 
         var unitType = GetUnitType();
-        var targetColor = (TargetParent as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;
-
-        if (unitType == UnitCommon.UnitType.Hitman && !CheckStealth(targetColor))
-        {
-            ResetAttackTimer();
-            return;
-        }
 
         if (unitType == UnitCommon.UnitType.Terrorist && _bombAbility != null && !_bombAbility.CanAttack())
         {
@@ -164,6 +157,7 @@ public partial class CanAttack : Node, IJsonConfigurable
             return;
 
         var damage = RollDamage();
+        (_thisParent as Unit)?.MarkShot();
         switch (unitType)
         {
             case UnitCommon.UnitType.Sniper:
@@ -178,10 +172,6 @@ public partial class CanAttack : Node, IJsonConfigurable
                 break;
             case UnitCommon.UnitType.Thompson:
                 _thompsonAbility.ApplyPiercingDamage(Target, damage);
-                break;
-            case UnitCommon.UnitType.Hitman:
-                _hitmanStealth?.OnAttackInitiated();
-                Target?.ReceiveDamage(damage, this);
                 break;
             default:
                 Target.ReceiveDamage(damage, this);
@@ -201,9 +191,8 @@ public partial class CanAttack : Node, IJsonConfigurable
             return 0;
         if (MissChance > 0 && GD.Randf() < MissChance)
             return 0;
-        var againstUnit = target is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
-        var (min, max) = againstUnit ? (DamageMin, DamageMax) : (BuildingDamageMin, BuildingDamageMax);
-        var damage = max <= min ? min : GD.RandRange(min, max);
+        var damage = RollDamage(target);
+        (_thisParent as Unit)?.MarkShot();
         health.ReceiveDamage(damage, this);
         return damage;
     }
@@ -240,10 +229,6 @@ public partial class CanAttack : Node, IJsonConfigurable
             case UnitCommon.UnitType.Shotgun when _raidAbility == null:
                 _raidAbility = new RaidAbility();
                 AddChild(_raidAbility);
-                break;
-            case UnitCommon.UnitType.Hitman when _hitmanStealth == null:
-                _hitmanStealth = new HitmanStealth();
-                AddChild(_hitmanStealth);
                 break;
             case UnitCommon.UnitType.Terrorist when _bombAbility == null:
                 _bombAbility = new BombAbility();

@@ -407,8 +407,16 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
     inside the current vision square and within the table range (Sniper 9.0), so standing gives +1 sight and +1 reach
     (`Unit.CurrentVision`, `Unit.Sees`, `CanAttack.TargetInRange`). Open: line of sight in the vision grid; activities 12+
     shrink vision to +2Ah × (27 − activity) / 15; `SniperAbility`'s farther-is-stronger damage is a GDScript-era guess.
-  - Hit man: `HitmanStealth` (always hidden until he attacks) is a GDScript-era guess; the original has a Disguise order
-    (0Ah, text 29,10, needs a service via vt+B8h, hidden flag vt+19Ch). Port that order; keep "not auto-attacked while disguised".
+  - Disguise and the Hit man: done (`Units/UnitDisguise.cs`, replaces the GDScript-era `HitmanStealth`). Unit +0D0h =
+    last shot (Unit::Attack sub_42BD15), +0D4h = disguise start (constructor: 0 / −3601). Order 0Ah "Disguise"
+    (29,10, slot 4, icon tile 0xD85 from 0x4844EC, immediate): any own unit but a Collector or one in a car, when the
+    owner can use service 12h (FBI, 1 500 000 bribed, 100 points) and 60 game hours passed since the last one
+    (gate sub_42CCE5, handler sub_42C503). Exposed (vt+19Ch sub_42B3C0): Hit man — shot within the last 30 hours;
+    others — 60 hours after disguising or shot within 30 hours. Only exposed units are picked by the unit AI; the
+    player can still order an attack. Panel: " (Disguised)" (5,12) after the type name while vt+1D8h (sub_42EC08).
+    Damage to units (sub_42C890 / sub_42C960): an exposed Hit man does 30, a hidden one the table 161–162.
+    MCP-tested in episode 13 (Hit man exposed for the first 30 h, then hidden; Disguise button on a Pistol and a
+    Shotgun man, FBI points paid, label shown). Open: the Shotgun man's portrait is black in the panel.
   - A disguised Hit man (vt+19Ch) inside someone's sight is visible but never auto-attacked, by unit AI or computer players; the human can still attack him manually. Once he loses the disguise he is a normal target. Check `UnitAI.Think` (it currently skips hidden units entirely, which matches the auto-attack part) and that hidden Hit men are still drawn.
 
 - [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.

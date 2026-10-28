@@ -64,8 +64,8 @@ public partial class Unit
                 continue;
             if (!IsHostileTo(other))
                 continue;
-            if (other.CanAttack != null && !other.CanAttack.CheckStealth(TeamColor))
-                continue;
+            if (!other.IsExposed)
+                continue; // vt+19Ch: disguised units (and the hidden Hit man) are never picked by themselves
             if (!Sees(other))
                 continue;
             var d = MapTileMath.GetDistanceExact(this, other);
