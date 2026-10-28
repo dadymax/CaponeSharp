@@ -67,6 +67,28 @@ public partial class Unit
 {
     public const int ArrestServiceLow = 0x2C, ArrestServiceMid = 0x31, ArrestServiceHigh = 0x34;
 
+    /// <summary>+0D8h = 2 000 000 (vt+1E0h): planted by the FBI snitch service; vt+1E4h / vt+1DCh test it.</summary>
+    public bool IsSnitch { get; set; }
+
+    /// <summary>Order 0Ch "Pay snitch to switch sides ($200.000)" (sub_42C503): the price the buyer pays.</summary>
+    public const long SnitchPrice = 200_000;
+
+    /// <summary>Order 0Ch gate (vt+1E4h): a snitch of another player, and the buyer can afford the price.</summary>
+    public bool CanBuySnitch(Team team) =>
+        IsSnitch && !IsDead && team?.Org != null && OwnerTeam != team && team.Org.CanAfford(SnitchPrice);
+
+    /// <summary>Order 0Ch: "%s switches sides." (29,19); the unit joins the buyer, who pays 200 000.</summary>
+    public bool BuySnitch(Team team)
+    {
+        if (!CanBuySnitch(team))
+            return false;
+        Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(29, 19), DisplayName));
+        IsSnitch = false;
+        ChangeOwner(team);
+        team.Org.Spend(SnitchPrice);
+        return true;
+    }
+
     private bool LowTierGangster => UnitType is UnitCommon.UnitType.Thug or UnitCommon.UnitType.Pistol;
 
     private bool MidTierGangster =>

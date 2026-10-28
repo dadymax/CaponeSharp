@@ -142,6 +142,12 @@ public partial class Main : Node2D
 	}
 
 	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>
+	/// <summary>
+	/// The FBI "visits" the local player (HQ vt+104h, 30 game hours): the original sets the main window's +0A40h flag,
+	/// which its input handlers check, and shows "FBI \"visits\" you ..." (20,2) with a progress bar.
+	/// </summary>
+	public static bool InputBlocked => Teams.GetCurrentPlayerTeam()?.Org?.FbiVisitActive == true;
+
 	public override void _UnhandledInput(InputEvent @event)
 	{
 		if (@event is InputEventMouseMotion motion && Map != null)
@@ -150,6 +156,8 @@ public partial class Main : Node2D
 			return;
 		}
 		if (@event is not InputEventMouseButton mouse || Map == null)
+			return;
+		if (InputBlocked)
 			return;
 
 		// Event position, not GetGlobalMousePosition (that reads the OS cursor; same for a real mouse).

@@ -113,6 +113,16 @@ public partial class DebugCommands : Node
         return $"{unit.UnitType}@{unit.Cell} patrols to ({x}, {y})";
     }
 
+    /// <summary>HQ service state of player <paramref name="playerId"/> and the legalization levels.</summary>
+    public string HqState(int playerId)
+    {
+        var org = Teams.GetTeamByPlayerId(playerId)?.Org;
+        if (org == null)
+            return "no player";
+        return $"{org} rumour {org.RumourActive} investigation {org.InvestigationActive} fbi {org.FbiVisitActive} ({org.FbiVisitProgress:0.00}) factors [{string.Join(" ", org.TypeFactor.Select(f => f.ToString("0.00")))}] "
+               + $"legal [{World.LegalizationLevel(1)} {World.LegalizationLevel(2)} {World.LegalizationLevel(3)}] bribed [{string.Join(" ", org.AuthorityMoney)}] snitches {Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Count(u => u.IsSnitch && u.OwnerTeam?.Org == org)}";
+    }
+
     /// <summary>Order mode, movement and target of every player unit.</summary>
     public string Orders() =>
         string.Join("\n", PlayerFighters().Select(u =>
@@ -237,6 +247,8 @@ public partial class DebugCommands : Node
             "enemy" => Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && u.OwnerTeam != null && u.OwnerTeam != Player
                 && u.UnitType is UnitCommon.UnitType.Thug or UnitCommon.UnitType.Pistol).ElementAtOrDefault(index),
             "hq" => Player.HqCompany,
+            "enemyhq" => Teams.TeamsInGame.Values.Where(t => t != Player && t.HqCompany != null).Select(t => t.HqCompany).ElementAtOrDefault(index),
+            "snitch" => Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead && u.IsSnitch).ElementAtOrDefault(index),
             _ => null,
         };
         GuiGameback.UpdateSelectionIcon(node);

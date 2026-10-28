@@ -221,8 +221,7 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   30 points), 31h for Shotgun / Terrorist / Thompson (2 000 000, 40), 34h for any (4 000 000, 60; only checked, not
   paid), then a police car with "lawyers can't help" (sub_4460C5 with 1). MCP-tested in episode 4 (30 points paid, car
   sent). Order 0Ch "Pay snitch to switch sides ($200.000)" (29,12, slot 1, icon table 0x4844EC) needs unit +0D8h =
-  2 000 000 (vt+1E4h sub_42CED7), set by the FBI snitch service: the buyer pays 200 000 and takes the unit ("%s
-  switches sides.", 29,19). Not ported until the snitch service is.
+  2 000 000 (vt+1E4h sub_42CED7), set by the FBI snitch service — done, see "HQ authority services".
 - Open: mode 4 (action 4 is not on the menu), enemy buildings, police targeting, the
   Terrorist/Cadillac chase rule.
 - Movement (for the "units stack on one cell" issue): the original walks tile by tile. sub_427EF5 picks the next
@@ -278,6 +277,30 @@ with kind ≠ 0. The kind goes to vt+160h (sub_4626B5) from sub_4043D0.
 - Deviations: one extort try per company instead of per ring cell; a unit already extorting keeps its order; allies'
   and police units aren't intruders. Unknown: unit vt+1F0h (units skipped by the tasking) and unit vt+A0h.
 - Found while testing: attacking units stack on one cell. (HQ HP and elimination: fixed, see below.)
+
+## HQ authority services (2026-10-28)
+
+`Scripts/Economy/HqServices.cs`. HQ building menu sub_4152F0, commands sub_415FF0 (issuer pays, the clicked HQ's owner
+is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
+- Own HQ: slot 0 "Ask Mayor to start bribing investigations" (17,3/4, service 17h politician 700 000 / 20 points):
+  "Mayor declares that FBI will start bribing investigations ..." (17,48), every player's bribed money except the
+  politician's × 0.75 (dbl_488850). Slots 1–3: legalize business type 1–3 one step (17,5…22 by type and level:
+  beer / wine / spirits, magazines / peep shows / bordellos, lottery / bookmaking / gambling; services 1Bh, 1Eh, 21h
+  = politician 2 000 000/200, 4 500 000/400, 6 000 000/600), "… has been legalized." (17,39…47). Slot 4 "Set as
+  primary training center" (17,24) and slot 5 Repair (17,23) are not ported for the HQ yet.
+- Another player's HQ: slot 0 FBI "talk" to the boss (17,25/26, 11h FBI 2 000 000/100): 30 game hours during which
+  the victim, if local, can't give input (main window +0A40h) and sees "FBI \"visits\" you ..." (20,2) with progress;
+  slot 1 Mayor investigations (17,27/28, 16h 500 000/20): two weeks, income × 0.85, 20,27; slot 2 evil rumour
+  (17,29/30, 1Ah 1 500 000/60): two weeks, income × 0.7, 20,26; slot 3 snitch rumour (17,31/32, 20h 5 000 000/1000):
+  20,28, each gangster quits with 30 %; slot 4 announce player death (17,33/34, 22h 8 000 000/1600): 20,29, each
+  gangster quits with 50 %, each company lost with 25 %; slot 5 ask FBI for snitch (17,35/36, 0Eh 500 000/100): the
+  first non-snitch gangster of the target becomes a snitch (+0D8h = 2 000 000), "Snitch at ..." (17,49). Slots 0–2
+  hide while the effect runs. Buttons show the "1 point" text when the service costs one point.
+- A snitch of another player shows order 0Ch "Pay snitch to switch sides ($200.000)" (slot 1): he joins the buyer
+  (`Unit.ChangeOwner`), "%s switches sides." (29,19).
+- MCP-tested in episode 15: beer legalized; investigation + rumour on Дион О'Брайен (his type factors 0.6); a snitch
+  planted and bought (switched sides, 200 000 paid). Not tested: the FBI visit on the local player (the AI doesn't
+  buy services). Open: computer players using services; the original's FBI-visit progress box; HQ repair.
 
 ## Elimination and last player standing (2026-10-27)
 

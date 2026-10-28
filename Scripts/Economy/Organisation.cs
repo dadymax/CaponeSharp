@@ -16,7 +16,7 @@ namespace Capone;
 /// <item>Per business type: income, count, market share and the income multiplier used by companies (+10Ch).</item>
 /// </list>
 /// </summary>
-public class Organisation
+public partial class Organisation
 {
     /// <summary>Lowest allowed cash balance (sub_430951: cash − amount + 200 000 ≥ 0).</summary>
     public const long OverdraftLimit = 200_000;
@@ -109,6 +109,12 @@ public class Organisation
         if (Eliminated)
             return; // the HQ object is removed from the world (sub_43AB50), so its events stop
         UpdateStats();
+        // sub_430A58: while the FBI visits the local player, "FBI \"visits\" you ..." (20,2) is shown (sub_408C10).
+        if (Team.IsCurrentPlayerColor && (FbiVisitActive || _fbiShown))
+        {
+            _fbiShown = FbiVisitActive;
+            PanelInfo.StatusText = FbiVisitActive ? $"{OriginalTexts.Instance.Get(20, 2)} {(int)(FbiVisitProgress * 100)}%" : "";
+        }
         clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
     }
 
@@ -327,7 +333,11 @@ public class Organisation
         TypeFactor[(int)OriginalBusinessTable.BusinessType.Troubleshooting] = 1f;
         for (var i = 1; i < TypeCount; i++)
         {
-            // TODO (R5/§5): ×0.7 / ×0.85 when the HQ's vt+FCh / vt+100h conditions hold (investigations, rumours…).
+            // sub_430C30: an evil rumour (vt+FCh) ×0.7, an investigation (vt+100h) ×0.85 (flt_4887AC / flt_4887B0).
+            if (RumourActive)
+                TypeFactor[i] *= RumourFactor;
+            if (InvestigationActive)
+                TypeFactor[i] *= InvestigationFactor;
             var level = World.LegalizationLevel(i);
             TypeFactor[i] *= LegalizationFactor[Math.Clamp(level, 0, LegalizationFactor.Length - 1)];
         }

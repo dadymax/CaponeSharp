@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using Godot;
@@ -52,7 +53,11 @@ public partial class ActionBar : Control
         {
             var slot = i;
             var button = new TextureButton { Position = new Vector2(SlotSize * i, 0), Size = new Vector2(SlotSize, SlotSize), Visible = false };
-            button.Pressed += () => _actions[slot]?.Invoke();
+            button.Pressed += () =>
+            {
+                if (!Main.InputBlocked)
+                    _actions[slot]?.Invoke();
+            };
             PanelInfo.HookStatus(button, () => _texts[slot] ?? "");
             AddChild(button);
             _slots[i] = button;
@@ -152,6 +157,17 @@ public partial class ActionBar : Control
         return true;
     }
 
+    private void ClearSlots()
+    {
+        for (var i = 0; i < SlotCount; i++)
+        {
+            if (_slots[i].IsHovered() && _slots[i].Visible)
+                PanelInfo.StatusText = "";
+            _slots[i].Visible = false;
+            _actions[i] = null;
+        }
+    }
+
     /// <summary>Rebuilds the slots when what they depend on changed (or always when <paramref name="force"/>).</summary>
     private void Rebuild(bool force)
     {
@@ -176,22 +192,36 @@ public partial class ActionBar : Control
         {
             // Another player's (or nobody's) unit: order 0Bh "Ask cops to arrest gangster" in slot 0 (sub_42D2C1).
             var reportable = otherUnit.CanBeReportedBy(Teams.GetCurrentPlayerTeam());
-            var otherKey = $"other|{otherUnit.GetInstanceId()}|{reportable}";
+            var buyable = otherUnit.CanBuySnitch(Teams.GetCurrentPlayerTeam());
+            var otherKey = $"other|{otherUnit.GetInstanceId()}|{reportable}|{buyable}";
             if (!force && otherKey == _shown)
                 return;
             _shown = otherKey;
-            for (var i = 0; i < SlotCount; i++)
-            {
-                _slots[i].Visible = false;
-                _actions[i] = null;
-            }
+            ClearSlots();
             if (reportable)
                 Set(0, ArrestIcon, OriginalTexts.Instance.Get(29, 11),
                     () => otherUnit.ReportToPolice(Teams.GetCurrentPlayerTeam()));
+            // Slot 1: order 0Ch "Pay snitch to switch sides ($200.000)" (29,12), icon from table 0x4844EC.
+            if (buyable)
+                Set(1, TypeIcon(DisguiseIcons, otherUnit.UnitType), OriginalTexts.Instance.Get(29, 12),
+                    () => otherUnit.BuySnitch(Teams.GetCurrentPlayerTeam()));
             return;
         }
         var company = GuiGameback.Instance?.SelectedNode as Company;
         var player = Teams.GetCurrentPlayerTeam();
+        if (company != null && IsInstanceValid(company) && company.IsHq && player?.Org != null)
+        {
+            // HQ menu (sub_4152F0): authority services on the own or another player's HQ.
+            var actions = HqServices.Menu(player, company);
+            var hqKey = $"hq|{company.GetInstanceId()}|{string.Join(",", actions.Select(a => a.Slot + a.Text))}";
+            if (!force && hqKey == _shown)
+                return;
+            _shown = hqKey;
+            ClearSlots();
+            foreach (var action in actions)
+                Set(action.Slot, action.Icon, action.Text, () => action.Run());
+            return;
+        }
         var own = company != null && IsInstanceValid(company) && company.IsEconomic && company.OwnerTeam == player && player != null;
         if (!own || company != _submenuCompany)
             _submenuCompany = null;

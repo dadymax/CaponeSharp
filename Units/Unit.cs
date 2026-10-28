@@ -132,6 +132,26 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             _unitInstance.OwnerType = owner;
     }
 
+    /// <summary>The unit joins <paramref name="team"/> (unit vt+74h with a new owner, e.g. a bought snitch).</summary>
+    public void ChangeOwner(Team team)
+    {
+        CancelOrder();
+        StopMoving();
+        if (CanAttack != null)
+            CanAttack.Target = null;
+        Selected = false;
+        TeamColor = team.TeamColor;
+        var relation = Teams.GetCurrentPlayerTeam()?.GetTargetRelation(team.TeamColor);
+        SetOwner(relation switch
+        {
+            Teams.TeamRelation.Self => UnitCommon.UnitOwner.Player,
+            Teams.TeamRelation.Friend => UnitCommon.UnitOwner.Teammate,
+            _ => UnitCommon.UnitOwner.Enemy,
+        });
+        IsDeserter = false;
+        CanAttack?.Reinit();
+    }
+
     #region Orders
 
     /// <summary>Start a new order (a node that drives this unit); the previous one is cancelled.</summary>
