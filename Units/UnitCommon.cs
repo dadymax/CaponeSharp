@@ -119,8 +119,12 @@ public partial class UnitCommon : Node
             foreach (var (owner, sprites) in record.Sprites)
                 foreach (var missing in sprites.Validate())
                     yield return $"{type}/{owner}: {missing}";
-            if (record.Properties.TryGetValue("Avatar", out var avatar)
-                && OriginalData.Instance.Tiles.ResolveTile(avatar.AsString()) == null)
+            if (!record.Properties.TryGetValue("Avatar", out var avatar))
+            {
+                if (type is not (UnitType.PoliceCar or UnitType.Policeman))
+                    yield return $"{type}/Avatar: none";
+            }
+            else if (OriginalData.Instance.Tiles.ResolveTile(avatar.AsString()) == null)
                 yield return $"{type}/Avatar: {avatar.AsString()}";
         }
     }

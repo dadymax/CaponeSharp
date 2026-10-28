@@ -389,6 +389,7 @@
     }
   },
   "Shotgun": {
+    "Avatar": "Shotgun man face",
     "ArmyFavor": 20,
     "can_attack": {
       "attackRate": 1.5

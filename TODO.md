@@ -416,7 +416,7 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
     player can still order an attack. Panel: " (Disguised)" (5,12) after the type name while vt+1D8h (sub_42EC08).
     Damage to units (sub_42C890 / sub_42C960): an exposed Hit man does 30, a hidden one the table 161–162.
     MCP-tested in episode 13 (Hit man exposed for the first 30 h, then hidden; Disguise button on a Pistol and a
-    Shotgun man, FBI points paid, label shown). Open: the Shotgun man's portrait is black in the panel.
+    Shotgun man, FBI points paid, label shown). The Shotgun man's black portrait: fixed ("Shotgun man face", now checked by the smoke test).
   - A disguised Hit man (vt+19Ch) inside someone's sight is visible but never auto-attacked, by unit AI or computer players; the human can still attack him manually. Once he loses the disguise he is a normal target. Check `UnitAI.Think` (it currently skips hidden units entirely, which matches the auto-attack part) and that hidden Hit men are still drawn.
 
 - [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.
