@@ -188,11 +188,12 @@ public partial class Organisation
             return;
         Eliminated = true;
         GD.Print($"Organisation: {Team.PlayerName} eliminated");
+        // Assets first: the defeat opens the end screen, which must find the player owning nothing.
+        ReleaseAssets();
         if (Team.IsCurrentPlayerColor)
             CampaignManager.Instance?.OnPlayerDefeated(Team, OriginalTexts.Instance.Get(19, 1));
         else
             Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(19, 2), Team.PlayerName));
-        ReleaseAssets();
         CheckLastPlayers();
     }
 

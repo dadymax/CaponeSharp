@@ -231,7 +231,10 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
             if (value is Company company)
             {
-                if (ExtortOrder.CanExtort(this, company))
+                // sub_42C1F6: a Thief sent onto a building steals (or delivers) instead of extorting.
+                if (StealOrder.CanSteal(this))
+                    SetOrder(new StealOrder(this, company));
+                else if (ExtortOrder.CanExtort(this, company))
                     SetOrder(new ExtortOrder(this, company));
                 else
                 {
@@ -488,7 +491,31 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     #region Death and arrest
 
-    private void OnHPisZero(Color attackerColor) => Die();
+    private void OnHPisZero(Color attackerColor)
+    {
+        LoseCarriedMoney(Teams.GetTeam(attackerColor));
+        Die();
+    }
+
+    /// <summary>
+    /// sub_42B8A3 (unit vt+FCh): money carried by a killed unit (+0A4h: collector, thief) goes to the killer's player
+    /// as a deposit (HQ vt+68h). The local killer reads "%s lost $%s." / "$%s stolen from %s." (29,16, victim's
+    /// player), the local victim "%s stole $%s." (29,18, killer's player).
+    /// </summary>
+    public void LoseCarriedMoney(Team killer)
+    {
+        var amount = CarriedMoney;
+        if (amount <= 0 || killer?.Org == null || killer == OwnerTeam)
+            return;
+        CarriedMoney = 0;
+        killer.Org.Deposit(amount);
+        var victim = OwnerTeam;
+        GD.Print($"Unit {DisplayName} killed: {amount} carried goes to {killer.PlayerName}");
+        if (killer.IsCurrentPlayerColor && victim != null)
+            Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(29, 16), victim.PlayerName, PanelInfo.Money(amount)));
+        else if (victim?.IsCurrentPlayerColor == true)
+            Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(29, 18), killer.PlayerName, PanelInfo.Money(amount)));
+    }
 
     /// <summary>The unit is killed: it stops, shows its corpse for a while and is removed.</summary>
     public void Die()

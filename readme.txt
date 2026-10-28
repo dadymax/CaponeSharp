@@ -78,6 +78,8 @@ Right click               order: walk there / attack the clicked unit / go to a 
 + / -                     game speed x2 / /2 (one game hour = one real second at x1)
 Bottom panel buttons      orders of the selected object (hover shows the text):
     own unit:     Go, Attack (Shift = Force Go / Force Attack), Extort, Disguise, Patrol
+    Thief:        right click (or Go) on another player's company steals its cash, on their HQ all their
+                  money; on your own HQ he hands it in
     other unit:   Ask cops to arrest gangster, Pay snitch to switch sides
     own company:  convert to a business, sell, repair, primary training center
     other company: police raid, demolish, brownout

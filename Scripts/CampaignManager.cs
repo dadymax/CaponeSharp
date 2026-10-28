@@ -175,6 +175,16 @@ public partial class CampaignManager : Node
         return unit;
     }
 
+    /// <summary>A new unit of <paramref name="team"/> on a free cell next to <paramref name="cell"/>.</summary>
+    public Unit CreateUnitNear(UnitCommon.UnitType type, Team team, Vector2I cell) => CreateUnit(type, team, FreeCellNear(cell));
+
+    /// <summary>A free walkable cell next to <paramref name="cell"/> (sub_43B955), or the cell itself.</summary>
+    public Vector2I FreeCellNear(Vector2I cell)
+    {
+        var free = FreeCellsAround(cell, 1);
+        return free.Count > 0 ? free[0] : cell;
+    }
+
     /// <summary>A collector for <paramref name="team"/>, standing next to its HQ (sub_41FEF0 + Unit::Unit(type 7)).</summary>
     public Unit SpawnCollector(Team team)
     {

@@ -299,6 +299,9 @@ public partial class Main : Node2D
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
+				case OrderMode.Go or OrderMode.ForceGo when hit is Company building && StealOrder.CanSteal(unit):
+					unit.TargetStructure = building; // a Thief sent onto a building steals or delivers (sub_42C1F6)
+					break;
 				case OrderMode.Go or OrderMode.ForceGo:
 					unit.GoTo(local, order == OrderMode.ForceGo);
 					break;

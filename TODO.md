@@ -497,18 +497,18 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
     - Plan: Scripts/Vision.cs (grid per radius with the rule above, cached per unit until its cell or radius changes),
       a per-frame visibility set for the local player and allies, `Unit.Sees` using the grid (sub_42B750 checks it),
       a dark overlay on unseen cells, enemy units hidden there, companies keeping their last seen sign.
-- [ ] **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.
-- [ ] **Police actions**: "Ask Cops to raid the business (N police favour points)", "Ask cops to arrest gangster". Police are also on the map: unit "Sergeant", building "Police Station". Episode 1 tips say the police arrest your gangsters. Needs police units + arrest logic.
-- [ ] **Army**: "Recruit gun man / shotgun man / thompson man / sniper / hitman / terrorist / thief / cadillac ($X and N Army favour points)". This matches `ArmyFavor` in `units.json`; enforce it on recruit. "Bribe the army to find and recruit a sniper."
-- [ ] **Mayor actions** (politician points):
+- [x] (done: bribe shares chart `SharesPanel`, `Organisation.Deposit`) **Authorities = spending sliders.** "%1.0f%% of income is used to bribe police / army / politician / FBI". Favour accumulates as points ("Police own %1.0f points worth of favour"). The fourth authority is the **politician (Mayor)**, not the "senate". Find the income-to-points formula from the code that formats those strings.
+- [x] (done: police stations, cars, arrests, raids — `Police`, `CompanyServices`) **Police actions**: "Ask Cops to raid the business (N police favour points)", "Ask cops to arrest gangster". Police are also on the map: unit "Sergeant", building "Police Station". Episode 1 tips say the police arrest your gangsters. Needs police units + arrest logic.
+- [x] (done: recruit column with army favour, `Training`) **Army**: "Recruit gun man / shotgun man / thompson man / sniper / hitman / terrorist / thief / cadillac ($X and N Army favour points)". This matches `ArmyFavor` in `units.json`; enforce it on recruit. "Bribe the army to find and recruit a sniper."
+- [x] (done: `HqServices`, `CompanyServices`) **Mayor actions** (politician points):
   - legalize beer / wines / spirits / gambling / bookmaking / lottery / bordellos / peep shows / dirty magazines (each triggers a "… has been legalized." event)
   - arrange brownout
   - demolish building
   - start a snitch / evil rumour
   - start (bribing) investigations
   - announce player death
-- [ ] **FBI actions**: "Ask FBI for snitch", "Ask FBI to 'talk' to boss"; events "FBI 'visits' you …", "Former FBI agent reveals that %s used to be a snitch …".
-- [ ] **Business**:
+- [x] (done: FBI visit, snitch, disguise — `HqServices`, `UnitDisguise`) **FBI actions**: "Ask FBI for snitch", "Ask FBI to 'talk' to boss"; events "FBI 'visits' you …", "Former FBI agent reveals that %s used to be a snitch …".
+- [x] (done: conversion, licences, repair, sell, primary center, market share — `Businesses`, `Company`) **Business**:
   - company classes Legal/Slum, Legal/Middle class, Legal/Center
   - Extort %
   - "Upgrade to Bootlegging/Entertainment/Gambling/Troubleshooting/Supporting biz"
@@ -517,7 +517,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   - "Set as primary training center"
   - Market share
   - variant names and prices: find the table used with "Upgrade to %s ($%s …)" (pointer table at 0x49E9C4); the names are probably in the Russian string set
-- [ ] **Units**:
+- [~] **Units** (done: Disguise, Shotgun raid, Thief; open: Cadillac, Godfather):
+  - Thief done 2026-10-29 (`StealOrder`, sub_42FC60 / sub_42F6E0): sent onto another player's company he takes its
+    uncollected money, onto another player's HQ all of that player's cash; sent onto his own HQ or cash-out business
+    he delivers. A killed unit's carried money goes to the killer (`Unit.LoseCarriedMoney`, sub_42B8A3). Scenario
+    checks: steal, deliver, killed collector. Elimination now releases assets before the defeat screen.
   - Hitman "Disguise" / "(Disguised)" is a player-toggled state
   - Thief: "%s stole $%s."
   - Cadillac recruitable

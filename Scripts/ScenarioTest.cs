@@ -130,6 +130,11 @@ public partial class ScenarioTest : Node
             MakeDeserter();
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
+        if (_hour == System.Math.Min(30, _days * 12 + 6))
+        {
+            SendThief();
+            KillACollector();
+        }
         if (_hour >= _days * 24)
             DestroyComputerPlayers();
     }
@@ -302,6 +307,76 @@ public partial class ScenarioTest : Node
         }
         else
             Note("no enemy company for a brownout");
+    }
+
+    /// <summary>A Thief for the local player steals from an enemy company (or HQ) and brings the money home.</summary>
+    private void SendThief()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        if (human?.HqCompany == null || human.Org.Eliminated)
+        {
+            Note("no thief sent (no local HQ)");
+            return;
+        }
+        var target = Companies().Where(c => c.OwnerTeam != null && c.OwnerTeam != human && c.IsEconomic && c.Uncollected > 0)
+                         .OrderByDescending(c => c.Uncollected).FirstOrDefault()
+                     ?? Companies().FirstOrDefault(c => c.IsHq && c.OwnerTeam != human && c.OwnerTeam?.Org?.Cash > 0);
+        if (target == null)
+        {
+            Note("no enemy company with money for the thief");
+            return;
+        }
+        // Created next to the target, so enemy gangsters rarely get him first; a dead thief is only noted.
+        var thief = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Thief, human, target.Cell);
+        thief.TargetStructure = target;
+        long stolen = 0, before = 0;
+        var died = false;
+        bool Dead()
+        {
+            if (died || (IsInstanceValid(thief) && !thief.IsDead))
+                return died;
+            died = true;
+            Note($"the thief died before finishing (stolen {stolen})");
+            return true;
+        }
+        _pending.Add((_hour + 24, "a thief steals from an enemy", () =>
+        {
+            if (Dead())
+                return true;
+            if (thief.CarriedMoney <= 0)
+                return false;
+            stolen = thief.CarriedMoney;
+            before = human.Org.TotalIn + human.Org.TotalBribed;
+            // Skip the walk home through enemy ground: the check is the delivery itself.
+            thief.StopMoving();
+            thief.Position = thief.Map.MapToLocal(CampaignManager.Instance.FreeCellNear(human.HqCompany.Cell));
+            thief.TargetStructure = human.HqCompany;
+            _pending.Add((_hour + 96, "a thief delivers at his HQ", () => Dead()
+                || (thief.CarriedMoney == 0 && human.Org.TotalIn + human.Org.TotalBribed == before + stolen),
+                () => $"thief at {thief.Cell} carrying {thief.CarriedMoney} of {stolen}"));
+            return true;
+        }, () => $"thief at {thief.Cell} carrying {thief.CarriedMoney}, target {target}"));
+    }
+
+    /// <summary>An enemy collector carrying money is killed by the local player: the money goes to the killer.</summary>
+    private void KillACollector()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var collector = Units().FirstOrDefault(u => u.UnitType == UnitCommon.UnitType.Collector && u.CarriedMoney > 0
+                                                     && u.OwnerTeam != null && u.OwnerTeam != human && !u.InsideBuilding);
+        var attacker = Units().FirstOrDefault(u => u.OwnerTeam == human && u.CanAttack != null)?.CanAttack;
+        if (collector == null || attacker == null || human?.Org == null)
+        {
+            Note("no enemy collector with money to kill");
+            return;
+        }
+        var carried = collector.CarriedMoney;
+        var before = human.Org.TotalIn + human.Org.TotalBribed;
+        for (var i = 0; i < 50 && !collector.IsDead; i++)
+            collector.CanBeAttacked.ReceiveDamage(collector.CanBeAttacked.HP, attacker);
+        Check("a killed collector's money goes to the killer",
+            collector.IsDead && human.Org.TotalIn + human.Org.TotalBribed == before + carried,
+            $"carried {carried}, killer got {human.Org.TotalIn + human.Org.TotalBribed - before}, dead {collector.IsDead}");
     }
 
     private static (Company Company, HqServices.MenuAction Action) Pick(IEnumerable<Company> targets, Team human, int slot)
