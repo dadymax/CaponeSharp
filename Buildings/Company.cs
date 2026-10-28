@@ -624,6 +624,14 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
 
     private bool _signPending;
     private bool _inFog;
+    private Team _seenOwner;
+    private OriginalBusinessTable.Entry _seenEntry;
+
+    /// <summary>Owner as the local player last saw it (the current one when in sight).</summary>
+    public Team ShownOwner => _inFog ? _seenOwner : OwnerTeam;
+
+    /// <summary>Catalogue row as the local player last saw it.</summary>
+    public OriginalBusinessTable.Entry ShownEntry => _inFog ? _seenEntry : Entry;
 
     /// <summary>
     /// Out of the local player's sight (<see cref="FogOfWar"/>): the sign keeps its last seen owner and type until the
@@ -636,6 +644,11 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         {
             if (_inFog == value)
                 return;
+            if (value)
+            {
+                _seenOwner = OwnerTeam;
+                _seenEntry = Entry;
+            }
             _inFog = value;
             if (!value && _signPending)
                 ApplySign();

@@ -100,7 +100,7 @@ public partial class DebugCommands : Node
         FogOfWar.Instance?.Refresh();
         var units = Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => !u.IsDead).ToList();
         var companies = Tree.GetNodesInGroup(Company.GroupName).OfType<Company>().ToList();
-        return $"{FogOfWar.Instance?.Describe()}\nfog {on}: visible cells {FogOfWar.Instance?.VisibleCount}, hidden units {units.Count(u => !u.Visible)}/{units.Count}, companies in fog {companies.Count(c => c.InFog)}/{companies.Count}";
+        return $"{FogOfWar.Instance?.Describe()}\nfog {on}: visible cells {FogOfWar.Instance?.VisibleCount}, hidden units {units.Count(u => !u.Visible)}/{units.Count}, companies in fog {companies.Count(c => c.InFog)}/{companies.Count}, shown with an outdated owner {companies.Count(c => c.ShownOwner != c.OwnerTeam)}";
     }
 
     /// <summary>Patrol order for the player's unit number <paramref name="index"/> between its cell and (x, y).</summary>

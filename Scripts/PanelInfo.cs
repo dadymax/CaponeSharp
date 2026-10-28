@@ -103,7 +103,7 @@ public partial class PanelInfo : Control
     /// <summary>sub_40A997.</summary>
     private void DrawInfo(Node2D node, Team player)
     {
-        var owner = node switch { Unit u => u.OwnerTeam, Company c => c.OwnerTeam, _ => null };
+        var owner = node switch { Unit u => u.OwnerTeam, Company c => c.ShownOwner, _ => null };
         var relation = RelationColor(owner, player);
         var own = owner != null && owner == player;
 
@@ -172,9 +172,10 @@ public partial class PanelInfo : Control
 
     private static string CompanyKind(Company company)
     {
-        if (company.IsPoliceStation || company.Entry == null)
+        var entry = company.ShownEntry; // last seen when the company is in the fog of war
+        if (company.IsPoliceStation || entry == null)
             return company.KindName;
-        return (int)company.BusinessType switch
+        return (int)entry.Type switch
         {
             0 => T(15 + Mathf.Clamp(company.Block?.District ?? 3, 0, 3)),
             var t and >= 1 and <= 5 => T(18 + t),
