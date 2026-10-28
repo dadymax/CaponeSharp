@@ -42,9 +42,13 @@ public partial class CanAttack : Node, IJsonConfigurable
         }
         set
         {
+            var previous = _targetParent;
             _targetParent = value != null && IsInstanceValid(value) ? value.GetParent()?.GetParent() as Node2D : null;
             if (_targetParent != null && !IsHostile(_targetParent))
                 _targetParent = null;
+            // sub_42BD15: a Sniper starts aiming again at a new target (+0B8h, aim counter +0C8h = 0).
+            if (_targetParent != null && _targetParent != previous && GetUnitType() == UnitCommon.UnitType.Sniper)
+                ResetAttackTimer();
         }
     }
 
@@ -96,7 +100,31 @@ public partial class CanAttack : Node, IJsonConfigurable
         BuildingDamageMax = Mathf.Max(stats.BuildingDamageMin, stats.BuildingDamageMax);
         AttackRange = stats.AttackRange;
         MissChance = Mathf.Clamp(1f - stats.HitChance / 100f, 0f, 1f);
+        // Unit::Attack (sub_42BD15) runs on every think, once a game hour (event 5, sub_42A535): a shot needs the aim
+        // ticks (vt+1B4h) and the reload time since the last shot (vt+1B8h). One game hour = one timer second here.
+        AttackRate = Mathf.Max(AimTicks(stats.FireRate), stats.ReloadMinutes / (float)GameClock.MinutesPerHour);
+        FiresFromCar = stats.FiresFromCar != 0;
     }
+
+    /// <summary>Shot sound per unit type (dword_484554 → sound table 0x478700).</summary>
+    public static string ShotSound(UnitCommon.UnitType type) => type switch
+    {
+        UnitCommon.UnitType.Pistol => "Gun.wav",
+        UnitCommon.UnitType.Thompson or UnitCommon.UnitType.PoliceCar => "Machgun.wav",
+        UnitCommon.UnitType.Terrorist => "Bang.wav",
+        UnitCommon.UnitType.Sniper => "Rifle.wav",
+        UnitCommon.UnitType.Cadillac => "CarGo.wav",
+        UnitCommon.UnitType.Shotgun => "Shotgun.wav",
+        UnitCommon.UnitType.Hitman or UnitCommon.UnitType.Policeman => "Hitman.wav",
+        _ => "Hit.wav",
+    };
+
+    /// <summary>sub_42BBB0 (vt+1B4h): thinks of aiming per shot — 1 at a rate of 1 or more, else round(1 / rate).</summary>
+    public static int AimTicks(float fireRate) =>
+        fireRate >= 1f || fireRate <= 0f ? 1 : (int)System.Math.Round(1.0 / fireRate);
+
+    /// <summary>vt+1BCh: may shoot from inside a Cadillac (Thompson man).</summary>
+    public bool FiresFromCar { get; set; }
 
     /// <summary>
     /// Random damage for the current target. Like Unit::GetMinDamage/GetMaxDamage (0x42C890/0x42C960):
@@ -122,7 +150,7 @@ public partial class CanAttack : Node, IJsonConfigurable
             AttackTarget();
     }
 
-    public void ResetAttackTimer() => _currentTimer = AttackRate; // TODO: need good coefficient
+    public void ResetAttackTimer() => _currentTimer = AttackRate;
 
     public UnitCommon.UnitType GetUnitType() =>
         _thisParent is Unit unit ? unit.UnitType : UnitCommon.UnitType.Thug;
@@ -139,6 +167,10 @@ public partial class CanAttack : Node, IJsonConfigurable
             return;
         }
 
+        // sub_42BD15: from inside a car only units with vt+1BCh (the Thompson man) shoot.
+        if (_thisParent is Unit { Vehicle: not null } && !FiresFromCar)
+            return;
+
         var unitType = GetUnitType();
 
         if (unitType == UnitCommon.UnitType.Terrorist && _bombAbility != null && !_bombAbility.CanAttack())
@@ -147,14 +179,19 @@ public partial class CanAttack : Node, IJsonConfigurable
             return;
         }
 
+        if (!TargetInRange())
+            return;
+
+        // sub_42BD15: the shot's sound (table 0x484554 → sound table 0x478700) when the shooter or the target can be
+        // seen (vt+0DCh, read here as visible to the local player); the shot itself may then miss.
+        if ((_thisParent?.Visible ?? false) || (TargetParent?.Visible ?? false))
+            Sound.Play(ShotSound(unitType));
+
         if (MissChance > 0 && GD.Randf() < MissChance)
         {
             ResetAttackTimer();
             return;
         }
-
-        if (!TargetInRange())
-            return;
 
         var damage = RollDamage();
         (_thisParent as Unit)?.MarkShot();

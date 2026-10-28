@@ -47,7 +47,7 @@ public class OriginalUnitTable
             _stats[type] = new Stats
             {
                 Type = type,
-                Unknown00 = exe.ReadF32(va + 0x00),
+                FireRate = exe.ReadF32(va + 0x00),
                 DamageMin = exe.ReadU16(va + 0x04),
                 DamageMax = exe.ReadU16(va + 0x06),
                 BuildingDamageMin = exe.ReadU16(va + 0x08),
@@ -63,8 +63,8 @@ public class OriginalUnitTable
                 Value28 = exe.ReadU16(va + 0x28),
                 VisionMax = exe.ReadU16(va + 0x2A),
                 Vision = exe.ReadU16(va + 0x2C),
-                Value2E = exe.ReadU16(va + 0x2E),
-                Value30 = exe.ReadU16(va + 0x30),
+                ReloadMinutes = exe.ReadU16(va + 0x2E),
+                FiresFromCar = exe.ReadU16(va + 0x30),
             };
         }
     }
@@ -81,8 +81,8 @@ public class OriginalUnitTable
     public class Stats
     {
         public int Type;
-        /// <summary>+0x00, float. 1.0 for most; Thompson 6, Sniper 0.24, police car 4. Compared with 1.0 in sub_42BBB0.</summary>
-        public float Unknown00;
+        /// <summary>+0x00, float: shots per think (1.0 for most; Thompson 6, Sniper 0.24, police car 4). Below 1 the unit aims round(1 / rate) thinks (game hours) per shot (vt+1B4h sub_42BBB0).</summary>
+        public float FireRate;
         /// <summary>+0x04/+0x06: damage range against units.</summary>
         public int DamageMin, DamageMax;
         /// <summary>+0x08/+0x0A: damage range against buildings.</summary>
@@ -109,9 +109,9 @@ public class OriginalUnitTable
         public int VisionMax;
         /// <summary>+0x2C: normal vision radius in tiles.</summary>
         public int Vision;
-        /// <summary>+0x2E: 300 for Shotgun man only.</summary>
-        public int Value2E;
-        /// <summary>+0x30: 1 for Thompson man only.</summary>
-        public int Value30;
+        /// <summary>+0x2E: game minutes between shots (vt+1B8h sub_42BCF7): Shotgun man 300, others 0.</summary>
+        public int ReloadMinutes;
+        /// <summary>+0x30: may shoot from inside a Cadillac (vt+1BCh sub_42E4F3): Thompson man only.</summary>
+        public int FiresFromCar;
     }
 }

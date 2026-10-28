@@ -64,6 +64,8 @@ public static class Sound
     public static readonly string[] BusinessRefuse =
         { "BusinessRefuse1.wav", "BusinessRefuse2.wav", "BusinessRefuse3.wav", "BusinessRefuse4.wav", "BusinessRefuse5.wav" };
 
+    public const int MaxVoices = 16;
+
     /// <summary>Set false to mute (tests).</summary>
     public static bool Enabled { get; set; } = true;
 
@@ -84,6 +86,9 @@ public static class Sound
             _host = new Node { Name = "SoundHost" };
             (Engine.GetMainLoop() as SceneTree)?.Root.CallDeferred(Node.MethodName.AddChild, _host);
         }
+        // At most MaxVoices at once (a big fight fires many shots per game hour).
+        if (_host.GetChildCount() >= MaxVoices)
+            return;
         var player = new AudioStreamPlayer { Stream = stream };
         player.Finished += player.QueueFree;
         _host.CallDeferred(Node.MethodName.AddChild, player);

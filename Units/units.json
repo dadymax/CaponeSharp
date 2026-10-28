@@ -3,9 +3,7 @@
   "Thug": {
     "ArmyFavor": 0,
     "Avatar": "Thug man face",
-    "can_attack": {
-      "attackRate": 1.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own bat man idle",
@@ -52,9 +50,7 @@
   "Pistol": {
     "ArmyFavor": 1,
     "Avatar": "Pistol man face",
-    "can_attack": {
-      "attackRate": 1.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own pistol man idle",
@@ -101,9 +97,7 @@
   "Thompson": {
     "ArmyFavor": 40,
     "Avatar": "Thompson man face",
-    "can_attack": {
-      "attackRate": 1.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own Thompson man idle@0",
@@ -151,7 +145,6 @@
     "ArmyFavor": 30,
     "Avatar": "Bomb man face",
     "can_attack": {
-      "attackRate": 1.0,
       "can_capture_neutral": false
     },
     "Sprites": {
@@ -200,9 +193,7 @@
   "Sniper": {
     "ArmyFavor": 6,
     "Avatar": "Sniper man face",
-    "can_attack": {
-      "attackRate": 3.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own Sniper idle",
@@ -295,9 +286,7 @@
   },
   "PoliceCar": {
     "ArmyFavor": 0,
-    "can_attack": {
-      "attackRate": 1.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Police car",
@@ -391,9 +380,7 @@
   "Shotgun": {
     "Avatar": "Shotgun man face",
     "ArmyFavor": 20,
-    "can_attack": {
-      "attackRate": 1.5
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own Shotgun man idle",
@@ -440,9 +427,7 @@
   "Hitman": {
     "ArmyFavor": 30,
     "Avatar": "Hitman face",
-    "can_attack": {
-      "attackRate": 1.0
-    },
+    "can_attack": {},
     "Sprites": {
       "Player": [
         "Own Hitman idle",

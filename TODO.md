@@ -236,7 +236,11 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   Episode 4's boss stands far from his base on purpose.
 
 Known gaps in the brick (do later):
-- `CanAttack.HitOnce` is a simplification of Unit::Attack `sub_42BD15` (bursts, ammo, Cadillac).
+- Unit::Attack `sub_42BD15` (done 2026-10-29): units think once a game hour (event 5, sub_42A535); a shot needs
+  the aim ticks (table +00h: Sniper 4, others 1) and the reload time (+2Eh: Shotgun 300 min) → `CanAttack.AttackRate`
+  from the EXE (the hand-written `attackRate` in units.json is gone); a Sniper re-aims on a new target; only the
+  Thompson man (+30h) shoots from a car; shot sounds by type (table 0x484554). Still simplified: the shot object
+  `sub_438873` (hit roll, projectile) and `CanAttack.HitOnce` for extortion hits (unit vt+104h).
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
 - Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
 - Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).
