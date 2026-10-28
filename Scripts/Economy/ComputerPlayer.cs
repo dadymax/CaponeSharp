@@ -148,7 +148,8 @@ public class ComputerPlayer
         foreach (var unit in AllUnits().Where(u => u.OwnerTeam == Team).ToList())
         {
             if (unit.UnitType == UnitCommon.UnitType.Collector || (int)unit.UnitType == Parameters[12]
-                || unit.IsArrested || unit.IsFighting || unit.CurrentOrder is ExtortOrder)
+                || unit.IsArrested || unit.IsFighting || unit.CurrentOrder is ExtortOrder
+                || unit.Vehicle != null) // passengers are off the map's object list
                 continue;
             TaskUnit(unit);
         }

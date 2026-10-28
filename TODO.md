@@ -129,7 +129,7 @@ code (base squad) get random personal names like `Unit::Unit`.
   441 weekly ticks, so a Тренировочный центр costs ~500 000 a week and a failing Spend repeats "out of funds" every
   tick — corrected: Spend keeps paying while the player has gangsters, so there is no repeated message; with none
   left and negative net income the player is eliminated. Open: the owner type factor the original applies to type 5 (HQ +120h?) is assumed 1.
-- Open: Cadillac passengers.
+- Cadillac passengers: done (see §5 Units).
 
 ## Bribe shares — "Расходы" chart (2026-10-27)
 
@@ -517,7 +517,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   - "Set as primary training center"
   - Market share
   - variant names and prices: find the table used with "Upgrade to %s ($%s …)" (pointer table at 0x49E9C4); the names are probably in the Russian string set
-- [~] **Units** (done: Disguise, Shotgun raid, Thief; open: Cadillac, Godfather):
+- [~] **Units** (done: Disguise, Shotgun raid, Thief, Cadillac; open: Godfather):
+  - Cadillac done 2026-10-29 (`UnitVehicle`, `BoardOrder`; sub_42EE30 / 42EE90 / 42F3C2 / 42F270): four seats; own
+    units sent onto the car board it, ride hidden and keep their AI (they shoot from the car, Unit::Think puts them at
+    the car's position); Unload button (29,9); a destroyed car hurts its passengers (20–99, 1000 by a Terrorist) and
+    lets the survivors out; the car only drives; episode Cadillacs start with four Thompson men inside; the computer
+    player doesn't task passengers. Not checked in a fight yet: passengers' shots from the car.
   - Thief done 2026-10-29 (`StealOrder`, sub_42FC60 / sub_42F6E0): sent onto another player's company he takes its
     uncollected money, onto another player's HQ all of that player's cash; sent onto his own HQ or cash-out business
     he delivers. A killed unit's carried money goes to the killer (`Unit.LoseCarriedMoney`, sub_42B8A3). Scenario

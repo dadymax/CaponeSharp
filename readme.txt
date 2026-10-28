@@ -80,6 +80,8 @@ Bottom panel buttons      orders of the selected object (hover shows the text):
     own unit:     Go, Attack (Shift = Force Go / Force Attack), Extort, Disguise, Patrol
     Thief:        right click (or Go) on another player's company steals its cash, on their HQ all their
                   money; on your own HQ he hands it in
+    Cadillac:     right click a gangster onto your own Cadillac to get in (4 seats); the car's Unload button
+                  lets them out; passengers shoot from the car
     other unit:   Ask cops to arrest gangster, Pay snitch to switch sides
     own company:  convert to a business, sell, repair, primary training center
     other company: police raid, demolish, brownout
@@ -101,7 +103,7 @@ raids, demolition, brownout; victory conditions, defeat, elimination,
 last player standing; deserting unpaid gangsters.
 
 Known missing parts: Network game / Settings / Developers in the main menu, many sounds,
-Cadillac passengers, the Godfather, the original tile-by-tile movement
+the Godfather, the original tile-by-tile movement
 (units can stand on the same cell), rubble after demolition.
 Full list: TODO.md and PLAN.md.
 

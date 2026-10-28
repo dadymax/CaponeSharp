@@ -126,8 +126,15 @@ public partial class ScenarioTest : Node
             _pending.Remove(p);
             Check(p.Name, ok, p.Detail?.Invoke() ?? "");
         }
+        if (_hour == 1)
+            foreach (var car in Units().Where(u => u.IsCar && u.OwnerTeam != null))
+                Check("a starting Cadillac carries four Thompson men",
+                    car.Passengers.Count() == Unit.CarSeats && car.Passengers.All(p => p.UnitType == UnitCommon.UnitType.Thompson),
+                    $"{car.OwnerTeam.PlayerName}'s car: {string.Join(", ", car.Passengers.Select(p => p.UnitType))}");
         if (_hour == 6)
             MakeDeserter();
+        if (_hour == 8)
+            TestCadillac();
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
         if (_hour == System.Math.Min(30, _days * 12 + 6))
@@ -356,6 +363,62 @@ public partial class ScenarioTest : Node
                 () => $"thief at {thief.Cell} carrying {thief.CarriedMoney} of {stolen}"));
             return true;
         }, () => $"thief at {thief.Cell} carrying {thief.CarriedMoney}, target {target}"));
+    }
+
+    /// <summary>
+    /// A Cadillac for the local player: a Thug boards it, rides along, gets out on Unload, boards again, and the car is
+    /// destroyed with him inside (he is hurt and gets out alive or dies).
+    /// </summary>
+    private void TestCadillac()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        if (human?.HqCompany == null || human.Org.Eliminated)
+        {
+            Note("no Cadillac test (no local HQ)");
+            return;
+        }
+        var cm = CampaignManager.Instance;
+        var car = cm.CreateUnitNear(UnitCommon.UnitType.Cadillac, human, human.HqCompany.Cell);
+        var thug = cm.CreateUnitNear(UnitCommon.UnitType.Thug, human, car.Cell);
+        thug.SetOrder(new BoardOrder(thug, car));
+        var start = car.Cell;
+        var stage = 0;
+        var hpBefore = 0;
+        _pending.Add((_hour + 48, "a gangster boards a Cadillac, rides along and gets out", () =>
+        {
+            if (!IsInstanceValid(car) || car.IsDead || !IsInstanceValid(thug) || thug.IsDead)
+                return false;
+            switch (stage)
+            {
+                case 0 when thug.Vehicle == car && car.HasPassengers && !thug.Visible:
+                    stage = 1;
+                    car.GoTo(car.Map.MapToLocal(cm.FreeCellNear(start + new Vector2I(3, 3))), false);
+                    return false;
+                case 1 when !car.IsMoving && car.Cell != start:
+                    if (thug.Position != car.Position)
+                        return false;
+                    car.Unload();
+                    stage = 2;
+                    return thug.Vehicle == null && !thug.InsideBuilding && thug.Cell == car.Cell && !car.HasPassengers;
+                default:
+                    return false;
+            }
+        }, () => $"stage {stage}, thug in car {thug.Vehicle == car}, car at {car.Cell} moving {car.IsMoving}, thug at {thug.Cell}"));
+        _pending.Add((_hour + 72, "a destroyed Cadillac hurts its passengers and lets the survivors out", () =>
+        {
+            if (stage < 2 || !IsInstanceValid(car) || car.IsDead || !IsInstanceValid(thug) || thug.IsDead)
+                return false;
+            if (stage == 2)
+            {
+                if (!car.Board(thug))
+                    return false;
+                stage = 3;
+                hpBefore = thug.CanBeAttacked.HP;
+                for (var i = 0; i < 50 && !car.IsDead; i++)
+                    car.CanBeAttacked.ReceiveDamage(car.CanBeAttacked.HP, null);
+            }
+            return car.IsDead && (thug.IsDead || (thug.Vehicle == null && thug.CanBeAttacked.HP < hpBefore));
+        }, () => $"stage {stage}, car dead {car.IsDead}, thug dead {thug.IsDead}, HP {thug.CanBeAttacked?.HP} of {hpBefore}"));
     }
 
     /// <summary>An enemy collector carrying money is killed by the local player: the money goes to the killer.</summary>

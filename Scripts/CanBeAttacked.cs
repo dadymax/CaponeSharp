@@ -11,6 +11,8 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
 
     [Export] public int MaxHP { get; set; } = 15;
     public int HP { get; set; } = 1;
+    /// <summary>The unit that hit last (the killer, when HP reached 0).</summary>
+    public Unit LastAttacker { get; private set; }
     public int HealRate { get; set; } = 1;
     [Export] public int EvasionFactor { get; set; } = 5;
     [Export] public bool DisplayHP { get; set; } = true;
@@ -60,6 +62,7 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
             // Destroyed even when the attacker is unknown or already gone (a bomb, a test hit).
             var known = attacker != null && IsInstanceValid(attacker);
             var attackerEntity = known ? attacker.GetParent()?.GetParent() as IGameEntity : null;
+            LastAttacker = attackerEntity as Unit;
             EmitSignal(SignalName.HPisZERO, attackerEntity?.TeamColor ?? Teams.NeutralTeamColor);
             if (known)
                 attacker.Target = null;

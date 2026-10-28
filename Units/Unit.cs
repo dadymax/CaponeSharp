@@ -394,7 +394,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     public override void _PhysicsProcess(double delta)
     {
-        if (IsDead || IsArrested)
+        if (IsDead || IsArrested || FollowVehicle())
             return;
         if (_astarPointReached && _targetPositionNext != NoTarget)
         {
@@ -461,6 +461,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     {
         var wasLocal = OwnerTeam?.IsCurrentPlayerColor == true;
         GD.Print($"Unit {DisplayName} resigns");
+        LeaveVehicle();
+        if (IsCar)
+            Unload();
         if (wasLocal && ResignSound(UnitType) is { } sound)
             Sound.Play(sound);
         CancelOrder();
@@ -493,6 +496,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     private void OnHPisZero(Color attackerColor)
     {
+        CarDestroyed();
         LoseCarriedMoney(Teams.GetTeam(attackerColor));
         Die();
     }

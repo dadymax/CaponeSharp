@@ -266,10 +266,9 @@ public partial class CampaignManager : Node
             spawned++;
 
             // A Cadillac starts with Thompson men inside (EXE loop at 0x467F7A).
-            // There is no transport yet, so they stand on the car's cell.
             if (sUnit.UnitType == UnitCommon.UnitType.Cadillac)
                 for (var i = 0; i < CadillacPassengers; i++, spawned++)
-                    SpawnUnit(unitScene, UnitCommon.UnitType.Thompson, sUnit, unnamed: true);
+                    unit.Board(SpawnUnit(unitScene, UnitCommon.UnitType.Thompson, sUnit, unnamed: true));
 
             GD.Print($"CampaignManager: spawned {unit.DisplayName} ({sUnit.UnitType}) for player {sUnit.PlayerId} at {sUnit.Position}");
         }

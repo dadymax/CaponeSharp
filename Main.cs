@@ -270,7 +270,11 @@ public partial class Main : Node2D
 		{
 			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
 				continue;
-			if (hit is Unit && hit != unit)
+			if (unit.IsCar)
+				unit.GoTo(target, false); // the car only drives (sub_42F138)
+			else if (hit is Unit car && car.CanBoard(unit))
+				unit.SetOrder(new BoardOrder(unit, car)); // onto an own Cadillac: get in (sub_42C1F6)
+			else if (hit is Unit && hit != unit)
 				unit.AttackOrder((Node2D)hit, false);
 			else if (hit is Company)
 				unit.TargetStructure = (Node2D)hit;
@@ -299,6 +303,9 @@ public partial class Main : Node2D
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
+				case OrderMode.Go or OrderMode.ForceGo when hit is Unit car && car.CanBoard(unit):
+					unit.SetOrder(new BoardOrder(unit, car));
+					break;
 				case OrderMode.Go or OrderMode.ForceGo when hit is Company building && StealOrder.CanSteal(unit):
 					unit.TargetStructure = building; // a Thief sent onto a building steals or delivers (sub_42C1F6)
 					break;

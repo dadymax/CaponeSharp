@@ -264,6 +264,18 @@ public partial class DebugCommands : Node
         return node?.ToString() ?? "nothing";
     }
 
+    /// <summary>A Cadillac next to the player's HQ with the player's first gangster in it, selected.</summary>
+    public string Car()
+    {
+        if (Player?.HqCompany == null)
+            return "no HQ";
+        var car = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Cadillac, Player, Player.HqCompany.Cell);
+        var rider = PlayerFighters().FirstOrDefault(u => u != car && !u.IsCar);
+        var boarded = rider != null && car.Board(rider);
+        GuiGameback.UpdateSelectionIcon(car);
+        return $"car at {car.Cell}, boarded {boarded}, passengers {car.Passengers.Count()}";
+    }
+
     /// <summary>Rows the player's own company number <paramref name="index"/> could become (type 1–5).</summary>
     public string Offers(int index, int type)
     {

@@ -119,7 +119,7 @@ public partial class ActionBar : Control
     private static string T(int index) => OriginalTexts.Instance.Get(30, index);
 
     /// <summary>Per-unit-type icon tables (13 dwords each): go 0x4842E4, attack 0x484318, extort 0x48434C.</summary>
-    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484, DisguiseIcons = 0x4844EC;
+    private const uint GoIcons = 0x4842E4, AttackIcons = 0x484318, ExtortIcons = 0x48434C,         ForceGoIcons = 0x4843E8, ForceAttackIcons = 0x48441C, PatrolIcons = 0x484484, DisguiseIcons = 0x4844EC, UnloadIcons = 0x4844B8;
     /// <summary>Order 0Bh icon tile (sub_42D2C1 pushes 0AD8h).</summary>
     private const int ArrestIcon = 0xAD8;
 
@@ -138,6 +138,15 @@ public partial class ActionBar : Control
         if (main == null)
             return false;
         void Arm(Main.OrderMode mode) => main.PendingOrder = mode;
+        if (unit.IsCar)
+        {
+            // Cadillac menu (sub_42EF07): Go in slot 0; Unload (action 9, 29,9, icon table 0x4844B8) in slot 1 while
+            // someone rides in it.
+            Set(0, TypeIcon(GoIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 0), () => Arm(Main.OrderMode.Go));
+            if (unit.HasPassengers)
+                Set(1, TypeIcon(UnloadIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 9), unit.Unload);
+            return true;
+        }
         // With Shift held the first two become Force Go To / Force Attack (actions 5 / 6, texts 29,6 / 29,7).
         var force = Input.IsKeyPressed(Key.Shift);
         Set(0, TypeIcon(force ? ForceGoIcons : GoIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 6 : 0),
@@ -175,7 +184,7 @@ public partial class ActionBar : Control
             && selectedUnit.OwnerTeam == Teams.GetCurrentPlayerTeam() && !selectedUnit.IsDead
             && selectedUnit.UnitType is not UnitCommon.UnitType.Collector)
         {
-            var unitKey = $"unit|{selectedUnit.GetInstanceId()}|{Input.IsKeyPressed(Key.Shift)}|{selectedUnit.CanDisguise}";
+            var unitKey = $"unit|{selectedUnit.GetInstanceId()}|{Input.IsKeyPressed(Key.Shift)}|{selectedUnit.CanDisguise}|{selectedUnit.HasPassengers}";
             if (!force && unitKey == _shown)
                 return;
             _shown = unitKey;
