@@ -46,6 +46,12 @@ public partial class Main : Node2D
 			GetTree().Quit(failures == 0 ? 0 : 1);
 			return;
 		}
+		if (System.Array.Find(args, a => a == "--unit-test" || a.StartsWith("--unit-test=")) is { } unitTest)
+		{
+			var failures = Tests.UnitTests.Run(unitTest.Contains('=') ? unitTest[(unitTest.IndexOf('=') + 1)..] : null);
+			GetTree().Quit(failures == 0 ? 0 : 1);
+			return;
+		}
 		CampaignProgress.Load();
 		var episode = CampaignProgress.Current;
 		if (PendingEpisode > 0)

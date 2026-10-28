@@ -350,11 +350,9 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         return false;
     }
 
-    /// <summary>Base chance from income, plus/minus the pressure of units within 4 cells (own +, others −).</summary>
-    private int ExtortBaseChance(Unit unit)
+    /// <summary>sub_423330: the base chance (%) that a company with this income pays.</summary>
+    public static int IncomeChance(long income)
     {
-        long income = Income();
-        var chance = 0;
         for (var k = 0; k + 1 < ExtortChanceTable.Length; k++)
         {
             var (loIncome, loChance) = ExtortChanceTable[k];
@@ -362,9 +360,15 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
             if (income > hiIncome)
                 continue;
             // chance = hi + (lo − hi) × (hiIncome − income) / (hiIncome − loIncome)
-            chance = (int)(hiChance + (long)(loChance - hiChance) * (hiIncome - income) / (hiIncome - loIncome));
-            break;
+            return (int)(hiChance + (long)(loChance - hiChance) * (hiIncome - income) / (hiIncome - loIncome));
         }
+        return 0;
+    }
+
+    /// <summary>Base chance from income, plus/minus the pressure of units within 4 cells (own +, others −).</summary>
+    private int ExtortBaseChance(Unit unit)
+    {
+        var chance = IncomeChance(Income());
 
         var tree = GetTree();
         foreach (var node in tree.GetNodesInGroup(Unit.GroupName))

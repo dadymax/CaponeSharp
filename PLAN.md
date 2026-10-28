@@ -128,7 +128,7 @@ From `ep1.epi` and the EXE:
 - Only **Campaign** (starts the campaign, i.e. the briefing of the current episode) and **Exit** are to be built.
 - **Network game, Settings, Developers: TODO in the future — do not work on them until the user explicitly asks.**
 
-**M13 — Automated tests** ◐ (scenario checks done 2026-10-29; unit tests next)
+**M13 — Automated tests** ☑ (2026-10-29; follow-ups in TODO §7)
 - **Scenario checks** (`-- --scenario-test`, headless, like `--smoke-test`): load an episode without the briefing, run the
   clock fast for N game days, and check invariants after each game hour:
   - cash and net income add up with the logged income, wages and spending;
@@ -139,12 +139,13 @@ From `ep1.epi` and the EXE:
   - deserters are hostile to every player.
   Episodes to cover: 1 (tutorial), 4 (first opponent), 13 (aggressive opponent), 15 (two HQs), 8 (six players).
   Each check prints PASS/FAIL; the run ends with "N failure(s)" and a non-zero exit code on failure.
-- **Unit tests** (xUnit project `Tests/`, `dotnet test`) for the pure rules ported from the EXE:
+- **Unit tests** (`Tests/`, run inside Godot with `-- --unit-test`, not xUnit: most rules read the EXE through Godot
+  file APIs, which need the engine) for the pure rules ported from the EXE:
   `Vision.Build` line of sight (opaque letters, Sniper 8/9), `BusinessRules` (tiers, prices, licences), income factors
   (rumour ×0.7, investigation ×0.85, brownout), raid / demolish / brownout service choice, extortion chance, VCOND
   evaluation, order-mode rules, computer-player strategy choices. Code tied to the clock, the scene tree or the
   `Teams` statics gets its pure part extracted first (inputs passed in), only when that code is touched.
-- After each brick: build, `--smoke-test`, `--scenario-test`, `dotnet test`; MCP play-tests only for what is drawn or
+- After each brick: build, `--smoke-test`, `--unit-test`, `--scenario-test`; MCP play-tests only for what is drawn or
   clicked.
 
 ## Definition of done for episode 1

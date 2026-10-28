@@ -37,6 +37,12 @@ prints "Scenario test done: 0 failure(s)"):
 
 Options: --scenario-test=4,8 (episodes), --days=N (game days per episode), --speed=N.
 
+Unit tests of the rules taken from the EXE (no window, a few seconds; "Unit tests done: N passed, 0 failure(s)"):
+
+    ..\godottry\godot\Godot_v4.7.2-stable_mono_win64_console.exe --headless --path . -- --unit-test
+
+--unit-test=Vision runs only the tests whose name contains "Vision".
+
 Or open the folder in the Godot editor (same .exe without arguments) and press F5.
 
 

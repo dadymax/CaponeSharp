@@ -340,7 +340,7 @@ public partial class Organisation
         {
             var total = Math.Max(totals[i], MarketShareFloor);
             MarketShare[i] = total == 0 ? 0 : (float)TypeIncome[i] / total;
-            TypeFactor[i] = StepFactor(ShareCurve, (int)(MarketShare[i] * 100));
+            TypeFactor[i] = MarketFactor((int)(MarketShare[i] * 100));
         }
         // Legal and troubleshooting don't get the market bonus (+10Ch and +11Ch are reset to 1).
         TypeFactor[(int)OriginalBusinessTable.BusinessType.Legal] = 1f;
@@ -355,6 +355,16 @@ public partial class Organisation
             var level = World.LegalizationLevel(i);
             TypeFactor[i] *= LegalizationFactor[Math.Clamp(level, 0, LegalizationFactor.Length - 1)];
         }
+    }
+
+    /// <summary>sub_430BE8: income multiplier for a market share in percent.</summary>
+    public static float MarketFactor(int sharePercent) => StepFactor(ShareCurve, sharePercent);
+
+    /// <summary>Unit-test hook: the hourly statistics without a scene.</summary>
+    internal void SetIncomeForTest(long net, long gross)
+    {
+        NetIncome = net;
+        GrossIncome = gross;
     }
 
     private static float StepFactor((int Key, float Factor)[] table, int x)

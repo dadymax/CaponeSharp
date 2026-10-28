@@ -27,6 +27,13 @@ public static class Vision
             : new HashSet<Vector2I>();
     }
 
+    /// <summary>Unit-test hook: a map made of <paramref name="used"/> cells, <paramref name="opaque"/> ones being buildings.</summary>
+    internal static void InitForTest(IEnumerable<Vector2I> used, IEnumerable<Vector2I> opaque)
+    {
+        _used = new HashSet<Vector2I>(used);
+        _opaque = new HashSet<Vector2I>(opaque);
+    }
+
     public static bool SeeThrough(Vector2I cell) => _used.Contains(cell) && !_opaque.Contains(cell);
 
     /// <summary>Sight grid of radius <paramref name="r"/> around <paramref name="center"/>; index (dy + r) * (2r + 1) + dx + r.</summary>

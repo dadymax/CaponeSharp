@@ -38,18 +38,22 @@ public static class CompanyServices
 
     private static int District(Company c) => c.Block?.District ?? 3;
 
-    private static int RaidServiceFor(Company c)
-    {
-        var d = District(c);
-        var tier = c.Entry == null ? -1 : BusinessRules.Tier(c.Entry);
-        return d is 0 or 1 && tier is >= 0 and <= 2 ? RaidService[d, tier] : -1;
-    }
+    /// <summary>sub_4212C2: police service for a raid by district (0 slum, 1 middle class) and price tier; -1 = none.</summary>
+    public static int RaidServiceFor(int district, int tier) =>
+        district is 0 or 1 && tier is >= 0 and <= 2 ? RaidService[district, tier] : -1;
 
-    private static int DemolishServiceFor(Company c)
-    {
-        var tier = c.Entry == null ? -1 : BusinessRules.Tier(c.Entry);
-        return District(c) == 0 && tier is >= 0 and <= 2 ? DemolishService[tier] : -1;
-    }
+    /// <summary>Politician service for a demolition: slum businesses only, by price tier; -1 = none.</summary>
+    public static int DemolishServiceFor(int district, int tier) =>
+        district == 0 && tier is >= 0 and <= 2 ? DemolishService[tier] : -1;
+
+    /// <summary>Brownout services in the order they are tried, with their length in game minutes.</summary>
+    public static IReadOnlyList<(int Service, long Minutes)> Brownouts => BrownoutServices;
+
+    private static int Tier(Company c) => c.Entry == null ? -1 : BusinessRules.Tier(c.Entry);
+
+    private static int RaidServiceFor(Company c) => RaidServiceFor(District(c), Tier(c));
+
+    private static int DemolishServiceFor(Company c) => DemolishServiceFor(District(c), Tier(c));
 
     private static bool IsTarget(Team player, Company c) =>
         player?.Org != null && c != null && c.IsEconomic && c.OwnerTeam != player && !c.UnderConstruction;
