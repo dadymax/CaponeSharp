@@ -157,6 +157,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     {
         CancelOrder();
         TargetStructure = null;
+        MoveMode = null;
         WalkToCell(Map.LocalToMap(localPosition));
     }
 
@@ -182,6 +183,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         set
         {
             _targetStructure = value;
+            MoveMode = null;
             if (CanAttack != null)
                 CanAttack.Target = null;
             if (value == null)

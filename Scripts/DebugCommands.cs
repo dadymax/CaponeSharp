@@ -83,6 +83,21 @@ public partial class DebugCommands : Node
     public string Ai() => string.Join("\n", Teams.TeamsInGame.Values.Where(t => t.Ai != null).Select(t => t.Ai.Describe() + " | " + t.Org));
 
     /// <summary>Walks the player's unit number <paramref name="index"/> to map cell (x, y) like a Go order.</summary>
+    /// <summary>Go (or Force Go) order for the player's unit number <paramref name="index"/> to map cell (x, y).</summary>
+    public string Order(int index, int x, int y, bool force)
+    {
+        var unit = PlayerFighters().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.GoTo(unit.Map.MapToLocal(new Vector2I(x, y)), force);
+        return $"{unit.UnitType}@{unit.Cell} {(force ? "force go" : "go")} -> ({x}, {y}) mode {unit.MoveMode}";
+    }
+
+    /// <summary>Order mode, movement and target of every player unit.</summary>
+    public string Orders() =>
+        string.Join("\n", PlayerFighters().Select(u =>
+            $"{u.UnitType}@{u.Cell} mode {u.MoveMode?.ToString() ?? "-"} moving {u.IsMoving} target {(u.CanAttack?.TargetParent as Unit)?.UnitType.ToString() ?? "-"} HP {u.CanBeAttacked?.HP}"));
+
     public string GoTo(int index, int x, int y)
     {
         var unit = PlayerFighters().ElementAtOrDefault(index);

@@ -164,7 +164,7 @@ public class ComputerPlayer
         }
         if (_attackIntruder && _intruder != null && GodotObject.IsInstanceValid(_intruder) && !_intruder.IsDead)
         {
-            unit.TargetStructure = _intruder;
+            unit.AttackOrder(_intruder, false);
             return;
         }
         var human = Teams.GetCurrentPlayerTeam();
@@ -187,7 +187,7 @@ public class ComputerPlayer
         }
         var home = Training.PrimaryCenter(Team);
         if (home != null && MapTileMath.GetDistanceExact(unit, home) >= HomeRadius)
-            unit.MoveTo(home.Position);
+            unit.GoTo(home.Position, false);
     }
 
     /// <summary>Order 4284B0 mode 3 on the other player's training center (vt+8Ch).</summary>

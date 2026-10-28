@@ -202,10 +202,12 @@ public partial class Main : Node2D
 		{
 			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
 				continue;
-			if (hit is Company or Unit && hit != unit)
+			if (hit is Unit && hit != unit)
+				unit.AttackOrder((Node2D)hit, false);
+			else if (hit is Company)
 				unit.TargetStructure = (Node2D)hit;
 			else
-				unit.MoveTo(target);
+				unit.GoTo(target, false);
 		}
 	}
 
@@ -229,12 +231,11 @@ public partial class Main : Node2D
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
-				// TODO: forced orders ignore enemies on the way; our units don't engage on their own yet.
 				case OrderMode.Go or OrderMode.ForceGo:
-					unit.MoveTo(local);
+					unit.GoTo(local, order == OrderMode.ForceGo);
 					break;
 				case OrderMode.Attack or OrderMode.ForceAttack when hit is Unit target && target != unit:
-					unit.TargetStructure = target;
+					unit.AttackOrder(target, order == OrderMode.ForceAttack);
 					break;
 				case OrderMode.Patrol:
 					unit.SetOrder(new PatrolOrder(unit, unit.Cell, Map.LocalToMap(local)));

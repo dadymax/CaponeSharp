@@ -45,11 +45,63 @@ public partial class Unit
         if (clock == null || clock.Minute < _nextThink)
             return;
         _nextThink = clock.Minute + ThinkMinutes;
+        if (MoveMode != null && !IsMoving)
+            MoveMode = null; // the move order reached its end
         if (!ThinksForItself || CurrentOrder != null)
             return;
         if (Stance == 0)
             Stance = DefaultStance;
         Think();
+    }
+
+    /// <summary>
+    /// Mode of the running move / attack order (sub_4284B0's last argument; order vt+90h), null without one:
+    /// 0 Force Go (and Go for the Terrorist and Thief) — never fights; 1 Force Attack (and the Terrorist's Attack) —
+    /// only the ordered target; 2 Go — the nearest enemy in range; 3 Attack — the target, else the nearest enemy;
+    /// 4 enemy buildings (action 4, not on the menu yet). When the unit opens fire the order is dropped (order vt+7Ch)
+    /// and the unit goes on with its idle stance.
+    /// </summary>
+    public int? MoveMode { get; private set; }
+
+    private Unit _orderTarget;
+
+    /// <summary>Go / Force Go to a map point (actions 0 / 5 of sub_42C1F6).</summary>
+    public void GoTo(Vector2 localPosition, bool force)
+    {
+        MoveTo(localPosition);
+        _orderTarget = null;
+        MoveMode = force || UnitType is UnitCommon.UnitType.Terrorist or UnitCommon.UnitType.Thief ? 0 : 2;
+    }
+
+    /// <summary>Attack / Force Attack a unit or building (actions 1 / 6).</summary>
+    public void AttackOrder(Node2D target, bool force)
+    {
+        TargetStructure = target;
+        _orderTarget = target as Unit;
+        MoveMode = force || UnitType == UnitCommon.UnitType.Terrorist ? 1 : 3;
+    }
+
+    /// <summary>Order-mode rules while the order runs (sub_42AA86 switch at 0x42AF52). Returns true if handled.</summary>
+    private bool ThinkUnderOrder(Unit nearest)
+    {
+        if (MoveMode is not { } mode || !IsMoving)
+            return false;
+        var target = _orderTarget is { IsDead: false } t && IsInstanceValid(t) ? t : null;
+        Unit fireAt = mode switch
+        {
+            1 => target != null && InRange(target) ? target : null,
+            2 => nearest != null && InRange(nearest) ? nearest : null,
+            3 => target != null && InRange(target) ? target : nearest != null && InRange(nearest) ? nearest : null,
+            _ => null,
+        };
+        if (fireAt != null)
+        {
+            StopMoving();
+            MoveMode = null;
+            Stance = DefaultStance;
+            CanAttack.Target = fireAt.CanBeAttacked;
+        }
+        return true;
     }
 
     private bool InRange(Node2D target) => Sees(target) && MapTileMath.GetDistanceExact(this, target) <= CanAttack.AttackRange;
@@ -78,6 +130,8 @@ public partial class Unit
         var nearest = passiveDist < activeDist ? passive : active;
         var nearestDist = Mathf.Min(passiveDist, activeDist);
 
+        if (ThinkUnderOrder(nearest))
+            return;
         // Keep shooting the current target while it is in range.
         if (CanAttack.TargetParent is Unit { IsDead: false } current && InRange(current))
             return;

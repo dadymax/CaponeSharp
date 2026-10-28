@@ -207,7 +207,19 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   enemy that is fighting. Default stance vt+1B0h: 3 Terrorist, 1 others. Shots: vt+104h; in range: vt+118h.
 - Done: the idle rules for owned units (every 5 game minutes), the "fighting" mark on both sides of a hit.
   MCP-tested in episode 4: walking 4 gangsters near Большой Джим's snipers started a fight on both sides.
-- Open: per-order stances, enemy buildings, police targeting, the Terrorist/Cadillac chase rule.
+- Per-order stances: done (`Unit.MoveMode`, `UnitAI.ThinkUnderOrder`). sub_42C1F6 builds the move order sub_4284B0 with a
+  mode: Go 2 (Terrorist and Thief 0), Attack 3 (Terrorist 1), Force Go 0, Force Attack 1, action 4 → 4, Patrol legs 3
+  (sub_4292E0); Go on another player's company is an extort order. While it runs (switch 0x42AF52): 0 never fights;
+  1 the ordered target once in range; 2 the nearest enemy in range; 3 the target, else the nearest; 4 enemy buildings
+  (chase). Opening fire drops the order (order vt+7Ch = sub_428470) and the unit continues with its idle stance.
+  MCP-tested in episode 4: a Go stopped 5 tiles (its range) from a deserter and shot it; a Force Go walked on without
+  a target. Computer players use the same orders (home: Go, attacks: Attack).
+- Open: mode 4 (action 4 is not on the menu), Patrol legs fighting (mode 3), enemy buildings, police targeting, the
+  Terrorist/Cadillac chase rule.
+- Movement (for the "units stack on one cell" issue): the original walks tile by tile. sub_427EF5 picks the next
+  direction by scoring the neighbour cells with sub_427CC0: 6 the destination, 0 blocked, 4/5 free (5 for tile class
+  2), 1–3 when other units stand there (tile vt+134h = occupant count, vt+130h = occupant); 4 = arrived, 5 = stuck →
+  detour search sub_428244. Units are spread out by that preference, not by a hard rule. Not ported (A* in the port).
 - Start points (sub_43BDB7): RANDOM 0 → the first free start point in list order, RANDOM 1 → a random free one; .map
   STARTPOINTS and .epi UNIT use the same (x y) order (episode 13: Torrio's guard at 84,37 next to start 81,38).
   Episode 4's boss stands far from his base on purpose.
