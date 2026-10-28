@@ -39,14 +39,18 @@ public static class OriginalFonts
 
     /// <summary>
     /// Draws <paramref name="text"/> with its top-left at (<paramref name="x"/>, <paramref name="y"/>) in the canvas item's
-    /// coordinates (top-centre when <paramref name="font"/> ≥ 100), cut to <paramref name="width"/> pixels.
+    /// coordinates (top-centre when <paramref name="font"/> ≥ 100, top-right when ≥ 200), cut to <paramref name="width"/> pixels.
     /// </summary>
     public static void Draw(CanvasItem canvas, string text, float x, float y, int width, int font, Color color, bool shadow = true)
     {
         if (string.IsNullOrEmpty(text))
             return;
-        var centred = font >= 100;
-        if (centred)
+        // fnPrintText_0: font 200+ right-aligns on x (TA_RIGHT), 100+ centres (TA_CENTER).
+        var right = font >= 200;
+        var centred = !right && font >= 100;
+        if (right)
+            font -= 200;
+        else if (centred)
             font -= 100;
         var f = Get(font);
         var size = Size(font);
@@ -54,6 +58,8 @@ public static class OriginalFonts
             text = text[..^1];
         if (centred)
             x -= f.GetStringSize(text, HorizontalAlignment.Left, -1, size).X / 2;
+        else if (right)
+            x -= f.GetStringSize(text, HorizontalAlignment.Left, -1, size).X;
         var pos = new Vector2(x, y + f.GetAscent(size));
         if (shadow)
             canvas.DrawString(f, pos + new Vector2(2, 2), text, HorizontalAlignment.Left, -1, size, Shadow);

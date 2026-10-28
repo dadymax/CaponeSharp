@@ -158,7 +158,7 @@ public partial class Main : Node2D
 		if (won)
 			CampaignProgress.Won(episode, count);
 		var layer = AddScreenLayer();
-		var screen = new EndScreen(won, text);
+		var screen = new EndScreen(won, text, Statistics.Current);
 		screen.Closed += () =>
 		{
 			PendingEpisode = won ? Mathf.Min(episode + 1, count) : episode;

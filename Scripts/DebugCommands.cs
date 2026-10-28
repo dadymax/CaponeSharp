@@ -19,6 +19,13 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>Ends the episode as lost (the end screen with the statistics; a loss saves no progress).</summary>
+    public string Lose()
+    {
+        CampaignManager.Instance?.OnPlayerDefeated(Player, OriginalTexts.Instance.Get(19, 1));
+        return $"statistics: {Statistics.Current?.Count} slots, {Statistics.Current?.Players.Count} players";
+    }
+
     /// <summary>Hits player <paramref name="playerId"/>'s HQ for <paramref name="hp"/>, as if by one of the local player's units.</summary>
     public string DamageHq(int playerId, int hp)
     {

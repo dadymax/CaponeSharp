@@ -66,8 +66,11 @@ code (base squad) get random personal names like `Unit::Unit`.
   episode = max, `fnWriteConfig`; music `sub_408BE2(0 win / 4 loss)`, sound 24/25; end screen `sub_43CAB5`:
   GameWin/GAMEOVER.bmp, button sheet GameWinB/GameOvBu (283×42 "Back to menu" at 259, 527: row 0 hover, row 1 normal;
   rows 2–4 = tabs Income/Money/People), animation GameWinA/GameOvAn.
-- Open: the statistics chart in the end screen's box (`sub_43CCD0`; our box shows the result text for now), the
-  animations, music, the main menu (briefing "Back" quits), story scrolling past 13 lines (`sub_406D24` scroller).
+- Statistics chart (done 2026-10-29): `Statistics` (sub_460B36 / sub_460BE4) samples every player's weekly net
+  income, cash and gangsters every 30 game hours (the original: 30 s of real time) into 31 averaged slots that are
+  halved when full; `EndScreen` draws it like sub_43CCD0 with the Income / Money / People tabs (sub_43DB50). The result
+  text shows at the top left for 15 s (message log). Unit tests `StatisticsTests`.
+- Open: the animations, music, story scrolling past 13 lines (`sub_406D24` scroller).
 - Command line: `--skip-briefing` starts the episode at once (MCP tests); `--episode=N` overrides the saved progress.
 
 ## Business conversion — R5/M6 (2026-10-27)

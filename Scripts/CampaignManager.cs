@@ -219,6 +219,7 @@ public partial class CampaignManager : Node
         foreach (var team in Teams.TeamsInGame.Values)
             team.Org?.UpdateStats();
         VictoryManager.Instance?.Start(clock);
+        Statistics.Start(clock, GetScenarioFunds());
         GD.Print($"CampaignManager: economy started — {companies.Count(c => c.IsEconomic)} businesses in {CityBlock.All.Count} blocks, "
                  + $"{companies.Count(c => c.IsPoliceStation)} police stations");
     }

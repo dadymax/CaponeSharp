@@ -98,7 +98,7 @@ computer opponents (extortion, recruiting, conversions, attacks); HQ services;
 raids, demolition, brownout; victory conditions, defeat, elimination,
 last player standing; deserting unpaid gangsters.
 
-Known missing parts: Network game / Settings / Developers in the main menu, statistics chart on the end screen, many sounds,
+Known missing parts: Network game / Settings / Developers in the main menu on the end screen, many sounds,
 Thief stealing, Cadillac passengers, the original tile-by-tile movement
 (units can stand on the same cell), rubble after demolition.
 Full list: TODO.md and PLAN.md.
