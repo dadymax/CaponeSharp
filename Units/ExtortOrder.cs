@@ -33,7 +33,7 @@ public partial class ExtortOrder : Node
 
     /// <summary>
     /// Can this unit extort that company: an economic company of another, non-allied player or nobody, and a unit
-    /// that fights. TODO (R5): check the original's per-type order list (Thief, Cadillac, Godfather).
+    /// that has a weapon (order gate sub_42CAF0: no extortion for the Thief, the Godfather or the Cadillac).
     /// </summary>
     public static bool CanExtort(Unit unit, Company company)
     {
@@ -42,7 +42,7 @@ public partial class ExtortOrder : Node
         if (company.OwnerTeam != null
             && unit.OwnerTeam.GetTargetRelation(company.OwnerTeam.TeamColor) == Teams.TeamRelation.Friend)
             return false;
-        return unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Collector
+        return unit.CanAttack != null && unit.HasWeapon && unit.UnitType is not (UnitCommon.UnitType.Collector
             or UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.PoliceCar or UnitCommon.UnitType.Policeman);
     }
 

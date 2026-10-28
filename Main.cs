@@ -274,8 +274,10 @@ public partial class Main : Node2D
 				unit.GoTo(target, false); // the car only drives (sub_42F138)
 			else if (hit is Unit car && car.CanBoard(unit))
 				unit.SetOrder(new BoardOrder(unit, car)); // onto an own Cadillac: get in (sub_42C1F6)
-			else if (hit is Unit && hit != unit)
+			else if (hit is Unit && hit != unit && unit.HasWeapon)
 				unit.AttackOrder((Node2D)hit, false);
+			else if (hit is Unit && hit != unit)
+				unit.GoTo(((Node2D)hit).Position, false); // no weapon (Thief, Godfather): just go there
 			else if (hit is Company)
 				unit.TargetStructure = (Node2D)hit;
 			else

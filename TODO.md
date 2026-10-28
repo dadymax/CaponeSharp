@@ -517,7 +517,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   - "Set as primary training center"
   - Market share
   - variant names and prices: find the table used with "Upgrade to %s ($%s …)" (pointer table at 0x49E9C4); the names are probably in the Russian string set
-- [~] **Units** (done: Disguise, Shotgun raid, Thief, Cadillac; open: Godfather):
+- [x] **Units** (done: Disguise, Shotgun raid, Thief, Cadillac, Godfather):
+  - Godfather done 2026-10-29: no code checks type 12 except voices and pictures; he is an unarmed unit (stats 0
+    damage) and the order gate sub_42CAF0 gives units without a weapon (Thief, Godfather, Cadillac) no Attack, Extort
+    or Patrol (`Unit.HasWeapon`); they also never start fights by themselves, and a right click on an enemy just walks
+    there. VCOND 3 (kill the boss) and the computer player's param [12] (leave him alone) were already in place.
   - Cadillac done 2026-10-29 (`UnitVehicle`, `BoardOrder`; sub_42EE30 / 42EE90 / 42F3C2 / 42F270): four seats; own
     units sent onto the car board it, ride hidden and keep their AI (they shoot from the car, Unit::Think puts them at
     the car's position); Unload button (29,9); a destroyed car hurts its passengers (20–99, 1000 by a Terrorist) and

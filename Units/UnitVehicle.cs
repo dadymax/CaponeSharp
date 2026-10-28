@@ -30,6 +30,21 @@ public partial class Unit
 
     public bool IsCar => UnitType == UnitCommon.UnitType.Cadillac;
 
+    /// <summary>
+    /// Order gate sub_42CAF0: a unit whose maximum damage against its own kind (vt+110h sub_42C960 — unit damage, or
+    /// building damage for a Cadillac) is 0 gets no Attack, Extort or Patrol: the Thief, the Godfather, the Cadillac.
+    /// </summary>
+    public bool HasWeapon
+    {
+        get
+        {
+            var stats = _unitInstance?.Stats;
+            if (stats == null)
+                return CanAttack != null;
+            return (IsCar ? stats.BuildingDamageMax : stats.DamageMax) > 0;
+        }
+    }
+
     public IEnumerable<Unit> Passengers =>
         _seats.Where(p => p != null && IsInstanceValid(p) && !p.IsDead && p.Vehicle == this);
 

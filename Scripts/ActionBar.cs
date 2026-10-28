@@ -151,12 +151,15 @@ public partial class ActionBar : Control
         var force = Input.IsKeyPressed(Key.Shift);
         Set(0, TypeIcon(force ? ForceGoIcons : GoIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 6 : 0),
             () => Arm(force ? Main.OrderMode.ForceGo : Main.OrderMode.Go));
-        Set(1, TypeIcon(force ? ForceAttackIcons : AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 7 : 1),
-            () => Arm(force ? Main.OrderMode.ForceAttack : Main.OrderMode.Attack));
-        if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
+        // Attack, Extort and Patrol need a weapon (order gate sub_42CAF0): not for the Thief or the Godfather.
+        var armed = unit.HasWeapon && unit.CanAttack != null;
+        if (armed)
+            Set(1, TypeIcon(force ? ForceAttackIcons : AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 7 : 1),
+                () => Arm(force ? Main.OrderMode.ForceAttack : Main.OrderMode.Attack));
+        if (armed)
             Set(2, TypeIcon(ExtortIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 3), () => Arm(Main.OrderMode.Extort));
         // Slot 5: order 8 "Patrol" (29,8) between the unit's cell and the clicked cell (PatrolOrder).
-        if (unit.CanAttack != null && unit.UnitType is not (UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.Collector))
+        if (armed)
             Set(5, TypeIcon(PatrolIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 8), () => Arm(Main.OrderMode.Patrol));
         // Slot 4: order 0Ah "Disguise" (29,10), an immediate command (sub_42C0C0) gated by sub_42CCE5.
         if (unit.CanDisguise)

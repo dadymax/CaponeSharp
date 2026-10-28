@@ -34,7 +34,7 @@ public partial class Unit
     public int DefaultStance => UnitType == UnitCommon.UnitType.Terrorist ? 3 : 1;
 
     private bool ThinksForItself =>
-        CanAttack != null && (OwnerTeam != null || IsRogue || IsDeserter) && !IsDead && !IsArrested
+        CanAttack != null && HasWeapon && (OwnerTeam != null || IsRogue || IsDeserter) && !IsDead && !IsArrested
         && UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar
             or UnitCommon.UnitType.Policeman or UnitCommon.UnitType.Cadillac);
 
