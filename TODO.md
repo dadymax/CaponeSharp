@@ -568,9 +568,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 - [ ] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it
   is drawn over the unit sprite at some points: Y / Z sorting is wrong for the isometric map (units vs. block tiles).
-- [ ] **Companies hidden until discovered.** At the start of an episode companies under the fog of war must not be
+- [x] **Companies hidden until discovered.** At the start of an episode companies under the fog of war must not be
   visible; the player has to reveal the map to find them. Once seen, a company keeps its last seen state in the fog
-  (as now). Today every company sign is shown (dimmed) from the start.
+  (as now). Done 2026-10-29: `Company.Discovered`, set by `FogOfWar`; undiscovered companies are hidden and can't be
+  clicked or hovered (their building tiles stay on the darkened map).
 - [ ] **Collector visits.** When a collector (courier) takes money from a company or business, it "enters" the
   building and disappears from the map for a while, then reappears carrying the money and walks on to the next one.
   When it reaches the HQ it disappears for good (delivered). Today it stays visible next to the building.

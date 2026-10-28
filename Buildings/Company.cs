@@ -662,6 +662,12 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     private Team _seenOwner;
     private OriginalBusinessTable.Entry _seenEntry;
 
+    /// <summary>
+    /// The local player has seen this company at least once. Until then it is hidden (user, from the original game:
+    /// the player explores the map to find the companies); set by <see cref="FogOfWar"/>.
+    /// </summary>
+    public bool Discovered { get; set; }
+
     /// <summary>Owner as the local player last saw it (the current one when in sight).</summary>
     public Team ShownOwner => _inFog ? _seenOwner : OwnerTeam;
 

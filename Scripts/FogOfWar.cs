@@ -9,7 +9,8 @@ namespace Capone;
 /// <see cref="Vision"/>): the player sees what their own and their allies' units (current vision, unit vt+1ACh) and
 /// buildings (4 tiles, company / HQ vt+0E8h; sub_4393C6 marks the tiles) see. Nothing stays explored: when the viewers
 /// leave, the fog comes back and other players' units there are hidden. Companies out of sight keep showing their last
-/// seen state (<see cref="Company.InFog"/>). Unseen cells are drawn darker.
+/// seen state (<see cref="Company.InFog"/>); companies never seen are hidden (<see cref="Company.Discovered"/>).
+/// Unseen cells are drawn darker.
 /// </summary>
 public partial class FogOfWar : Node
 {
@@ -125,7 +126,13 @@ public partial class FogOfWar : Node
         foreach (var unit in units)
             unit.Visible = !enabled || IsFriendly(player, unit.OwnerTeam) || _visible.Contains(_map.LocalToMap(unit.Position));
         foreach (var company in companies)
+        {
             company.InFog = enabled && !_visible.Contains(_map.LocalToMap(company.Position));
+            if (!company.InFog)
+                company.Discovered = true;
+            // Never seen yet: hidden (its building stays part of the darkened map).
+            company.Visible = !enabled || company.Discovered;
+        }
 
         // Darken the unseen cells by switching to the dark alternative tile (only the changes).
         foreach (var cell in _cells)

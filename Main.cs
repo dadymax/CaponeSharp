@@ -381,11 +381,11 @@ public partial class Main : Node2D
 			CollideWithAreas = true,
 			Position = globalPoint,
 		};
-		// Units hidden by the fog of war can't be picked.
+		// Units hidden by the fog of war and companies not discovered yet can't be picked.
 		foreach (var hit in GetViewport().World2D.DirectSpaceState.IntersectPoint(query, 8))
 		{
 			var collider = hit["collider"].AsGodotObject();
-			if (collider is Unit { Visible: false })
+			if (collider is Unit { Visible: false } or Company { Visible: false })
 				continue;
 			return collider;
 		}
