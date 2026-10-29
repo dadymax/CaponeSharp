@@ -664,8 +664,14 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   these Signs.bmp frames, near the order handlers), then play it on every order click.
 
 - [ ] **Collector sprites with and without money (user, 2026-10-29).** The collector (courier) has different walking
-  sprites when he carries money and when he walks empty. To do: find the two sprite sets in the unit graphics and the
-  EXE check (carried money, sub_42B8A3 area) and switch them in the unit's animation.
+  sprites when he carries money and when he walks empty. The sprites with money are in OWNMAN.BMP; the ones without
+  money, and the death animation, are in OWNATTAC.BMP. To do: find the frame layout and the EXE check (carried money,
+  sub_42B8A3 area) and switch the sheet in the unit's animation.
+
+- [ ] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
+  job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Ours: `Company.IncomeTick` doesn't check
+  `UnderConstruction`, so the old row's income keeps accruing during the build; skip the tick (and show 0 income in
+  the panel) while it lasts.
 
 - [ ] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
   must grow to show how many points that authority has in its "stockpile". To do: find where the original draws them
