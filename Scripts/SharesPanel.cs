@@ -8,6 +8,8 @@ namespace Capone;
 /// (16,43, 20 high) as wide as its share on a piecewise scale (sub_409C60). Dragging a bar sets its share and scales
 /// the others to keep 100 %; hovering a row prints its share (texts 5,63/64/67/70/73) and the authority's favour
 /// (5,65/66…) on the status line at (232, 555) / (232, 573).
+/// Under each authority's coins a 2-px green bar shows its favour points (sub_40A245, rows 0x476C08):
+/// <see cref="FavourBarWidth"/>.
 /// </summary>
 public partial class SharesPanel : Control
 {
@@ -16,6 +18,11 @@ public partial class SharesPanel : Control
         new(546, 447, 134, 24), new(546, 472, 134, 26), new(546, 499, 134, 26), new(546, 526, 134, 27), new(546, 554, 134, 26),
     };
     public const int FullWidth = 134;
+    /// <summary>Favour bar: full at 40² = 1600 points (dbl_476D70, 40 for every authority), width row − 22 = 112.</summary>
+    public const double FavourScale = 40;
+    public const int FavourFull = FullWidth - 22;
+    private static readonly Color FavourColor = new(0, 1, 0);
+    private readonly int[] _favourWidths = new int[5];
 
     /// <summary>Share text per row (5, n) and the favour text pair (points, point) for authorities.</summary>
     private static readonly (int Share, int Favours, int Favour)[] Texts =
@@ -91,6 +98,21 @@ public partial class SharesPanel : Control
             _widths[i] = org == null ? 0 : Mathf.Clamp(WidthOf(org.Shares[i]), 0, FullWidth);
     }
 
+    /// <summary>
+    /// sub_40A245: √points / 40 of the full width; past it the bar grows by (points − 1600)^¼ pixels, at most 20 more.
+    /// </summary>
+    public static int FavourBarWidth(float points)
+    {
+        if (!(points > 0))
+            return 0;
+        var w = (int)(Mathf.Sqrt(points) / FavourScale * FavourFull);
+        if (w <= FavourFull)
+            return w;
+        var extra = points - FavourScale * FavourScale;
+        var grow = extra < 1 ? 0 : (int)Mathf.Sqrt(Mathf.Sqrt(extra));
+        return Mathf.Min(FavourFull + grow, FavourFull + 20);
+    }
+
     private static Rect2 PanelRect(Rect2I r) => new(r.Position.X, r.Position.Y - PanelInfo.PanelTop, r.Size.X, r.Size.Y);
 
     private int RowAt(Vector2 local)
@@ -142,7 +164,18 @@ public partial class SharesPanel : Control
 
     public override bool _HasPoint(Vector2 point) => RowAt(point) >= 0;
 
-    public override void _Process(double delta) => SyncFromOrg();
+    public override void _Process(double delta)
+    {
+        SyncFromOrg();
+        for (var i = 1; i < 5; i++)
+        {
+            var w = _org == null ? 0 : FavourBarWidth(_org.Favour[i]);
+            if (w == _favourWidths[i])
+                continue;
+            _favourWidths[i] = w;
+            QueueRedraw();
+        }
+    }
 
     public override void _Notification(int what)
     {
@@ -160,6 +193,13 @@ public partial class SharesPanel : Control
                 var w = Mathf.Min(_widths[i], 132);
                 if (w > 0)
                     DrawTextureRectRegion(_coins, new Rect2(Rows[i].Position.X, Rows[i].Position.Y - PanelInfo.PanelTop, w, 20), new Rect2(16, 43, w, 20));
+            }
+        // Rows 1–4: left + 1, from bottom − 3 to bottom − 1.
+        for (var i = 1; i < 5; i++)
+            if (_favourWidths[i] > 0)
+            {
+                var bottom = Rows[i].End.Y - PanelInfo.PanelTop;
+                DrawRect(new Rect2(Rows[i].Position.X + 1, bottom - 3, _favourWidths[i], 2), FavourColor);
             }
         if (_hoverRow < 0 || _org == null)
             return;

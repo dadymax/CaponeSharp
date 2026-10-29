@@ -671,13 +671,16 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 - [x] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
   job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Done 2026-10-29: the income tick
   (sub_420ED5) adds nothing while a job runs on the company (vt+0A0h) — conversion or repair (sub_4289E8 sets the
-  job too); support upkeep is still charged. `Company.IncomeTick` skips while `Busy`. The panel income line keeps
-  vt+188h (the EXE's panel doesn't check the job either). Scenario check "a business under construction earns
+  job too); support upkeep is still charged. `Company.IncomeTick` skips while `Busy`. The panel income line is unchanged
+  (vt+188h; whether the EXE's panel shows 0 during a job is not checked yet). Scenario check "a business under construction earns
   nothing" (scripted conversion at hour 10; fails without the fix).
 
-- [ ] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
-  must grow to show how many points that authority has in its "stockpile". To do: find where the original draws them
-  (the "Расходы" chart / HQ panel, authority favour vt+B8h) and their scale.
+- [x] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
+  must grow to show how many points that authority has in its "stockpile". Done 2026-10-29 (`SharesPanel`,
+  sub_40A245): under each authority's coin bar (rows 0x476C08: x 546..680, bottoms 498 / 525 / 553 / 580) a green
+  (00FF00) bar 2 px high from bottom − 3, x left + 1, √favour / 40 (dbl_476D70) × 112 px (row − 22); past full width
+  (1600 points) it grows by (points − 1600)^¼, at most 20 px more. Favour is HQ +0B8h (vt+0C0h sub_432D20). Unit
+  test `FavourBarFollowsTheSquareRoot`; MCP-checked with 100 / 400 / 1600 / 5000 points.
 
 - [ ] **Market share grows with built businesses (user, 2026-10-29).** When a business is built, the owner's market
   share of that type grows, and with the share the income grows (from the minimum to the maximum). Check the current
@@ -690,6 +693,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 - [ ] **Units sent to the same tile (user, 2026-10-29).** In the original, units sent to exactly the same tile arrive
   and merge into one cell, then are "teleported" to the empty tiles around it by a simple rule: 1 unit = 1 tile. To do:
   find the EXE's spreading step after arrival (move job sub_4279E7 result 4) and do the same instead of sharing cells.
+  Searched 2026-10-29, not found yet: arrival (result 4) only resets the job (sub_427910) and ends it; the step
+  (unit vt+140h sub_42A9D0 → sub_439690) just moves the unit to the next tile's list; tile vt+80h (sub_4392F0) only
+  appends; the unit's draw offset (vt+154h sub_42E511) comes from its walk step only; the map click (sub_411F84)
+  gives every selected unit the same target (vt+0C0h). sub_43B955 (free cell next to an object) is used only when
+  objects are created. Other places that count a tile's units (tile vt+134h): sub_427CC0, Cadillac unload sub_42F3C2,
+  sub_4462B4 (police job), sub_462590 (AI). Next: the unit's Think / idle code, or watch it in the original.
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 

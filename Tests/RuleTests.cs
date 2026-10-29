@@ -98,6 +98,17 @@ public static class EconomyTests
     private static Organisation NewOrg(long funds) => new(new Team(Colors.Red) { PlayerName = "test" }, funds);
 
     [UnitTest]
+    public static void FavourBarFollowsTheSquareRoot()
+    {
+        // sub_40A245: sqrt(points) / 40 x 112 px, then (points - 1600)^(1/4) more, at most 20.
+        Assert.Equal(0, SharesPanel.FavourBarWidth(0), "no points");
+        Assert.Equal(28, SharesPanel.FavourBarWidth(100), "100 points: 10 / 40 of 112");
+        Assert.Equal(112, SharesPanel.FavourBarWidth(1600), "1600 points: full");
+        Assert.Equal(115, SharesPanel.FavourBarWidth(1700), "1700 points: 100^(1/4) = 3.2 more");
+        Assert.Equal(132, SharesPanel.FavourBarWidth(1_000_000), "capped 20 past full");
+    }
+
+    [UnitTest]
     public static void OverdraftLimitIs200000()
     {
         var org = NewOrg(0);
