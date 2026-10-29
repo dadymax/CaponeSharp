@@ -609,6 +609,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 ## Bugs to fix (reported by the user, 2026-10-28)
 
+- [ ] **Fog of war graphics (user, 2026-10-29).** The fog is drawn with tiles from CHICAGO2.bmp: tile (0,0) is the
+  plain fog tile; the other tiles from (0,0) to (4,1) (all but (0,0)) are fog edge tiles, so the fog doesn't stop
+  abruptly at the border of the seen area but "slides into" it. Today the port only darkens unseen cells (alternative
+  tile 1). To do: draw fog cells with the plain tile and pick the edge tiles by which neighbours are seen (find the
+  EXE's edge selection, near the map renderer that reads the vision grids).
+
 - [x] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it
   is drawn over the unit sprite at some points: Y / Z sorting is wrong for the isometric map (units vs. block tiles).
   Done 2026-10-29: flat ground tiles (picture one floor tile high, 19 px — most R/S/F/G and every B/M/H cell) are
