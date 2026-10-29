@@ -48,3 +48,31 @@ public static class MapTests
         }
     }
 }
+
+/// <summary>Original ↔ map cell coordinates (MapTileMath).</summary>
+public static class CoordinateTests
+{
+    [UnitTest]
+    public static void ToOriginalInvertsFromOriginal()
+    {
+        var map = new TileMapLayer
+        {
+            TileSet = new TileSet
+            {
+                TileShape = TileSet.TileShapeEnum.Isometric,
+                TileSize = MapTileMath.StandartTile,
+                TileLayout = TileSet.TileLayoutEnum.DiamondRight,
+                TileOffsetAxis = TileSet.TileOffsetAxisEnum.Vertical,
+            },
+        };
+        try
+        {
+            foreach (var o in new[] { new Vector2I(0, 0), new Vector2I(17, 14), new Vector2I(84, 84), new Vector2I(3, 90) })
+                Assert.Equal(o, MapTileMath.ToOriginal(map, MapTileMath.FromOriginal(map, o)), $"round trip {o}");
+        }
+        finally
+        {
+            map.Free();
+        }
+    }
+}

@@ -119,7 +119,10 @@ public class VictoryCondition
     /// 3 sub_463B04 — no living unit of the type exists (anyone's);
     /// 4 sub_463774 — a unit of the type exists (anyone's; the original doesn't check the owner);
     /// 5 sub_4639B0 — the market share of the type is above the target (the original reads the first HQ);
-    /// 6 sub_4638D0 — the player owns a business (not legal, not support) in the district.
+    /// 6 sub_4638D0 — the player owns a business (not legal, not support) in the district;
+    /// 7 sub_463BC3 — a living unit of the player, of the type (13: any), is within the radius of the given cell;
+    /// 8 sub_463CD8 — the player owns at least <c>count</c> companies of the business type (6: any but legal) whose
+    /// original map position lies in the rectangle (inclusive).
     /// </summary>
     public void Evaluate(Team team)
     {
@@ -150,8 +153,32 @@ public class VictoryCondition
                 if (companies.Any(c => c.OwnerTeam == team && (int)c.BusinessType is not (0 or 5) && c.Block?.District == District))
                     Complete();
                 break;
+            case ConditionType.UnitReach when MapTileMath.Tilemap is { } map:
+            {
+                var spot = MapTileMath.FromOriginal(map, TargetCoords);
+                if (units.Any(u => u.OwnerTeam == team && u.Map != null && !u.InsideBuilding
+                                   && (OriginalUnitType == AnyUnitType || (int)u.UnitType == OriginalUnitType)
+                                   && ((Vector2)(u.Cell - spot)).Length() <= TargetSize))
+                    Complete();
+                break;
+            }
+            case ConditionType.CaptureArea when MapTileMath.Tilemap is { } map:
+                CurrentProgress = companies.Count(c => c.OwnerTeam == team
+                    && ((int)c.BusinessType == CompanyType || (CompanyType == AnyBusinessType && (int)c.BusinessType != 0))
+                    && InRectangle(MapTileMath.ToOriginal(map, c.Cell)));
+                if (CurrentProgress >= RequiredProgress)
+                    Complete();
+                break;
         }
     }
+
+    /// <summary>VCOND 7 unit type 13: any unit.</summary>
+    public const int AnyUnitType = 13;
+    /// <summary>VCOND 8 company type 6: any business but a legal company.</summary>
+    public const int AnyBusinessType = 6;
+
+    private bool InRectangle(Vector2I p) =>
+        p.X >= TopLeft.X && p.X <= BottomRight.X && p.Y >= TopLeft.Y && p.Y <= BottomRight.Y;
 
     public void UpdateMoneyProgress(long currentMoney)
     {

@@ -432,7 +432,10 @@ Still open from this part:
 - [ ] Attack rate and army favour are still from `units.json` (handheld data); find them in the EXE.
 - [ ] Thief walk frames and the Terrorist attack frames are not named in Chicago.tile (idle/walk used as fallback). The EXE's per-type animation tile table is not located yet.
 - [ ] UNIT flags: A = 0 clears the unit's value (vtable+0x174), B → vtable+0x1EC (stationary guard?). Stored on `Unit.EpiFlagA/B`, not used.
-- [ ] VCOND 7 uses unit type 13 (not a table entry, probably "any unit"); VCOND 2/5/6/8 company-type numbers not decoded.
+- [x] VCOND 7 (sub_463BC3): a living unit of the player of the type (13 = any) within the radius of the cell;
+  VCOND 8 (sub_463CD8): at least `count` companies of the business type (6 = any but legal) in the rectangle of
+  original coordinates. The first condition met ends the episode (sub_43C1B2) — not all of a player's (fixed
+  2026-10-29). `MapTileMath.ToOriginal`.
 - [ ] BRIBEADVANCE authority numbering (1–4) not verified; stored on `Organisation.Favour/AuthorityMoney`.
 - [x] Company stats come from the EXE catalogue (`OriginalBusinessTable`); `Company` is rebuilt on it (PLAN M3). `companies2.json` is no longer read (delete it once the logos are remade); `companies.json` still maps sign types to Chicago.tile sprites.
 - [ ] Episode texts (briefing/success/failure) are parsed but not shown yet (§3).

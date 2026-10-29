@@ -33,6 +33,19 @@ public static class MapTileMath
     /// <summary>Map cell of an original-game coordinate (as used in .map STARTPOINTS and .epi UNIT/VCOND lines).</summary>
     public static Vector2I FromOriginal(TileMapLayer map, Vector2I original) => Add(map, Vector2I.Zero, original);
 
+    /// <summary>Original-game coordinate of a map cell (the inverse of <see cref="FromOriginal"/>, a linear map).</summary>
+    public static Vector2I ToOriginal(TileMapLayer map, Vector2I cell)
+    {
+        var o = FromOriginal(map, Vector2I.Zero);
+        var ex = FromOriginal(map, new Vector2I(1, 0)) - o;
+        var ey = FromOriginal(map, new Vector2I(0, 1)) - o;
+        var d = cell - o;
+        var det = ex.X * ey.Y - ex.Y * ey.X;
+        if (det == 0)
+            return d;
+        return new Vector2I((d.X * ey.Y - d.Y * ey.X) / det, (ex.X * d.Y - ex.Y * d.X) / det);
+    }
+
     /// <summary>Exact distance in map cells between two nodes.</summary>
     public static float GetDistanceExact(Node2D node1, Node2D node2)
     {

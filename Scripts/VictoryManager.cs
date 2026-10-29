@@ -34,12 +34,15 @@ public partial class VictoryManager : Node
         GD.Print("VictoryManager: initialized ", Conditions.Count, " victory conditions");
     }
 
-    /// <summary>Returns the winning player's ID, or -1.</summary>
+    /// <summary>
+    /// Returns the winning player's ID, or -1. sub_43C1B2: the first condition met ends the episode — a player with
+    /// several conditions (episode 8: either of two places) needs only one of them.
+    /// </summary>
     public int CheckAll()
     {
         foreach (var vc in Conditions)
         {
-            if (vc.Check() && CheckPlayerAllConditions(vc.TargetPlayer))
+            if (vc.Check())
             {
                 AllCompleted = true;
                 GD.Print("VictoryManager: player ", vc.TargetPlayer, " WINS!");
@@ -49,19 +52,6 @@ public partial class VictoryManager : Node
         return -1;
     }
 
-    private bool CheckPlayerAllConditions(int playerId)
-    {
-        var any = false;
-        foreach (var vc in Conditions)
-        {
-            if (vc.TargetPlayer != playerId)
-                continue;
-            any = true;
-            if (!vc.IsCompleted)
-                return false;
-        }
-        return any;
-    }
 
     /// <summary>Raised once with the winning player's id.</summary>
     public event System.Action<int> PlayerWon;
