@@ -35,7 +35,7 @@ public partial class FogOfWar : Node
         if (_map == null)
             return;
         _fogTiles = new FogTiles();
-        _fogTiles.Init(_map, _map.GetUsedCells());
+        _fogTiles.Init(_map);
         CallDeferred(MethodName.AttachFogTiles);
     }
 
