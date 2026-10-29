@@ -28,7 +28,6 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     public Team OwnerTeam => Teams.GetTeam(TeamColor);
     public TileMapLayer Map { get; private set; }
 
-    private AStarGrid2D _astarNav;
     private CollisionShape2D _shape;
     private AnimatedSprite2D _as2d;
 
@@ -67,7 +66,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     public event Action<Unit> Died;
 
     public Vector2I Cell => Map.LocalToMap(Position);
-    public bool IsMoving => _astarNavPath.Count > 0 || _targetPositionNext != NoTarget;
+    public bool IsMoving => _moving || _stepCell != null;
 
     /// <summary>
     /// vt+1ACh (sub_42E385): vision radius now — unit table +2Ch while walking (activity +0BCh 1–4), +2Ah otherwise
@@ -185,12 +184,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     #region Movement targets
 
-    private static readonly Vector2I NoTarget = new(int.MaxValue, int.MaxValue);
-    private Vector2I _targetPositionNext = NoTarget;
-    private Vector2I _targetPosition;
-
-    /// <summary>Current destination cell.</summary>
-    public Vector2I Target => _targetPosition;
+    /// <summary>Destination cell of the running move (the target object's cell when following one).</summary>
+    public Vector2I Target => _moveTargetNode != null && IsInstanceValid(_moveTargetNode)
+        ? Map.LocalToMap(_moveTargetNode.Position) : _moveTarget;
 
     /// <summary>Player order: walk to a point given in the parent's (main scene's) coordinates.</summary>
     public void MoveTo(Vector2 localPosition)
@@ -202,15 +198,26 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     }
 
     /// <summary>Walk to a cell (or next to it, if it is a building). Used by orders; doesn't touch the current order.</summary>
-    public void WalkToCell(Vector2I cell) => _targetPositionNext = cell;
+    public void WalkToCell(Vector2I cell)
+    {
+        _moveTargetNode = null;
+        _moveTarget = cell;
+        StartMove();
+    }
 
-    /// <summary>Walk next to a map object.</summary>
-    public void WalkTo(Node2D target) => WalkToCell(Map.LocalToMap(target.Position));
+    /// <summary>Walk next to a map object, following it if it moves (the move job keeps the target object, +2Ch).</summary>
+    public void WalkTo(Node2D target)
+    {
+        _moveTargetNode = target;
+        _moveTarget = Map.LocalToMap(target.Position);
+        StartMove();
+    }
 
+    /// <summary>Ends the move; a step already begun is finished so the unit stands on a cell.</summary>
     public void StopMoving()
     {
-        _targetPositionNext = NoTarget;
-        _astarNavPath.Clear();
+        _moving = false;
+        _detour = null;
     }
 
     private Node2D _targetStructure;
@@ -255,30 +262,6 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         }
     }
 
-    private List<Vector2I> _astarNavPath = new();
-
-    private void CalcAstar(Vector2I target)
-    {
-        if (!_astarNav.IsInBoundsv(target))
-            return;
-        var current = Map.LocalToMap(Position);
-        var isSolidTarget = _astarNav.IsPointSolid(target);
-        if (isSolidTarget)
-            _astarNav.SetPointSolid(target, false);
-
-        var path = new List<Vector2I>(_astarNav.GetIdPath(current, target, true));
-        if (path.Count > 0)
-            path.RemoveAt(0);
-        if (isSolidTarget)
-        {
-            _astarNav.SetPointSolid(target, true);
-            // Stop next to a building instead of walking into it.
-            if (path.Count > 0)
-                path.RemoveAt(path.Count - 1);
-        }
-        _astarNavPath = path;
-    }
-
     #endregion
 
     public override void _Ready()
@@ -287,16 +270,6 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         _selection = FindChild("Selection") as Selection;
 
         Map = (GetParent() as Main)?.Map ?? MapTileMath.Tilemap;
-        _astarNav = new AStarGrid2D
-        {
-            CellShape = AStarGrid2D.CellShapeEnum.IsometricRight,
-            CellSize = MapTileMath.StandartTile,
-            DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never,
-            Region = Map.GetUsedRect(),
-        };
-        _astarNav.Update();
-        foreach (var coords in Map.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>())
-            _astarNav.SetPointSolid(coords);
 
         _as2d = FindChild("Animation") as AnimatedSprite2D;
         _shape = FindChild("Shape") as CollisionShape2D;
@@ -390,35 +363,34 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             AnimationStop(false);
     }
 
-    private bool _astarPointReached = true;
-
     public override void _PhysicsProcess(double delta)
     {
         if (IsDead || IsArrested || FollowVehicle())
             return;
-        if (_astarPointReached && _targetPositionNext != NoTarget)
+        if (_stepCell is { } next)
         {
-            _targetPosition = _targetPositionNext;
-            _targetPositionNext = NoTarget;
-            CalcAstar(_targetPosition);
+            var target = Map.MapToLocal(next);
+            var step = Position.MoveToward(target, (float)delta * _unitInstance.MoveSpeed);
+            AnimationMoveOrAttack(step - Position, true);
+            Position = step;
+            if (Position != target)
+                return;
+            _stepCell = null;
         }
-        if (_astarNavPath.Count == 0)
+        if (!_moving)
         {
             AnimationStop();
             return;
         }
-
-        _astarPointReached = false;
-        var target = Map.MapToLocal(_astarNavPath[0]);
-        var next = Position.MoveToward(target, (float)delta * _unitInstance.MoveSpeed);
-        AnimationMoveOrAttack(next - Position, true);
-        Position = next;
-
-        if (Position == target)
+        var direction = NextMoveDirection();
+        if (direction is MoveMap.Arrived or MoveMap.Stuck)
         {
-            _astarNavPath.RemoveAt(0);
-            _astarPointReached = true;
+            _moving = false;
+            _detour = null;
+            AnimationStop();
+            return;
         }
+        _stepCell = MoveMap.Step(Cell, direction);
     }
 
     #region Salary (sub_42A535: daily salary / 7; a unit that can't be paid resigns)
@@ -601,7 +573,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             return;
         IsArrested = false;
         Visible = true;
-        Position = Map.MapToLocal(cell);
+        PlaceAt(Map.MapToLocal(cell));
         _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, false);
     }
 

@@ -227,10 +227,13 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   2 000 000 (vt+1E4h sub_42CED7), set by the FBI snitch service — done, see "HQ authority services".
 - Open: mode 4 (action 4 is not on the menu), enemy buildings, police targeting, the
   Terrorist/Cadillac chase rule.
-- Movement (for the "units stack on one cell" issue): the original walks tile by tile. sub_427EF5 picks the next
-  direction by scoring the neighbour cells with sub_427CC0: 6 the destination, 0 blocked, 4/5 free (5 for tile class
-  2), 1–3 when other units stand there (tile vt+134h = occupant count, vt+130h = occupant); 4 = arrived, 5 = stuck →
-  detour search sub_428244. Units are spread out by that preference, not by a hard rule. Not ported (A* in the port).
+- Movement (done 2026-10-29, `MoveMap` + `UnitMovement`, A* removed): the original walks tile by tile. Each cell,
+  sub_427EF5 scores the (up to two) neighbours toward the destination with sub_427CC0 (6 destination, 0 blocked,
+  5 free road / pavement, 4 free other ground or a moving occupant, 2 a standing one, 1 crowded), ties go to the
+  cell nearer the start–end line, a poor lone choice tries a sidestep; stuck → detour search sub_428244 (rays,
+  waypoint), give up when a cell repeats in the last six. Units may share cells; a road / pavement cell with a
+  fighting unit is closed (sub_432E13). Letters: R road, S pavement (no Cadillac), I walkable (was blocked in the
+  port), the rest not. Buildings are reached edge to edge. Unit tests `MovementTests`.
 - Start points (sub_43BDB7): RANDOM 0 → the first free start point in list order, RANDOM 1 → a random free one; .map
   STARTPOINTS and .epi UNIT use the same (x y) order (episode 13: Torrio's guard at 84,37 next to start 81,38).
   Episode 4's boss stands far from his base on purpose.

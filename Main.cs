@@ -181,6 +181,8 @@ public partial class Main : Node2D
 		Map.Name = "Map";
 		MapTileMath.Tilemap = Map;
 		Vision.Init(Map);
+		MoveMap.Init(Map);
+		Unit.InitOccupancy();
 		Map.AddChild(new FogOfWar { Name = "FogOfWar" });
 		AddChild(Map);
 

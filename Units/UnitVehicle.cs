@@ -73,7 +73,7 @@ public partial class Unit
         unit.StopMoving();
         unit.EnterBuilding();
         unit.Vehicle = this;
-        unit.Position = Position;
+        unit.PlaceAt(Position);
         return true;
     }
 
@@ -97,7 +97,7 @@ public partial class Unit
             return;
         Vehicle = null;
         if (IsInstanceValid(car))
-            Position = car.Position;
+            PlaceAt(car.Position);
         ExitBuilding();
     }
 
@@ -135,6 +135,7 @@ public partial class Unit
             LeaveVehicle();
             return false;
         }
+        _stepCell = null;
         Position = Vehicle.Position;
         return true;
     }

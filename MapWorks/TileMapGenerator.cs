@@ -10,6 +10,10 @@ public static class TileMapGenerator
     public static readonly StringName TileNonWalkable = "nonWalkable";
     /// <summary>Map meta: cells that block sight (building letters B C M H D G P; the ground classes are see-through).</summary>
     public static readonly StringName MetaOpaque = "opaqueCells";
+    /// <summary>Road cells (letter R, tile off_47D0BC: everyone may walk, class 2).</summary>
+    public static readonly StringName MetaRoad = "roadCells";
+    /// <summary>Pavement cells (letter S, tile off_47D230 "sand": no Cadillac, class 2).</summary>
+    public static readonly StringName MetaSand = "sandCells";
     public static readonly StringName MetaNameBases = "Bases";
 
     private const string CompanyScenePath = "res://Buildings/Company.tscn";
@@ -54,6 +58,8 @@ public static class TileMapGenerator
         var businesses = OriginalData.Instance.Businesses;
         var bldngCounter = 0;
         var opaque = new Godot.Collections.Array<Vector2I>();
+        var roads = new Godot.Collections.Array<Vector2I>();
+        var sand = new Godot.Collections.Array<Vector2I>();
         // Medium standalone buildings (letter B): original map cell -> map cell.
         var mediumBuildings = new Dictionary<Vector2I, Vector2I>();
         foreach (var vec in map.BlockPlacement)
@@ -134,8 +140,17 @@ public static class TileMapGenerator
 
                     switch (bldngChar)
                     {
+                        // fnBuildingPlacementOnMapByNumber: R road and S "sand" (pavement) are class 2 ground, I is
+                        // class 3 ground (sub_420BD0, off_47D514) — all walkable; everything else is not.
                         case 'R':
+                            td.SetCustomData(TileNonWalkable, false);
+                            roads.Add(actual);
+                            break;
                         case 'S':
+                            td.SetCustomData(TileNonWalkable, false);
+                            sand.Add(actual);
+                            break;
+                        case 'I':
                             td.SetCustomData(TileNonWalkable, false);
                             break;
                         case 'B':
@@ -201,6 +216,8 @@ public static class TileMapGenerator
 
         tileMap.SetMeta(TileNonWalkable, nonWalkableMap);
         tileMap.SetMeta(MetaOpaque, opaque);
+        tileMap.SetMeta(MetaRoad, roads);
+        tileMap.SetMeta(MetaSand, sand);
         tileMap.SetMeta(MetaNameBases, bases);
         return tileMap;
     }
