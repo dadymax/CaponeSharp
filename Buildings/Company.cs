@@ -139,6 +139,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
             return;
         var owner = OwnerTeam;
         GD.Print($"Company: HQ of {owner.PlayerName} destroyed");
+        Sound.Play("Crash.wav");
         Messages.Show(owner.IsCurrentPlayerColor
             ? OriginalTexts.Instance.Get(17, 37)
             : PanelInfo.CFormat(OriginalTexts.Instance.Get(17, 38), owner.PlayerName));
@@ -589,6 +590,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     public void Demolish()
     {
         GD.Print($"Company {CompanyName} demolished");
+        Sound.Play("Crash.wav"); // sub_422E10
         if (OwnerTeam != null)
             SetOwnerTeam(null);
         Block?.Companies.Remove(this);
@@ -597,6 +599,33 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     }
 
     // ---- ownership (vt+74h, sub_4211F0) ------------------------------------------------------------------------------
+
+    /// <summary>
+    /// Selected (company vt+70h sub_422C80, HQ sub_416660): the HQ says HQ.wav; a company its kind — Business (legal),
+    /// CollectionCenter / TraningCenter (support +28h 3 / 4), Bootlegging, Entertainment, Gambling, TroubleShooting;
+    /// anything else select.wav.
+    /// </summary>
+    public string SelectSound()
+    {
+        if (IsHq)
+            return "HQ.wav";
+        if (Entry == null || UnderConstruction)
+            return "select.wav";
+        if (Entry.Type == OriginalBusinessTable.BusinessType.Legal)
+            return "Business.wav";
+        if (Entry.Value28 == 4)
+            return "TraningCenter.wav";
+        if (Entry.Value28 == 3)
+            return "CollectionCenter.wav";
+        return Entry.Type switch
+        {
+            OriginalBusinessTable.BusinessType.Bootlegging => "Bootlegging.wav",
+            OriginalBusinessTable.BusinessType.Entertainment => "Entertainment.wav",
+            OriginalBusinessTable.BusinessType.Gambling => "Gambling.wav",
+            OriginalBusinessTable.BusinessType.Troubleshooting => "TroubleShooting.wav",
+            _ => "Business.wav",
+        };
+    }
 
     /// <summary>Change owner; a neutral company loses its uncollected cash, and the block registers the new owner.</summary>
     public void SetOwnerTeam(Team team)

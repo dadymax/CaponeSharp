@@ -468,11 +468,21 @@ Still open from this part:
 
 ## 4. Sound (P1 — cheap, big effect)
 
-- [ ] Load WAVs at runtime from `original_game/Sound` (`AudioStreamWav.LoadFromFile`); add a `SoundManager` autoload. The EXE's id → file table starts at 0x4779B8.
-- [ ] Unit voices per type: `<Unit>Arrive / Click / ClickEnemy / Die / Idle1-5 / Order / OrderHurry / Resign` for Thug, Pistol, Shotgun, Thompson, Sniper, Bombman, Hitman, Thief, Godfather.
-- [ ] Weapons: `Gun`, `Machgun`, `Rifle`, `Shotgun`, `bang`, `Hit`, `CRASH`.
-- [ ] Business: `Bootlegging/Entertainment/Gambling/TroubleShooting/CollectionCenter/TraningCenter/HQ/Business`. Capture outcome: `BusinessPay1-6` / `BusinessRefuse1-5` — done in `Company.Extort` (`Sound` class). Collector hits: `CollectorHit1-3`.
+- [x] WAVs load at runtime (`Sound`, at most 16 at once); the EXE's id → file table is off_478700 (205 entries).
+- [x] Unit voices per type (`UnitVoice`); death sounds for the local player's units (sub_42B880, `Unit.DieSound`): `<Unit>Arrive / Click / ClickEnemy / Die / Idle1-5 / Order / OrderHurry / Resign` for Thug, Pistol, Shotgun, Thompson, Sniper, Bombman, Hitman, Thief, Godfather.
+- [x] Weapons: shot sounds by type (table 0x484554, `CanAttack.ShotSound`); `Crash` for destroyed HQs, demolished companies and Cadillacs.
+- [x] Business (selection sounds sub_422C80 / sub_416660, `Company.SelectSound`; collector cry below half HP): `Bootlegging/Entertainment/Gambling/TroubleShooting/CollectionCenter/TraningCenter/HQ/Business`. Capture outcome: `BusinessPay1-6` / `BusinessRefuse1-5` — done in `Company.Extort` (`Sound` class). Collector hits: `CollectorHit1-3`.
 - [ ] Police/FBI: `PoliceArrest1-3`, `PoliceRaid`, `POLICE_S`, `FBIInforms`. Cars: `NewCar`, `CarGo`, `CarClick`. UI: `ButtonClick`, `OverButton`, `Click`, `select`, `Message1-8`, `OutOfFunds`, `Permit`, `Welcome`, `NewGame`, `WinEffect`, `LoseEffect`.
+
+- [x] Message log over the map (sub_40C2C2 / sub_40FFD0 / sub_41D3E0, `MessageLog`, done 2026-10-29): messages of the
+  last 15 s at (25, 13 + 16n), panel font 3; kind 4 green with Message.wav, others yellow; episode results (kinds
+  2/3) go to the end screen. Before this, game messages were only logged. A message may carry a map position (FBI
+  reports, raids, demolitions); clicking it centres the view there (assumption).
+- [x] FBI informers (sub_431542, `FbiInformers`, done 2026-10-29): FBI services 7–0Fh with no point cost; once
+  bribed past the price they report every week (7: every 28 days): rival funds, income, gangsters, market share,
+  a business / gangster / HQ location, with FBIInforms.wav.
+- [ ] The "Меню" button position (GuiMenu at 10,10) is a guess and covers the first message line; locate the EXE's
+  GameButt.bmp blit (surface holder +4).
 
 ## 5. Gameplay rules recovered from the EXE (P2)
 

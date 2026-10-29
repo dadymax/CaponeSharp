@@ -449,6 +449,21 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         CanAttack?.Reinit();
     }
 
+    /// <summary>sub_42B880: death sound by type (others ThugDie, sound C4h); a Cadillac crashes.</summary>
+    public static string DieSound(UnitCommon.UnitType type) => type switch
+    {
+        UnitCommon.UnitType.Pistol => "PistolDie.wav",
+        UnitCommon.UnitType.Sniper => "SniperDie.wav",
+        UnitCommon.UnitType.Shotgun => "ShotgunDie.wav",
+        UnitCommon.UnitType.Hitman => "HitmanDie.wav",
+        UnitCommon.UnitType.Terrorist => "BombmanDie.wav",
+        UnitCommon.UnitType.Thompson => "ThompsonDie.wav",
+        UnitCommon.UnitType.Godfather => "GodfatherDie.wav",
+        UnitCommon.UnitType.Thief => "ThiefDie.wav",
+        UnitCommon.UnitType.Cadillac => "Crash.wav",
+        _ => "ThugDie.wav",
+    };
+
     public static string ResignSound(UnitCommon.UnitType type) => type switch
     {
         UnitCommon.UnitType.Thug => "ThugResign.wav",
@@ -510,6 +525,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         if (_as2d != null && _as2d.SpriteFrames.HasAnimation(killed) && _as2d.SpriteFrames.GetFrameCount(killed) > 0)
             _as2d.Play(killed);
         GD.Print($"Unit {DisplayName} ({UnitType}) died");
+        // sub_42B8A3 / sub_42B880: the local player's units die with their own sound.
+        if (OwnerTeam?.IsCurrentPlayerColor == true)
+            Sound.Play(DieSound(UnitType));
         Died?.Invoke(this);
         var clock = GameClock.Instance;
         if (clock != null)

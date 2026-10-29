@@ -44,7 +44,12 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         // sub_438710: the HP change itself — no evasion (whether a bullet hits is decided by the shot, sub_438873).
         if (HP <= 0)
             return;
+        var before = HP;
         HP = Mathf.Max(0, HP - damage);
+        // sub_42BC00: the local player's collector cries out when it drops below half its hit points.
+        if (GetParent()?.GetParent() is Unit { UnitType: UnitCommon.UnitType.Collector } collector
+            && collector.OwnerTeam?.IsCurrentPlayerColor == true && MaxHP / 2 < before && MaxHP / 2 >= HP && HP > 0)
+            Sound.Play($"CollectorHit{Time.GetTicksMsec() % 3 + 1}.wav");
         if (HP == 0)
         {
             // Destroyed even when the attacker is unknown or already gone (a bomb, a test hit).

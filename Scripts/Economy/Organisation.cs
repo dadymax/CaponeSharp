@@ -114,6 +114,7 @@ public partial class Organisation
         if (Eliminated)
             return; // the HQ object is removed from the world (sub_43AB50), so its events stop
         UpdateStats();
+        InformerTick();
         // sub_430A58: while the FBI visits the local player, "FBI \"visits\" you ..." (20,2) is shown (sub_408C10).
         if (Team.IsCurrentPlayerColor && (FbiVisitActive || _fbiShown))
         {

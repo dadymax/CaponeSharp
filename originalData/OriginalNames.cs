@@ -108,17 +108,31 @@ public static class Sound
     }
 }
 
-/// <summary>Game messages shown to the local player (original: message line + sound). The GUI listens to <see cref="Posted"/>.</summary>
+/// <summary>
+/// Game messages for the local player (sub_408A70 → sub_41D3E0 → the view's list, sub_40FFD0): a kind, the text and a
+/// map position (the given one, else the local HQ's). Kind 4 plays Message.wav; <see cref="MessageLog"/> shows the
+/// messages of the last 15 seconds (kinds 2 / 3 are the episode results: the end screen shows those).
+/// </summary>
 public static class Messages
 {
+    public const int Normal = 0, Warning = 1, Lost = 2, Won = 3, Good = 4;
+
+    public record Entry(string Text, int Kind, Vector2I? Cell, ulong Ticks);
+
+    public static List<Entry> Log { get; } = new();
     public static List<string> History { get; } = new();
     public static event System.Action<string> Posted;
 
-    public static void Show(string text)
+    public static void Show(string text, int kind = Normal, Vector2I? cell = null)
     {
         History.Add(text);
         if (History.Count > 50)
             History.RemoveAt(0);
+        Log.Add(new Entry(text, kind, cell, Time.GetTicksMsec()));
+        if (Log.Count > 50)
+            Log.RemoveAt(0);
+        if (kind == Good)
+            Sound.Play("Message.wav");
         GD.Print("Message: ", text);
         Posted?.Invoke(text);
     }

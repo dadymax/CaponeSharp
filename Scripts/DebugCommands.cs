@@ -19,6 +19,13 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>Posts a game message (kind 0 normal, 4 good).</summary>
+    public string Say(string text, int kind = 0)
+    {
+        Messages.Show(text, kind);
+        return $"{Messages.Log.Count} messages";
+    }
+
     /// <summary>Ends the episode as lost (the end screen with the statistics; a loss saves no progress).</summary>
     public string Lose()
     {

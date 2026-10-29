@@ -180,6 +180,7 @@ public partial class Main : Node2D
 			return;
 		Map.Name = "Map";
 		MapTileMath.Tilemap = Map;
+		Messages.Log.Clear();
 		Vision.Init(Map);
 		MoveMap.Init(Map);
 		Unit.InitOccupancy();
@@ -340,6 +341,8 @@ public partial class Main : Node2D
 			GuiGameback.UpdateSelectionIcon(selectable as Node2D);
 			if (selectable is Unit unit)
 				UnitVoice.Play(unit, UnitVoice.Kind.Select);
+			else if (selectable is Company company)
+				Sound.Play(company.SelectSound());
 		}
 	}
 
@@ -435,6 +438,7 @@ public partial class Main : Node2D
 			AddChild(canvasLayer);
 		}
 		canvasLayer.ProcessMode = ProcessModeEnum.Always;
+		canvasLayer.AddChild(new MessageLog());
 		canvasLayer.AddChild(new GuiMenu());
 	}
 

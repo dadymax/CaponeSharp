@@ -105,9 +105,9 @@ public static class CompanyServices
         if (!IsTarget(player, company) || service < 0 || !player.Org.UseItem(service))
             return false;
         if (player.IsCurrentPlayerColor)
-            Messages.Show(OriginalTexts.Instance.Get(30, 20));
+            Messages.Show(OriginalTexts.Instance.Get(30, 20), Messages.Normal, company.Cell);
         else if (company.OwnerTeam?.IsCurrentPlayerColor == true)
-            Messages.Show(OriginalTexts.Instance.Get(30, 21));
+            Messages.Show(OriginalTexts.Instance.Get(30, 21), Messages.Normal, company.Cell);
         company.Demolish();
         return true;
     }
@@ -172,7 +172,7 @@ public partial class PoliceRaid : Node
                 if (IsInstanceValid(_company) && _company.OwnerTeam?.IsCurrentPlayerColor == true)
                 {
                     Sound.Play("PoliceRaid.wav");
-                    Messages.Show(OriginalTexts.Instance.Get(28, 0));
+                    Messages.Show(OriginalTexts.Instance.Get(28, 0), Messages.Normal, _company.Cell);
                 }
                 GameClock.Instance?.ScheduleIn(RaidMinutes, () =>
                 {
