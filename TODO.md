@@ -679,8 +679,8 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 - [x] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
   job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Done 2026-10-29: the income tick
   (sub_420ED5) adds nothing while a job runs on the company (vt+0A0h) — conversion or repair (sub_4289E8 sets the
-  job too); support upkeep is still charged. `Company.IncomeTick` skips while `Busy`. The panel income line is unchanged
-  (vt+188h; whether the EXE's panel shows 0 during a job is not checked yet). Scenario check "a business under construction earns
+  job too); support upkeep is still charged. `Company.IncomeTick` skips while `Busy`. The panel income line is unchanged:
+  the EXE's panel (sub_40A997, 0x40B39C) prints vt+188h without looking at the job, next to the job's progress bar. Scenario check "a business under construction earns
   nothing" (scripted conversion at hour 10; fails without the fix).
 
 - [x] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
