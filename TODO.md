@@ -481,8 +481,8 @@ Still open from this part:
 - [x] FBI informers (sub_431542, `FbiInformers`, done 2026-10-29): FBI services 7–0Fh with no point cost; once
   bribed past the price they report every week (7: every 28 days): rival funds, income, gangsters, market share,
   a business / gangster / HQ location, with FBIInforms.wav.
-- [ ] The "Меню" button position (GuiMenu at 10,10) is a guess and covers the first message line; locate the EXE's
-  GameButt.bmp blit (surface holder +4).
+- [x] The "Меню" button (sub_40C103): GameButt.bmp (158,43)–(208,56) / pressed (208,43)–(258,56) at (5, 0), click
+  area (5,0)–(55,13); the message lines start under it.
 
 ## 5. Gameplay rules recovered from the EXE (P2)
 

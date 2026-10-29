@@ -6,16 +6,17 @@ namespace Capone;
 /// <summary>
 /// Top menu. The MENU button comes from GAMEBUTT.BMP, the drop-down from Menu.bmp.
 /// <para>GAMEBUTT.BMP (258×100) holds several panel graphics; the button is the pair of "Меню" images
-/// side by side at y = 42: normal on the left, pressed on the right (rectangles measured from the bitmap,
-/// the EXE's own coordinates are not located yet).</para>
+/// side by side at y = 43: normal on the left, pressed on the right (sub_40C103).</para>
 /// <para>Menu.bmp (368×216) is a 4×2 grid of complete menus: cell 0 has nothing highlighted, cell i
 /// highlights item i (1 = Альянсы … 7 = ВЫХОД). Hovering an item shows its cell; the item zones are the
 /// rows where cell i differs from cell 0.</para>
 /// </summary>
 public partial class GuiMenu : Control
 {
-    private static readonly Rect2I ButtonNormalRect = new(158, 42, 48, 14);
-    private static readonly Rect2I ButtonPressedRect = new(210, 42, 48, 14);
+    // sub_40C103: GameButt.bmp (158, 43)–(208, 56) normal, (208, 43)–(258, 56) pressed, drawn at (5, 0)
+    // (dword_476BE8/BEC); the click area is (5, 0)–(55, 13), so the message lines (y 13) start right under it.
+    private static readonly Rect2I ButtonNormalRect = new(158, 43, 50, 13);
+    private static readonly Rect2I ButtonPressedRect = new(208, 43, 50, 13);
     private const int MenuCols = 4;
     private const int MenuRows = 2;
 
@@ -37,7 +38,7 @@ public partial class GuiMenu : Control
     public override void _Ready()
     {
         Instance = this;
-        Position = new Vector2(10, 10);
+        Position = new Vector2(5, 0);
         // The root itself never takes clicks; only the button and the open menu do.
         MouseFilter = MouseFilterEnum.Ignore;
 
