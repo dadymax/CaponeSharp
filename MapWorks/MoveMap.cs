@@ -12,7 +12,7 @@ namespace Capone;
 /// road / pavement (class 2 ground) or 4 elsewhere; one occupant: 4 if it is moving, 2 if it stands; more: 1.</item>
 /// <item><see cref="NextDirection"/> (sub_427EF5): of the (up to two) directions toward the destination, the better
 /// scored; a tie goes to the cell nearer the straight line from the move's start to its end (sub_428116), an exact
-/// tie at random; a lone poor choice (score below 4) first tries a sidestep (sub_427DF6).</item>
+/// tie at random (the sidestep sub_427DF6 only runs outside a running game).</item>
 /// <item><see cref="FindDetour"/> (sub_428244): when stuck, rays go out from the cell in the directions next to the
 /// ones toward the destination; the first walkable cell beside a ray on the destination's side, not among the last
 /// visited cells, becomes a waypoint.</item>
@@ -36,6 +36,9 @@ public static class MoveMap
     public static Func<Vector2I, object, (int Count, bool Moving, bool Fighting)> Occupancy { get; set; } = (_, _) => (0, false, false);
 
     public static Random Rng { get; set; } = new();
+
+    /// <summary>The sidestep of sub_427DF6 (see NextDirection); off in a running game.</summary>
+    public static bool SidestepEnabled { get; set; }
 
     public static void Init(TileMapLayer map)
     {
@@ -120,7 +123,9 @@ public static class MoveMap
                 return Rng.Next(2) == 0 ? d0 : d1;
             return e0 < e1 ? d0 : d1;
         }
-        if (s1 == 0 && s0 < 4)
+        // sub_427DF6 sidestep: only when the world state (sub_414BA0) mod 3 isn't 0 — in a running game it is 3, so
+        // units walk on into an occupied cell instead (they may share cells). Off: it made units shuttle back and forth.
+        if (SidestepEnabled && s1 == 0 && s0 < 4)
         {
             var side = Sidestep(from, to, d0, car, self);
             if (side != Stuck)

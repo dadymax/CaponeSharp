@@ -19,6 +19,31 @@ public partial class DebugCommands : Node
 
     public string StatusLine() => PanelInfo.StatusText;
 
+    /// <summary>
+    /// Text map of what player unit <paramref name="index"/> sees: @ the unit, # building seen, x building hidden,
+    /// . ground seen, space ground hidden. Rows are map y, columns map x.
+    /// </summary>
+    public string SightMap(int index)
+    {
+        var unit = PlayerFighters().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        var grid = unit.SightGrid(out var center, out var r);
+        var sb = new StringBuilder($"{unit.UnitType} at {center}, r {r}\n");
+        for (var dy = -r; dy <= r; dy++)
+        {
+            for (var dx = -r; dx <= r; dx++)
+            {
+                var cell = center + new Vector2I(dx, dy);
+                var seen = Vision.Visible(grid, center, r, cell);
+                var open = Vision.SeeThrough(cell);
+                sb.Append(dx == 0 && dy == 0 ? '@' : open ? (seen ? '.' : ' ') : (seen ? '#' : 'x'));
+            }
+            sb.Append('\n');
+        }
+        return sb.ToString();
+    }
+
     /// <summary>Posts a game message (kind 0 normal, 4 good).</summary>
     public string Say(string text, int kind = 0)
     {
