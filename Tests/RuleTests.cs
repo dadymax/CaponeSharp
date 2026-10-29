@@ -22,12 +22,32 @@ public static class VisionTests
     public static void OpenFieldSeesEverythingWithinRadius()
     {
         Field();
-        for (var y = -3; y <= 3; y++)
-            for (var x = -3; x <= 3; x++)
-                Assert.True(Sees(4, x, y), $"({x}, {y}) visible at radius 4");
-        Assert.True(Sees(4, 4, 3), "(4, 3): the step back (3, 2) is within 4");
-        Assert.False(Sees(4, 4, 4), "(4, 4): the step back (3, 3) is 4.24 away, beyond 4");
-        Assert.False(Sees(4, 5, 0), "outside the grid");
+        // Radius 5 has no unrolled copy: the generic loop only tests the steps back.
+        for (var y = -4; y <= 4; y++)
+            for (var x = -4; x <= 4; x++)
+                Assert.True(Sees(5, x, y), $"({x}, {y}) visible at radius 5");
+        Assert.True(Sees(5, 5, 4), "(5, 4): the step back (4, 3) is within 5");
+        Assert.False(Sees(5, 5, 5), "(5, 5): the step back (4, 4) is 5.66 away, beyond 5");
+        Assert.False(Sees(5, 6, 0), "outside the grid");
+    }
+
+    [UnitTest]
+    public static void UnrolledRadiiLoseTheOuterRing()
+    {
+        Field();
+        // sub_456D98 / sub_457D79 / sub_44C237 / sub_453BF1 clear ring r and cells farther than r.
+        foreach (var r in new[] { 3, 4, 8, 9 })
+        {
+            Assert.True(Sees(r, r - 1, 0), $"r {r}: ({r - 1}, 0)");
+            Assert.False(Sees(r, r, 0), $"r {r}: ({r}, 0) is on the outer ring");
+            Assert.False(Sees(r, 0, -r), $"r {r}: (0, {-r}) is on the outer ring");
+        }
+        Assert.True(Sees(4, 3, 2), "r 4: (3, 2) is 3.6 away");
+        Assert.False(Sees(4, 3, 3), "r 4: (3, 3) is 4.24 away");
+        Assert.True(Sees(8, 3, 7), "r 8: (3, 7) is 7.6 away");
+        Assert.False(Sees(8, 4, 7), "r 8: (4, 7) is 8.06 away");
+        Assert.False(Sees(9, 6, 7), "r 9: (6, 7) is 9.22 away");
+        Assert.True(Sees(9, 5, 7), "r 9: (5, 7) is 8.6 away");
     }
 
     [UnitTest]

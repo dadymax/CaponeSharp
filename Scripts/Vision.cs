@@ -10,6 +10,9 @@ namespace Capone;
 /// straight-line distance (sub_4471D0 / sub_4470D0). When one axis dominates there are two such neighbours (back along
 /// that axis, and diagonally back); either one is enough. The cell itself is not tested, so the wall facing the viewer
 /// is seen and what lies behind it is not.
+/// The unrolled copies (radius 3: sub_4565BE / sub_456D98, 4: sub_456F8C / sub_457D79, 8: sub_448640 / sub_44C237,
+/// 9: sub_44E2EC / sub_453BF1) end by clearing the outer square ring and every cell farther than r in a straight line,
+/// so with these radii a unit sees one cell less than the generic loop (radius 5, 6, 7, …) would give it.
 /// See-through tiles (map object vt+168h): ground — roads, sidewalks, parks, 'F' — yes; buildings ('B', 'C', 'M', 'H',
 /// 'D', 'G', 'P', companies, HQs) no. The Godot map is the original grid with y flipped, so this works on Godot cells.
 /// </summary>
@@ -53,6 +56,11 @@ public static class Vision
                     if (!Passes(grid, center, r, dx, dy))
                         grid[(dy + r) * size + dx + r] = false;
                 }
+        if (r is 3 or 4 or 8 or 9)
+            for (var dy = -r; dy <= r; dy++)
+                for (var dx = -r; dx <= r; dx++)
+                    if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) == r || dx * dx + dy * dy > r * r)
+                        grid[(dy + r) * size + dx + r] = false;
         return grid;
     }
 
