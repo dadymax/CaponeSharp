@@ -98,6 +98,18 @@ public static class EconomyTests
     private static Organisation NewOrg(long funds) => new(new Team(Colors.Red) { PlayerName = "test" }, funds);
 
     [UnitTest]
+    public static void BuildingPortraitsAreBlockInfPictures()
+    {
+        // sub_422158 / sub_415258 / sub_429D30: every portrait is one of BLOCKINF.BMP's 84 x 95 "info" tiles.
+        foreach (var name in new[] { "info slum", "info theathern", "info L-house", "info news stand", "info hall",
+                     "info hotel 2", "info hotel 1", "info central 1", "info extra 1", "info police", "HQ info picture" })
+        {
+            var tile = OriginalData.Instance.Tiles.ResolveTile(name);
+            Assert.True(tile != null && tile.Size == new Vector2I(84, 95), $"{name}: {tile?.Size}");
+        }
+    }
+
+    [UnitTest]
     public static void FavourBarFollowsTheSquareRoot()
     {
         // sub_40A245: sqrt(points) / 40 x 112 px, then (points - 1600)^(1/4) more, at most 20.

@@ -252,7 +252,7 @@ Known gaps in the brick (do later):
   Balance changed: in the idle scenario run episode 15 is no longer lost on day 4 (the AI attack stalls on the
   player's units). To compare with the running original.
 - `ExtortOrder.CanExtort`: which unit types may extort is a guess (all fighters except Collector/Cadillac/police).
-- Company portraits in the panel use placeholder "info …" tiles per grade (`SelectionIcon.CompanyPortrait`).
+- Company portraits in the panel follow the EXE (district and grade, sub_422158; `SelectionIcon.CompanyPortrait`).
 - Police car stats: unit type 6 table row is used (TicksPerTile 20); the original car object is `sub_4459D0` (0x44 bytes).
 - Lawyers are police services 29h / 27h / 24h (200 000 / 75 000 / 10 000 bribed, 1 point): the police job uses the
   best one the arrested gangster's owner can use (70 / 50 / 30 % release, 28,1) — already working. 2Ch / 31h / 34h are
@@ -730,7 +730,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [x] Clicks on GUI controls (menu, bottom panel) no longer select/deselect on the map: `Main` uses `_UnhandledInput`.
 
 - [ ] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
-- [ ] **Company portraits**: `SelectionIcon.CompanyPortrait` uses Chicago.tile "info …" pictures per grade as placeholders; find the original building → picture mapping.
+- [x] **Company portraits**: `SelectionIcon.CompanyPortrait` uses Chicago.tile "info …" pictures per grade as placeholders; find the original building → picture mapping.
   User, 2026-10-29: corner buildings show the wrong portrait. The portraits are in BLOCKINF.BMP, a 4 × 4 table. From
   playing the original (not 100% sure; the user will try to get the original data), by the letter in the block
   description table, as (row, column). The choice depends on the neighbouring letters in the same block:
@@ -743,7 +743,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   - P with M: 0,2
   - P with H: 1,1
 
-  To do: find the EXE code that picks the BLOCKINF.BMP cell (the panel portrait draw) to settle the alternatives.
+  Done 2026-10-30: the EXE picks the portrait by district and grade, not by letter (company picture vt+68h
+  sub_422158): no block → extra 1 (C14h); slum → slum (C1Eh); middle class: grade 3 theathern (C13h), 2 L-house
+  (C16h), 1 news stand (C1Ch), else hall (C1Dh); center: grade 4 hotel 2 (C1Bh), 3 hotel 1 (C17h), 2 central 1
+  (C15h), else L-house. An owned HQ shows the HQ picture 0D8Dh (sub_415258); police stations C18h (sub_429D30); a
+  generic building by district (sub_4025F0: C1Eh / C1Dh / C1Bh, else C19h). Not modelled: state +18h = 5 (set by sub_422D82 when a company
+  is released and the local player isn't the owner) shows hall / hotel 2. Unit test
+  `BuildingPortraitsAreBlockInfPictures`.
 - [x] **HQ placement**: the HQ now stands on the start point itself, as in `sub_404098` (a business there is replaced).
 - [ ] **RID leaks at exit** with `--headless --quit-after`: harmless.
 - [x] ~~Group (rectangle) select~~: fixed in the C# port.
