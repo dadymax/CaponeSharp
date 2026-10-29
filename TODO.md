@@ -658,6 +658,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   G cell one row off its B (original y − 1); SLUM_CITY is one row the other way, LOST / CAPONECITY / QUARANTINE /
   SMALLNEIGHBORHOOD up to 8 cells. Unit tests `MapTests` check every map.
 
+- [ ] **Order click animation (user, 2026-10-29).** When the player gives a unit an order (walk, attack, acquire,
+  etc.), an animation plays at the clicked point. Frames come from Signs.bmp: 6 sprites in the rectangle at
+  (288, 66), 71 × 99 px, 3 rows of 2. To do: find the frame order, timing and anchor in the EXE (the code that loads
+  these Signs.bmp frames, near the order handlers), then play it on every order click.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
