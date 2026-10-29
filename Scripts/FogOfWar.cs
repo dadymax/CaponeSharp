@@ -10,15 +10,12 @@ namespace Capone;
 /// buildings (4 tiles, company / HQ vt+0E8h; sub_4393C6 marks the tiles) see. Nothing stays explored: when the viewers
 /// leave, the fog comes back and other players' units there are hidden. Companies out of sight keep showing their last
 /// seen state (<see cref="Company.InFog"/>); companies never seen are hidden (<see cref="Company.Discovered"/>).
-/// Unseen cells are drawn darker.
+/// Unseen cells get the original fog tiles with soft edges (<see cref="FogTiles"/>).
 /// </summary>
 public partial class FogOfWar : Node
 {
     public const int BuildingSight = 4;
     private const double UpdateSeconds = 0.25;
-    private static readonly Color FogTint = new(0.5f, 0.5f, 0.55f);
-    /// <summary>Alternative tile id of the darkened copy of every map tile.</summary>
-    private const int FogAlternative = 1;
 
     /// <summary>A setting: off shows everything (as before).</summary>
     public static bool Enabled { get; set; } = true;
@@ -26,10 +23,9 @@ public partial class FogOfWar : Node
     public static FogOfWar Instance { get; private set; }
 
     private readonly HashSet<Vector2I> _visible = new();
-    private readonly HashSet<Vector2I> _fogged = new();
     private readonly Dictionary<Company, (Vector2I Cell, bool[] Grid)> _buildingGrids = new();
     private TileMapLayer _map;
-    private List<Vector2I> _cells = new();
+    private FogTiles _fogTiles;
     private double _timer;
 
     public override void _Ready()
@@ -38,40 +34,19 @@ public partial class FogOfWar : Node
         _map = GetParent() as TileMapLayer;
         if (_map == null)
             return;
-        _cells = _map.GetUsedCells().ToList();
-        AddDarkTiles(_map.TileSet);
+        _fogTiles = new FogTiles();
+        _fogTiles.Init(_map, _map.GetUsedCells());
+        CallDeferred(MethodName.AttachFogTiles);
     }
 
-    /// <summary>
-    /// Gives every map tile a darkened alternative (same texture origin, z, and custom data such as nonWalkable and the
-    /// company), so a fogged cell — building sprite included — is drawn darker by switching the cell's alternative.
-    /// </summary>
-    private static void AddDarkTiles(TileSet set)
+    /// <summary>The fog layer is drawn right after the map, y-sorted with it (same parent).</summary>
+    private void AttachFogTiles()
     {
-        if (set == null)
+        var parent = _map.GetParent();
+        if (parent == null)
             return;
-        var layers = set.GetCustomDataLayersCount();
-        for (var s = 0; s < set.GetSourceCount(); s++)
-        {
-            if (set.GetSource(set.GetSourceId(s)) is not TileSetAtlasSource atlas)
-                continue;
-            for (var t = 0; t < atlas.GetTilesCount(); t++)
-            {
-                var coords = atlas.GetTileId(t);
-                if (atlas.HasAlternativeTile(coords, FogAlternative))
-                    continue;
-                atlas.CreateAlternativeTile(coords, FogAlternative);
-                var original = atlas.GetTileData(coords, 0);
-                var dark = atlas.GetTileData(coords, FogAlternative);
-                dark.TextureOrigin = original.TextureOrigin;
-                dark.ZIndex = original.ZIndex;
-                dark.YSortOrigin = original.YSortOrigin;
-                dark.Material = original.Material;
-                dark.Modulate = original.Modulate * FogTint;
-                for (var l = 0; l < layers; l++)
-                    dark.SetCustomDataByLayerId(l, original.GetCustomDataByLayerId(l));
-            }
-        }
+        parent.AddChild(_fogTiles);
+        parent.MoveChild(_fogTiles, _map.GetIndex() + 1);
     }
 
     public override void _ExitTree()
@@ -85,7 +60,7 @@ public partial class FogOfWar : Node
 
     public int VisibleCount => _visible.Count;
 
-    public string Describe() => $"map cells {_cells.Count}, visible {_visible.Count}, fogged {_fogged.Count}";
+    public string Describe() => $"visible cells {_visible.Count}";
 
     public override void _Process(double delta)
     {
@@ -135,15 +110,7 @@ public partial class FogOfWar : Node
             company.Visible = !enabled || company.Discovered;
         }
 
-        // Darken the unseen cells by switching to the dark alternative tile (only the changes).
-        foreach (var cell in _cells)
-        {
-            var fog = enabled && !_visible.Contains(cell);
-            if (fog ? _fogged.Add(cell) : _fogged.Remove(cell))
-                _map.SetCell(cell, _map.GetCellSourceId(cell), _map.GetCellAtlasCoords(cell), fog ? FogAlternative : 0);
-        }
-        foreach (var company in companies)
-            company.Modulate = company.InFog ? FogTint : Colors.White;
+        _fogTiles?.Refresh(_visible, enabled);
     }
 
     private static bool IsFriendly(Team player, Team owner) =>
