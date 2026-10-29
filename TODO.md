@@ -690,13 +690,21 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   (1600 points) it grows by (points − 1600)^¼, at most 20 px more. Favour is HQ +0B8h (vt+0C0h sub_432D20). Unit
   test `FavourBarFollowsTheSquareRoot`; MCP-checked with 100 / 400 / 1600 / 5000 points.
 
-- [ ] **Market share grows with built businesses (user, 2026-10-29).** When a business is built, the owner's market
+- [x] **Market share grows with built businesses (user, 2026-10-29).** When a business is built, the owner's market
   share of that type grows, and with the share the income grows (from the minimum to the maximum). Check the current
   model (`Organisation.MarketShare`, floor unk_4C4B40, multiplier steps unk_4881F4) against this in play.
+  Checked 2026-10-30: the hourly statistics (sub_430C30) add each owned company's income to its type and the share is
+  own / max(everyone's, 5 000 000) (`Organisation.ShareOf`); the type's income multiplier steps from ×1 to ×2.25
+  (sub_430BE8). Fixed: the statistics skip a company while a job runs on it (vt+0A0h — conversion, repair), as the
+  EXE does, so a business counts toward the share only once it is built. Unit test
+  `MarketShareGrowsWithIncomeAndRivalsCapIt`.
 
-- [ ] **Market share competition (user, 2026-10-29).** A more expensive business gives more market share. When several
+- [x] **Market share competition (user, 2026-10-29).** A more expensive business gives more market share. When several
   competitors build the same business type, they compete for the share: nobody can reach 100% while anyone else still
   has at least one business of that type. Check our share formula (share against total income per type) gives this.
+  Checked 2026-10-30: yes — the share is weighed by income (pricier rows earn more), and any rival income of the type
+  keeps everyone below 100 % (same unit test). A rival's business that earns nothing this hour (blackout, frozen,
+  being built) doesn't count.
 
 - [ ] **Units sent to the same tile (user, 2026-10-29).** In the original, units sent to exactly the same tile arrive
   and merge into one cell, then are "teleported" to the empty tiles around it by a simple rule: 1 unit = 1 tile. To do:

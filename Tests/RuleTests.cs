@@ -98,6 +98,20 @@ public static class EconomyTests
     private static Organisation NewOrg(long funds) => new(new Team(Colors.Red) { PlayerName = "test" }, funds);
 
     [UnitTest]
+    public static void MarketShareGrowsWithIncomeAndRivalsCapIt()
+    {
+        // sub_430C30 / sub_430BE8: share = own income / max(all players' income of the type, 5 000 000).
+        Assert.True(Organisation.ShareOf(1_000_000, 1_000_000) < Organisation.ShareOf(3_000_000, 3_000_000),
+            "a small market alone stays under the floor; more income, more share");
+        Assert.Equal(1f, Organisation.ShareOf(6_000_000, 6_000_000), "alone above the floor: 100 %");
+        Assert.True(Organisation.ShareOf(6_000_000, 6_000_001) < 1f, "a rival earning anything keeps it under 100 %");
+        Assert.True(Organisation.ShareOf(4_000_000, 6_000_000) > Organisation.ShareOf(2_000_000, 6_000_000),
+            "the pricier (higher-income) business takes the bigger share");
+        Assert.True(Organisation.MarketFactor(0) == 1f && Organisation.MarketFactor(100) > Organisation.MarketFactor(50)
+            && Organisation.MarketFactor(50) > Organisation.MarketFactor(10), "the income bonus grows with the share");
+    }
+
+    [UnitTest]
     public static void BuildingPortraitsAreBlockInfPictures()
     {
         // sub_422158 / sub_415258 / sub_429D30: every portrait is one of BLOCKINF.BMP's 84 x 95 "info" tiles.

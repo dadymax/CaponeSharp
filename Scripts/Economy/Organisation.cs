@@ -309,7 +309,8 @@ public partial class Organisation
             {
                 if (node is not Company company || company.OwnerTeam != Team || !company.IsEconomic)
                     continue;
-                if (!company.CachedIncomeEnabled || company.Block is { IsActive: false } || company.Frozen)
+                // sub_430C30: only companies with income enabled (+0CCh), an active block and no job running (vt+0A0h).
+                if (!company.CachedIncomeEnabled || company.Block is { IsActive: false } || company.Frozen || company.Busy)
                     continue;
                 var income = company.Income();
                 net += income;
@@ -340,8 +341,7 @@ public partial class Organisation
 
         for (var i = 0; i < TypeCount; i++)
         {
-            var total = Math.Max(totals[i], MarketShareFloor);
-            MarketShare[i] = total == 0 ? 0 : (float)TypeIncome[i] / total;
+            MarketShare[i] = ShareOf(TypeIncome[i], totals[i]);
             TypeFactor[i] = MarketFactor((int)(MarketShare[i] * 100));
         }
         // Legal and troubleshooting don't get the market bonus (+10Ch and +11Ch are reset to 1).
@@ -358,6 +358,13 @@ public partial class Organisation
             TypeFactor[i] *= LegalizationFactor[Math.Clamp(level, 0, LegalizationFactor.Length - 1)];
         }
     }
+
+    /// <summary>
+    /// Market share (+0F8h, sub_430C30): the player's weekly income of a type over everyone's, counted against at least
+    /// <see cref="MarketShareFloor"/>. Pricier businesses earn more and so weigh more; while a rival earns anything
+    /// from the type, nobody reaches 1.
+    /// </summary>
+    public static float ShareOf(long own, long total) => (float)own / Math.Max(total, MarketShareFloor);
 
     /// <summary>sub_430BE8: income multiplier for a market share in percent.</summary>
     public static float MarketFactor(int sharePercent) => StepFactor(ShareCurve, sharePercent);
