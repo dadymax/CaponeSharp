@@ -663,6 +663,26 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   (288, 66), 71 × 99 px, 3 rows of 2. To do: find the frame order, timing and anchor in the EXE (the code that loads
   these Signs.bmp frames, near the order handlers), then play it on every order click.
 
+- [ ] **Collector sprites with and without money (user, 2026-10-29).** The collector (courier) has different walking
+  sprites when he carries money and when he walks empty. To do: find the two sprite sets in the unit graphics and the
+  EXE check (carried money, sub_42B8A3 area) and switch them in the unit's animation.
+
+- [ ] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
+  must grow to show how many points that authority has in its "stockpile". To do: find where the original draws them
+  (the "Расходы" chart / HQ panel, authority favour vt+B8h) and their scale.
+
+- [ ] **Market share grows with built businesses (user, 2026-10-29).** When a business is built, the owner's market
+  share of that type grows, and with the share the income grows (from the minimum to the maximum). Check the current
+  model (`Organisation.MarketShare`, floor unk_4C4B40, multiplier steps unk_4881F4) against this in play.
+
+- [ ] **Market share competition (user, 2026-10-29).** A more expensive business gives more market share. When several
+  competitors build the same business type, they compete for the share: nobody can reach 100% while anyone else still
+  has at least one business of that type. Check our share formula (share against total income per type) gives this.
+
+- [ ] **Units sent to the same tile (user, 2026-10-29).** In the original, units sent to exactly the same tile arrive
+  and merge into one cell, then are "teleported" to the empty tiles around it by a simple rule: 1 unit = 1 tile. To do:
+  find the EXE's spreading step after arrival (move job sub_4279E7 result 4) and do the same instead of sharing cells.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
