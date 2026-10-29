@@ -618,7 +618,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   edge piece 9C8h–9CFh of each unseen neighbour ((−1,−1), (0,−1), (+1,−1), (+1,0), (+1,+1), (0,+1), (−1,+1), (−1,0)),
   composed per combination; drawn after the cell's own tile. Fixed after the user's check: only R road and S
   pavement (class 2 ground) get fog and count as fogged — building blocks never; the pieces are chosen by the
-  neighbour's screen direction (their names), not the EXE's map offsets (our grid is oriented differently). The square is
+  neighbour's screen direction (their names), not the EXE's map offsets (our grid is oriented differently).
+  Second fix (user screenshot: edges piled on each other): every piece is turned into a coverage map (full fog
+  0.5, edges = local dot density, the highest where pieces overlap) and dithered by one 4×4 pattern on the map's
+  pixel grid, so overlapping pieces never get darker than full fog. The square is
   dithered by a shader on the map's pixel grid (our half-pixel rows would misalign per-tile dither).
 
 - [x] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it

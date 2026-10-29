@@ -14,7 +14,7 @@ namespace Capone;
 /// Here: a y-sorted layer after the map, one tile per cell; the edge combinations are composed on demand. A fog tile
 /// shares the draw level of the cell's own tile (flat ground below the units, tall pictures with them). Our cells
 /// sit on half-pixel rows (9.5 px apart), so per-tile dithering would not line up: the full square is drawn as a
-/// solid diamond (marked red) and a shader dithers it on a checkerboard in map pixels; edge pieces keep their dots.
+/// coverage map and a shader dithers it on one pattern in map pixels (see DitherShader).
 /// </summary>
 public partial class FogTiles : TileMapLayer
 {
@@ -87,20 +87,23 @@ public partial class FogTiles : TileMapLayer
         Material = new ShaderMaterial { Shader = new Shader { Code = DitherShader } };
     }
 
-    /// <summary>Red pixels: solid fog, dithered on the map's pixel grid; others drawn as they are.</summary>
+    /// <summary>
+    /// Red channel = fog coverage (0.5 = full fog). One 4×4 ordered dither on the map's pixel grid turns it into black
+    /// dots: 0.5 gives exactly the original's checkerboard, edges get fewer dots on the same grid, and pieces that
+    /// overlap (on one cell or across neighbouring cells) never add up to more than full fog.
+    /// </summary>
     private const string DitherShader = @"
 shader_type canvas_item;
 varying vec2 world;
+const float BAYER[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
 void vertex() { world = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy; }
 void fragment() {
     vec4 c = texture(TEXTURE, UV);
     if (c.a < 0.5) discard;
-    if (c.r > 0.5) {
-        if (mod(floor(world.x) + floor(world.y), 2.0) < 0.5) discard;
-        COLOR = vec4(0.0, 0.0, 0.0, 1.0);
-    } else {
-        COLOR = c;
-    }
+    ivec2 p = ivec2(floor(mod(floor(world), 4.0)));
+    float threshold = (BAYER[p.y * 4 + p.x] + 0.5) / 16.0;
+    if (c.r <= threshold) discard;
+    COLOR = vec4(0.0, 0.0, 0.0, 1.0);
 }";
 
     /// <summary>Shows the fog for the cells seen now (<paramref name="enabled"/> false: no fog at all).</summary>
@@ -141,7 +144,9 @@ void fragment() {
             _atlasTexture.Update(_atlasImage);
     }
 
-    /// <summary>The DARK SQUARE's diamond filled solid (red marker), one pixel larger to close the half-pixel gaps.</summary>
+    private static Color Coverage(float c) => new(Mathf.Min(c, 0.5f), 0, 0, 1);
+
+    /// <summary>The DARK SQUARE's diamond at full fog coverage, one pixel larger to close the half-pixel gaps.</summary>
     private void PaintSolidSquare(Vector2I at)
     {
         var w = _squareRect.Size.X;
@@ -152,7 +157,38 @@ void fragment() {
                 var dx = Mathf.Abs(x + 0.5f - w / 2f) / (w / 2f);
                 var dy = Mathf.Abs(y + 0.5f - h / 2f) / (h / 2f);
                 if (dx + dy <= 1.08f)
-                    _atlasImage.SetPixel(at.X + x, at.Y + y, new Color(1, 0, 0, 1));
+                    _atlasImage.SetPixel(at.X + x, at.Y + y, Coverage(0.5f));
+            }
+    }
+
+    /// <summary>
+    /// Edge pieces as coverage: the density of the piece's dots around each pixel (3×3), the highest of the pieces in
+    /// the mask — the original's dotted gradients, without dots of different pieces piling up.
+    /// </summary>
+    private void PaintEdges(int code, Vector2I at)
+    {
+        for (var y = 0; y < Cell.Y; y++)
+            for (var x = 0; x < Cell.X; x++)
+            {
+                var best = 0f;
+                for (var k = 0; k < 8; k++)
+                {
+                    if ((code & (1 << k)) == 0)
+                        continue;
+                    var r = _edgeRects[k];
+                    var dots = 0;
+                    for (var oy = -1; oy <= 1; oy++)
+                        for (var ox = -1; ox <= 1; ox++)
+                        {
+                            int px = x + ox, py = y + oy;
+                            if (px >= 0 && py >= 0 && px < r.Size.X && py < r.Size.Y
+                                && _sheet.GetPixel(r.Position.X + px, r.Position.Y + py).A > 0.5f)
+                                dots++;
+                        }
+                    best = Mathf.Max(best, dots / 9f);
+                }
+                if (best > 0.05f)
+                    _atlasImage.SetPixel(at.X + x, at.Y + y, Coverage(best));
             }
     }
 
@@ -167,9 +203,7 @@ void fragment() {
         if (code == Square)
             PaintSolidSquare(at);
         else
-            for (var k = 0; k < 8; k++)
-                if ((code & (1 << k)) != 0)
-                    _atlasImage.BlendRect(_sheet, _edgeRects[k], at);
+            PaintEdges(code, at);
         _codeCoords[code] = coords;
         _source.CreateTile(coords);
         _source.GetTileData(coords, 0).ZIndex = TileMapGenerator.GroundZ;
