@@ -712,6 +712,19 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 - [ ] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
 - [ ] **Company portraits**: `SelectionIcon.CompanyPortrait` uses Chicago.tile "info …" pictures per grade as placeholders; find the original building → picture mapping.
+  User, 2026-10-29: corner buildings show the wrong portrait. The portraits are in BLOCKINF.BMP, a 4 × 4 table. From
+  playing the original (not 100% sure; the user will try to get the original data), by the letter in the block
+  description table, as (row, column). The choice depends on the neighbouring letters in the same block:
+  - M: 0,0 or 2,2
+  - H: 1,0 or 2,0
+  - C in small blocks (3×3, 5×5): 3,0, 3,1 or 3,2
+  - B: 2,1
+  - C in standard blocks with M: 0,3
+  - C in standard blocks with H: 1,2 or 1,3
+  - P with M: 0,2
+  - P with H: 1,1
+
+  To do: find the EXE code that picks the BLOCKINF.BMP cell (the panel portrait draw) to settle the alternatives.
 - [x] **HQ placement**: the HQ now stands on the start point itself, as in `sub_404098` (a business there is replaced).
 - [ ] **RID leaks at exit** with `--headless --quit-after`: harmless.
 - [x] ~~Group (rectangle) select~~: fixed in the C# port.
