@@ -658,10 +658,14 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   G cell one row off its B (original y − 1); SLUM_CITY is one row the other way, LOST / CAPONECITY / QUARANTINE /
   SMALLNEIGHBORHOOD up to 8 cells. Unit tests `MapTests` check every map.
 
-- [ ] **Order click animation (user, 2026-10-29).** When the player gives a unit an order (walk, attack, acquire,
+- [x] **Order click animation (user, 2026-10-29).** When the player gives a unit an order (walk, attack, acquire,
   etc.), an animation plays at the clicked point. Frames come from Signs.bmp: 6 sprites in the rectangle at
-  (288, 66), 71 × 99 px, 3 rows of 2. To do: find the frame order, timing and anchor in the EXE (the code that loads
-  these Signs.bmp frames, near the order handlers), then play it on every order click.
+  (288, 66), 71 × 99 px, 3 rows of 2. Done 2026-10-29 (`OrderMarker`): Chicago.tile 0AD3h "Attack cursor" (6 frames
+  36 × 33). The map view keeps the order's target (+0A28h, set by the map click sub_411F84 after the orders and by
+  the handlers at 0x413FD8 / 0x4141BE / 0x41438A) and a frame (+0A24h); sub_40B914 draws one frame per redraw
+  (timer about 100 ms, sub_4198A0), bottom-centred on the target (a unit: its walk position − 2 px; else its cell
+  + 1 px), and clears the target after the last frame. Ours: right click and order-button clicks that order at least
+  one unit; it follows a clicked unit. MCP-checked (slowed down: the frames play at the clicked road cell).
 
 - [x] **Collector sprites with and without money (user, 2026-10-29).** The collector (courier) has different walking
   sprites when he carries money and when he walks empty. The sprites with money are in OWNMAN.BMP; the ones without

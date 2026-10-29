@@ -186,6 +186,13 @@ public partial class Main : Node2D
 		Unit.InitOccupancy();
 		Map.AddChild(new FogOfWar { Name = "FogOfWar" });
 		AddChild(Map);
+		if (_orderMarker == null || !IsInstanceValid(_orderMarker))
+		{
+			_orderMarker = new OrderMarker();
+			AddChild(_orderMarker);
+		}
+		else
+			MoveChild(_orderMarker, -1); // above the new map
 
 		campaignManager.TileMap = Map;
 		campaignManager.AssignBases();
@@ -260,6 +267,17 @@ public partial class Main : Node2D
 	/// Right click: extort the company under the cursor, attack the unit under it, or walk there.
 	/// Collectors and the police are not under the player's command.
 	/// </summary>
+	private OrderMarker _orderMarker;
+
+	/// <summary>The order animation (OrderMarker) on the clicked unit, or else on the clicked cell.</summary>
+	private void ShowOrderMarker(object hit, Vector2 globalPoint)
+	{
+		if (_orderMarker == null || Map == null)
+			return;
+		var cell = Map.LocalToMap(Map.ToLocal(globalPoint));
+		_orderMarker.Play(hit as Unit, Map, cell);
+	}
+
 	private void GiveOrder(Vector2 globalPoint)
 	{
 		var hit = IntersectPoint(globalPoint);
@@ -269,10 +287,12 @@ public partial class Main : Node2D
 			UnitVoice.Play(first, hit is Company or Unit ? UnitVoice.Kind.Attack : UnitVoice.Kind.Go);
 			break;
 		}
+		var ordered = false;
 		foreach (var selected in _selected)
 		{
 			if (selected is not Unit unit || !IsInstanceValid(unit) || !IsCommandable(unit))
 				continue;
+			ordered = true;
 			if (unit.IsCar)
 				unit.GoTo(target, false); // the car only drives (sub_42F138)
 			else if (hit is Unit car && car.CanBoard(unit))
@@ -286,6 +306,8 @@ public partial class Main : Node2D
 			else
 				unit.GoTo(target, false);
 		}
+		if (ordered)
+			ShowOrderMarker(hit, globalPoint);
 	}
 
 	/// <summary>Carries out the order chosen with an order button on the map point <paramref name="globalPoint"/>.</summary>
@@ -305,6 +327,8 @@ public partial class Main : Node2D
 			});
 			break;
 		}
+		if (System.Linq.Enumerable.Any(CommandableSelection()))
+			ShowOrderMarker(hit, globalPoint);
 		foreach (var unit in CommandableSelection())
 			switch (order)
 			{
