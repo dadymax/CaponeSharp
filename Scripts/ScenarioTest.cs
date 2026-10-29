@@ -70,6 +70,7 @@ public partial class ScenarioTest : Node
     private readonly List<string> _notes = new();
     private readonly Dictionary<Company, Team> _hqOwners = new();
     private readonly Dictionary<Company, Team> _owners = new();
+    private readonly Dictionary<Company, (long BuildStart, long Uncollected)> _building = new();
     private readonly Dictionary<Team, int> _thugStarvedHours = new();
     private readonly Dictionary<Team, int> _unitCounts = new();
     /// <summary>Delayed checks: deadline hour, name, condition, failure detail.</summary>
@@ -96,6 +97,16 @@ public partial class ScenarioTest : Node
             if (c.IsHq)
                 _hqOwners[c] = c.OwnerTeam;
             _owners[c] = c.OwnerTeam;
+            // sub_420ED5: no income while a conversion job runs (vt+0A0h).
+            if (c.UnderConstruction)
+            {
+                if (_building.TryGetValue(c, out var job) && job.BuildStart == c.BuildStart)
+                    Check("a business under construction earns nothing", c.Uncollected <= job.Uncollected,
+                        $"{c}: uncollected {job.Uncollected} -> {c.Uncollected}");
+                _building[c] = (c.BuildStart, c.Uncollected);
+            }
+            else
+                _building.Remove(c);
         }
         _clock.TurnPassed += OnTurn;
         var players = string.Join(", ", Teams.TeamsInGame.Values.Where(t => t.Org != null)
@@ -135,6 +146,8 @@ public partial class ScenarioTest : Node
             MakeDeserter();
         if (_hour == 8)
             TestCadillac();
+        if (_hour == 10)
+            TestConstruction();
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
         if (_hour == System.Math.Min(30, _days * 12 + 6))
@@ -370,6 +383,37 @@ public partial class ScenarioTest : Node
     /// A Cadillac for the local player: a Thug boards it, rides along, gets out on Unload, boards again, and the car is
     /// destroyed with him inside (he is hurt and gets out alive or dies).
     /// </summary>
+    /// <summary>A company being converted earns nothing until the job ends (sub_420ED5, vt+0A0h).</summary>
+    private void TestConstruction()
+    {
+        var pick = Companies()
+            .Where(c => c.OwnerTeam?.Org != null && !c.OwnerTeam.Org.Eliminated && c.IsEconomic && !c.IsHq && !c.Busy
+                        && c.Entry?.Income > 0 && c.Income() > 0)
+            .SelectMany(c => System.Enum.GetValues<OriginalBusinessTable.BusinessType>()
+                .SelectMany(type => BusinessRules.Offers(c, type)).Select(row => (Company: c, Row: row)))
+            .Where(x => x.Row.Value1C >= 3 * GameClock.MinutesPerHour)
+            .OrderByDescending(x => x.Row.Value1C)
+            .FirstOrDefault();
+        if (pick.Company == null)
+        {
+            Note("no conversion tested (no earning company with a long enough build)");
+            return;
+        }
+        var (company, row) = pick;
+        var org = company.OwnerTeam.Org;
+        for (var a = 1; a < Organisation.TypeCount; a++)
+            org.Favour[a] += 10_000;
+        org.Spend(-row.Price); // pays for the build
+        var result = company.StartConversion(row);
+        Check("conversion started", result == Company.ConversionResult.Started, $"{company}: {result}");
+        if (result != Company.ConversionResult.Started)
+            return;
+        var before = company.Uncollected;
+        _pending.Add((_hour + 2, "a business under construction earns nothing", () =>
+            !IsInstanceValid(company) || !company.UnderConstruction || company.Uncollected <= before,
+            () => $"{company}: uncollected {before} -> {company.Uncollected}"));
+    }
+
     private void TestCadillac()
     {
         var human = Teams.GetCurrentPlayerTeam();

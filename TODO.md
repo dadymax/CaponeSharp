@@ -668,10 +668,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   money, and the death animation, are in OWNATTAC.BMP. To do: find the frame layout and the EXE check (carried money,
   sub_42B8A3 area) and switch the sheet in the unit's animation.
 
-- [ ] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
-  job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Ours: `Company.IncomeTick` doesn't check
-  `UnderConstruction`, so the old row's income keeps accruing during the build; skip the tick (and show 0 income in
-  the panel) while it lasts.
+- [x] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
+  job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Done 2026-10-29: the income tick
+  (sub_420ED5) adds nothing while a job runs on the company (vt+0A0h) — conversion or repair (sub_4289E8 sets the
+  job too); support upkeep is still charged. `Company.IncomeTick` skips while `Busy`. The panel income line keeps
+  vt+188h (the EXE's panel doesn't check the job either). Scenario check "a business under construction earns
+  nothing" (scripted conversion at hour 10; fails without the fix).
 
 - [ ] **Bribe "stockpile" bars (user, 2026-10-29).** When part of the income goes to an authority, small green lines
   must grow to show how many points that authority has in its "stockpile". To do: find where the original draws them

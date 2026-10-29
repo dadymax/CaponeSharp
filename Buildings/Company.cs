@@ -12,7 +12,8 @@ namespace Capone;
 /// <list type="bullet">
 /// <item>Every hour: cache whether the block lets the owner earn here; unowned or legal companies heal 5 HP.</item>
 /// <item>441 times a week (every ~22 min, random offset): <see cref="Uncollected"/> += <see cref="Income"/> / 441;
-/// support businesses (negative income) charge their owner instead.</item>
+/// support businesses (negative income) charge their owner instead. Nothing is earned while a conversion or repair
+/// job runs on the company (vt+0A0h); upkeep is still charged.</item>
 /// <item>Weekly: unowned companies lose their uncollected cash.</item>
 /// </list>
 /// Income (vt+188h, sub_422AF4) = catalogue income per week × damage factor × district factor (legal only) × owner's
@@ -228,7 +229,8 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
             return;
         if (Entry.Income > 0)
         {
-            if ((Block?.IsActive ?? true) && !Frozen && CachedIncomeEnabled)
+            // vt+0A0h: nothing is earned while a job (conversion sub_427050, repair sub_4289E8) runs here.
+            if ((Block?.IsActive ?? true) && !Frozen && !Busy && CachedIncomeEnabled)
                 Uncollected += Income() / IncomeTicksPerWeek;
         }
         else
