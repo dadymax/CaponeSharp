@@ -706,15 +706,15 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   keeps everyone below 100 % (same unit test). A rival's business that earns nothing this hour (blackout, frozen,
   being built) doesn't count.
 
-- [ ] **Units sent to the same tile (user, 2026-10-29).** In the original, units sent to exactly the same tile arrive
-  and merge into one cell, then are "teleported" to the empty tiles around it by a simple rule: 1 unit = 1 tile. To do:
-  find the EXE's spreading step after arrival (move job sub_4279E7 result 4) and do the same instead of sharing cells.
-  Searched 2026-10-29, not found yet: arrival (result 4) only resets the job (sub_427910) and ends it; the step
-  (unit vt+140h sub_42A9D0 → sub_439690) just moves the unit to the next tile's list; tile vt+80h (sub_4392F0) only
-  appends; the unit's draw offset (vt+154h sub_42E511) comes from its walk step only; the map click (sub_411F84)
-  gives every selected unit the same target (vt+0C0h). sub_43B955 (free cell next to an object) is used only when
-  objects are created. Other places that count a tile's units (tile vt+134h): sub_427CC0, Cadillac unload sub_42F3C2,
-  sub_4462B4 (police job), sub_462590 (AI). Next: the unit's Think / idle code, or watch it in the original.
+- [x] **Units sent to the same tile (user, 2026-10-29).** In the original, units sent to exactly the same tile arrive
+  and merge into one cell, then are "teleported" to the empty tiles around it by a simple rule: 1 unit = 1 tile.
+  Done 2026-10-30 (`Unit.SpreadOut`, `MayStayOn`): the idle branch of the hourly think (sub_42AA86, 0x42B2E4) calls
+  unit vt+15Ch sub_42B500. A unit with no job (+0A8h, set by vt+9Ch), not in a car, that may not stay on its tile
+  (vt+160h sub_42B490: another living unit without a job is there) steps one tile (vt+140h, a normal step) to a
+  neighbour, 4 directions from a random start (tables dword_484604..10): first a road or pavement tile (tile
+  vt+158h = 1) it may stay on, else any road or pavement neighbour. Not found where I first looked: the move job,
+  the tile lists, the unit draw and the map click have no spreading. Scenario check "units sent to one cell spread
+  out" (two idle units sent to one cell must meet, then stand on different cells; fails without the spread).
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 

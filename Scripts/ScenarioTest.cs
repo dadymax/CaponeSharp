@@ -148,6 +148,8 @@ public partial class ScenarioTest : Node
             TestCadillac();
         if (_hour == 10)
             TestConstruction();
+        if (_hour == 12)
+            TestSpreadOut();
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
         if (_hour == System.Math.Min(30, _days * 12 + 6))
@@ -383,6 +385,38 @@ public partial class ScenarioTest : Node
     /// A Cadillac for the local player: a Thug boards it, rides along, gets out on Unload, boards again, and the car is
     /// destroyed with him inside (he is hurt and gets out alive or dies).
     /// </summary>
+    /// <summary>Two idle units sent to one cell spread out to a cell each (unit think → sub_42B500).</summary>
+    private void TestSpreadOut()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var idle = Units().Where(u => u.OwnerTeam == human && !u.IsDead && !u.IsCar && u.Vehicle == null
+                                      && !u.InsideBuilding && u.HasNoJob && MoveMap.IsRoadOrPavement(u.Cell)).ToList();
+        // Two that stand close together, so the walk is short.
+        idle = idle.SelectMany(x => idle.Where(y => y != x).Select(y => (x, y)))
+            .Where(p => MapTileMath.GetDistance(p.x, p.y) <= 4)
+            .Select(p => new List<Unit> { p.x, p.y }).FirstOrDefault() ?? new List<Unit>();
+        if (idle.Count < 2)
+        {
+            Note("no spread-out tested (no two idle units close together on the road)");
+            return;
+        }
+        var (a, b) = (idle[0], idle[1]);
+        b.MoveTo(b.Map.MapToLocal(a.Cell));
+        var met = false;
+        _pending.Add((_hour + 16, "units sent to one cell spread out", () =>
+        {
+            if (!IsInstanceValid(a) || !IsInstanceValid(b) || a.IsDead || b.IsDead)
+                return true; // killed meanwhile: nothing to check
+            var idleBoth = a.HasNoJob && b.HasNoJob;
+            if (idleBoth && a.Cell == b.Cell)
+                met = true;
+            return met && idleBoth && a.Cell != b.Cell;
+        }, () => $"{a.UnitType} at {a.Cell}, {b.UnitType} at {b.Cell}, met {met}, road/pavement neighbours "
+                 + string.Join(" ", Enumerable.Range(0, 4).Select(d => MoveMap.Step(a.Cell, d))
+                     .Select(c => $"{c}:{MoveMap.IsRoadOrPavement(c)}/{MoveMap.Walkable(c, false)}"))
+                 + $", a job {!a.HasNoJob} target {a.CanAttack?.TargetParent?.Name}, b target {b.CanAttack?.TargetParent?.Name}"));
+    }
+
     /// <summary>A company being converted earns nothing until the job ends (sub_420ED5, vt+0A0h).</summary>
     private void TestConstruction()
     {

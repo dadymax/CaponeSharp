@@ -98,6 +98,15 @@ public partial class Unit
 
     private static (int Count, bool Moving, bool Fighting) CellOccupancy(Vector2I cell, object self)
     {
+        if (!UnitsOn(cell, out var here))
+            return (0, false, false);
+        var others = here.Where(u => u != self).ToList();
+        return others.Count == 0 ? (0, false, false) : (others.Count, others[0].IsMoving, others.Any(u => u.IsFighting));
+    }
+
+    /// <summary>The units on a map cell (tile vt+88h list), from a cache refreshed once per physics frame.</summary>
+    private static bool UnitsOn(Vector2I cell, out List<Unit> units)
+    {
         var frame = Engine.GetPhysicsFrames();
         if (frame != _occupancyFrame && Engine.GetMainLoop() is SceneTree tree)
         {
@@ -113,9 +122,49 @@ public partial class Unit
                 list.Add(unit);
             }
         }
-        if (!Occupants.TryGetValue(cell, out var here))
-            return (0, false, false);
-        var others = here.Where(u => u != self).ToList();
-        return others.Count == 0 ? (0, false, false) : (others.Count, others[0].IsMoving, others.Any(u => u.IsFighting));
+        return Occupants.TryGetValue(cell, out units);
+    }
+
+    // ---- spreading out (unit vt+15Ch sub_42B500, vt+160h sub_42B490) ---------------------------------------------
+
+    /// <summary>Unit +0A8h = 0: no job (order or move) runs for the unit.</summary>
+    public bool HasNoJob => CurrentOrder == null && !IsMoving;
+
+    /// <summary>sub_42B490: the unit may stay on <paramref name="cell"/> unless another living unit there has no job.</summary>
+    public bool MayStayOn(Vector2I cell) =>
+        !UnitsOn(cell, out var units) || !units.Any(u => u != this && !u.IsDead && u.HasNoJob);
+
+    /// <summary>
+    /// sub_42B500, from the idle branch of the hourly think: a unit without a job, not in a car, sharing its cell with
+    /// another idle living unit steps to a neighbour (4 directions, random start, tables dword_484604..10): first a road
+    /// or pavement cell (tile vt+158h) it may stay on, else any road or pavement cell. So units sent to one cell end
+    /// up one per cell around it.
+    /// </summary>
+    public void SpreadOut()
+    {
+        if (IsDead || IsArrested || InsideBuilding || Vehicle != null || !HasNoJob || Map == null)
+            return;
+        var here = Cell;
+        if (MayStayOn(here))
+            return;
+        var start = MoveMap.Rng.Next(4);
+        for (var pass = 0; pass < 2; pass++)
+            for (var i = 0; i < 4; i++)
+            {
+                var next = MoveMap.Step(here, (start + i) % 4);
+                if (!MoveMap.IsRoadOrPavement(next) || !MoveMap.Walkable(next, IsCar))
+                    continue;
+                if (pass == 0 && !MayStayOn(next))
+                    continue;
+                MoveTo(Map.MapToLocal(next));
+                // The step puts the unit on the next tile at once (sub_439690), so a unit thinking after it this
+                // frame already sees it there.
+                if (Occupants.TryGetValue(here, out var list))
+                    list.Remove(this);
+                if (!Occupants.TryGetValue(next, out var there))
+                    Occupants[next] = there = new List<Unit>(1);
+                there.Add(this);
+                return;
+            }
     }
 }

@@ -47,13 +47,26 @@ public partial class Unit
         _nextThink = clock.Minute + ThinkMinutes;
         if (MoveMode != null && !IsMoving)
             MoveMode = null; // the move order reached its end
+        // The original thinks once per game hour; the spread-out step runs at that rate.
+        var spreadDue = clock.Minute >= _nextSpread;
+        if (spreadDue)
+            _nextSpread = clock.Minute + GameClock.MinutesPerHour;
         // A patrol leg is a move order with mode 3 (sub_4292E0); other orders (extortion…) don't fight.
         if (!ThinksForItself || (CurrentOrder != null && CurrentOrder is not PatrolOrder))
+        {
+            if (spreadDue)
+                SpreadOut();
             return;
+        }
         if (Stance == 0)
             Stance = DefaultStance;
         Think();
+        // sub_42AA86: the idle branch ends with vt+15Ch when the unit didn't take up a fight.
+        if (spreadDue && !(CanAttack.TargetParent is Unit { IsDead: false } && CanAttack.TargetInRange()))
+            SpreadOut();
     }
+
+    private long _nextSpread;
 
     /// <summary>
     /// Mode of the running move / attack order (sub_4284B0's last argument; order vt+90h), null without one:
