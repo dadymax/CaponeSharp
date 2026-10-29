@@ -663,10 +663,14 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   (288, 66), 71 × 99 px, 3 rows of 2. To do: find the frame order, timing and anchor in the EXE (the code that loads
   these Signs.bmp frames, near the order handlers), then play it on every order click.
 
-- [ ] **Collector sprites with and without money (user, 2026-10-29).** The collector (courier) has different walking
+- [x] **Collector sprites with and without money (user, 2026-10-29).** The collector (courier) has different walking
   sprites when he carries money and when he walks empty. The sprites with money are in OWNMAN.BMP; the ones without
-  money, and the death animation, are in OWNATTAC.BMP. To do: find the frame layout and the EXE check (carried money,
-  sub_42B8A3 area) and switch the sheet in the unit's animation.
+  money, and the death animation, are in OWNATTAC.BMP. Done 2026-10-29: the unit picture (vt+68h sub_42D8D0) checks
+  the carried money +0A4h in its collector cases. `Unit.CarriesBag`: with money the collector walks with the
+  "Collector SE/NE/NW/SW" tiles (units.json attack* layers), stands on their first SE frame and dies as "Collector
+  killed" (killed2); without money the "no money" tiles. Changing `CarriedMoney` switches at once. MCP-checked
+  (spawned collectors walking, money given and taken mid-walk). New Debug hooks: `Spawn(type, money)`,
+  `Carry(index, money)`, `Walk(index, x, y)` (index over all the player's units).
 
 - [x] **No income while a business is being built (user, 2026-10-29).** A business under construction (conversion
   job sub_427050, until the catalogue +1Ch build minutes pass) earns nothing. Done 2026-10-29: the income tick

@@ -55,7 +55,25 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// <summary>Weekly salary (unit table +0x20), paid daily as salary / 7 (unit event handler sub_42A535).</summary>
     public int Salary { get; set; }
     /// <summary>Money a collector carries (unit vt+1CCh / vt+1D0h / vt+1D4h).</summary>
-    public long CarriedMoney { get; set; }
+    public long CarriedMoney
+    {
+        get => _carriedMoney;
+        set
+        {
+            var bag = CarriesBag;
+            _carriedMoney = value;
+            if (bag != CarriesBag)
+                RefreshBagAnimation();
+        }
+    }
+    private long _carriedMoney;
+
+    /// <summary>
+    /// A collector with money (+0A4h ≠ 0) is drawn from the bag pictures (OWNMAN.BMP …, layers attack*/killed2 in
+    /// units.json), without money from the empty-handed ones (OWNATTAC.BMP …, move*/idle/killed): picture vt+68h
+    /// sub_42D8D0, collector cases.
+    /// </summary>
+    public bool CarriesBag => UnitType == UnitCommon.UnitType.Collector && _carriedMoney > 0;
     public bool IsDead { get; private set; }
     /// <summary>In a police car on the way to the station.</summary>
     public bool IsArrested { get; private set; }
@@ -310,27 +328,57 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             return;
         if ((_animMove && move) || (_animAttack && !move))
         {
-            _as2d.Stop();
-            _as2d.Frame = 0;
-            _as2d.Play(OriginalUnitSprites.IdleName);
+            PlayIdle();
             _animStopped = true;
         }
     }
+
+    private void PlayIdle()
+    {
+        _as2d.Stop();
+        if (CarriesBag)
+        {
+            // Standing with the bag: the first frame of its SE walk.
+            _as2d.Animation = OriginalUnitSprites.GetAnimLayerName(OriginalUnitSprites.SlType.attack);
+            _as2d.Frame = 0;
+            return;
+        }
+        _as2d.Frame = 0;
+        _as2d.Play(OriginalUnitSprites.IdleName);
+    }
+
+    private bool _animBag;
+
+    /// <summary>The collector picked up or handed over money: switch picture sets.</summary>
+    private void RefreshBagAnimation()
+    {
+        if (_as2d == null || IsDead)
+            return;
+        if (_animStopped || (!_animMove && !_animAttack))
+            PlayIdle();
+        else if (_animMove)
+            _as2d.Play(MoveLayer(_oldDirection));
+        _animBag = CarriesBag;
+    }
+
+    private string MoveLayer(MapTileMath.Directions direction) =>
+        OriginalUnitSprites.GetAnimLayerName(CarriesBag ? OriginalUnitSprites.SlType.attack : OriginalUnitSprites.SlType.move, direction);
 
     public void AnimationMoveOrAttack(Vector2 directionAsVector, bool move = true)
     {
         if (IsDead)
             return;
         var direction = MapTileMath.GetDirection(directionAsVector);
-        if (!_animStopped && direction == _oldDirection && ((move && _animMove) || (!move && _animAttack)))
+        if (!_animStopped && direction == _oldDirection && _animBag == CarriesBag
+            && ((move && _animMove) || (!move && _animAttack)))
             return;
         _oldDirection = direction;
         _animStopped = false;
         _as2d.Stop();
         _animMove = move;
         _animAttack = !move;
-        var slType = move ? OriginalUnitSprites.SlType.move : OriginalUnitSprites.SlType.attack;
-        _as2d.Play(OriginalUnitSprites.GetAnimLayerName(slType, direction));
+        _animBag = CarriesBag;
+        _as2d.Play(move ? MoveLayer(direction) : OriginalUnitSprites.GetAnimLayerName(OriginalUnitSprites.SlType.attack, direction));
     }
 
     /// <summary>Show one attack swing towards <paramref name="target"/> (used by orders that hit once).</summary>
@@ -521,7 +569,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             CanAttack.Target = null;
         RemoveFromGroup(GroupName);
         _shape?.SetDeferred(CollisionShape2D.PropertyName.Disabled, true);
-        var killed = OriginalUnitSprites.SpriteLayersDict[OriginalUnitSprites.SpriteLayersEnum.killed];
+        // A collector killed with money still on him (none taken: no killer player) falls with the bag.
+        var killed = OriginalUnitSprites.SpriteLayersDict[CarriesBag
+            ? OriginalUnitSprites.SpriteLayersEnum.killed2 : OriginalUnitSprites.SpriteLayersEnum.killed];
         if (_as2d != null && _as2d.SpriteFrames.HasAnimation(killed) && _as2d.SpriteFrames.GetFrameCount(killed) > 0)
             _as2d.Play(killed);
         GD.Print($"Unit {DisplayName} ({UnitType}) died");

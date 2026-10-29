@@ -296,6 +296,28 @@ public partial class DebugCommands : Node
         return node?.ToString() ?? "nothing";
     }
 
+    /// <summary>A unit of <paramref name="type"/> (.epi UNIT type) for the player next to the HQ, optionally carrying money.</summary>
+    public string Spawn(int type, long money = 0)
+    {
+        if (Player?.HqCompany == null)
+            return "no HQ";
+        var unit = CampaignManager.Instance.CreateUnitNear((UnitCommon.UnitType)type, Player, Player.HqCompany.Cell);
+        if (unit == null)
+            return "not created";
+        unit.CarriedMoney = money;
+        return $"{unit.UnitType} at {unit.Cell}, carrying {unit.CarriedMoney}";
+    }
+
+    /// <summary>Sets the money the player's unit <paramref name="index"/> (any type, <see cref="Units"/> order) carries.</summary>
+    public string Carry(int index, long money)
+    {
+        var unit = PlayerUnits().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.CarriedMoney = money;
+        return $"{unit.UnitType} carries {unit.CarriedMoney}";
+    }
+
     /// <summary>A Cadillac next to the player's HQ with the player's first gangster in it, selected.</summary>
     public string Car()
     {
@@ -378,6 +400,19 @@ public partial class DebugCommands : Node
             }
         GameClock.Instance.ScheduleIn(GameClock.MinutesPerHour, Tick);
     }
+
+    /// <summary>Sends the player's unit <paramref name="index"/> (any type) to a cell.</summary>
+    public string Walk(int index, int x, int y)
+    {
+        var unit = PlayerUnits().ElementAtOrDefault(index);
+        if (unit == null)
+            return "no unit";
+        unit.MoveTo(unit.Map.MapToLocal(new Vector2I(x, y)));
+        return $"{unit.UnitType}@{unit.Cell} -> ({x}, {y})";
+    }
+
+    private System.Collections.Generic.IEnumerable<Unit> PlayerUnits() =>
+        Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => u.OwnerTeam == Player && !u.IsDead);
 
     private System.Collections.Generic.IEnumerable<Unit> PlayerFighters() =>
         Tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>()
