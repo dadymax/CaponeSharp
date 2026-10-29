@@ -627,7 +627,9 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   the blocks past a corner): the unrolled sight routines for radius 3, 4, 8 and 9 hide the outer square ring and every
   cell farther than r, so a radius-8 unit sees a round area of radius 7; the cells that had leaked round the block
   corners on ring 8 are gone. "Seen" in the EXE (vt+0DCh sub_438B80) = marked in the last 61 game minutes (one
-  think), or the local player's object; ours uses the current sight, which only drops that one-hour trail.
+  think), or the local player's object. Done 2026-10-30: `FogOfWar` keeps the minute each cell was last in sight
+  and shows it while now < mark + 61, so the fog closes about a game hour behind a viewer (the original marks once
+  per unit think; ours marks continuously).
 
 - [x] **Draw order of walking units.** While a unit's animation moves across the map, the tile below (in front of) it
   is drawn over the unit sprite at some points: Y / Z sorting is wrong for the isometric map (units vs. block tiles).

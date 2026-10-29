@@ -11,10 +11,15 @@ namespace Capone;
 /// leave, the fog comes back and other players' units there are hidden. Companies out of sight keep showing their last
 /// seen state (<see cref="Company.InFog"/>); companies never seen are hidden (<see cref="Company.Discovered"/>).
 /// Unseen cells get the original fog tiles with soft edges (<see cref="FogTiles"/>).
+/// A cell counts as seen until 61 game minutes after it was last in sight (map object vt+0D8h stores the minute,
+/// vt+0DCh sub_438B80 tests now &lt; mark + 61), so the fog closes about a game hour behind a viewer that walks away.
+/// The original marks once per unit think (hourly); here the marks are refreshed continuously.
 /// </summary>
 public partial class FogOfWar : Node
 {
     public const int BuildingSight = 4;
+    /// <summary>sub_438B80: a mark keeps the cell seen for this many game minutes (3Dh).</summary>
+    public const int SeenMinutes = 61;
     private const double UpdateSeconds = 0.25;
 
     /// <summary>A setting: off shows everything (as before).</summary>
@@ -23,6 +28,8 @@ public partial class FogOfWar : Node
     public static FogOfWar Instance { get; private set; }
 
     private readonly HashSet<Vector2I> _visible = new();
+    private readonly HashSet<Vector2I> _inSight = new();
+    private readonly Dictionary<Vector2I, long> _lastSeen = new();
     private readonly Dictionary<Company, (Vector2I Cell, bool[] Grid)> _buildingGrids = new();
     private TileMapLayer _map;
     private FogTiles _fogTiles;
@@ -81,7 +88,7 @@ public partial class FogOfWar : Node
         var companies = tree.GetNodesInGroup(Company.GroupName).OfType<Company>().Where(IsInstanceValid).ToList();
         var enabled = Enabled && player != null;
 
-        _visible.Clear();
+        _inSight.Clear();
         if (enabled)
         {
             foreach (var unit in units.Where(u => IsFriendly(player, u.OwnerTeam)))
@@ -97,6 +104,24 @@ public partial class FogOfWar : Node
                 Add(cached.Grid, cell, BuildingSight);
             }
         }
+        // vt+0D8h marks, vt+0DCh: seen while now < mark + 61.
+        var now = GameClock.Instance?.Minute ?? 0;
+        foreach (var cell in _inSight)
+            _lastSeen[cell] = now;
+        _visible.Clear();
+        if (enabled)
+        {
+            var stale = new List<Vector2I>();
+            foreach (var (cell, minute) in _lastSeen)
+                if (now < minute + SeenMinutes)
+                    _visible.Add(cell);
+                else
+                    stale.Add(cell);
+            foreach (var cell in stale)
+                _lastSeen.Remove(cell);
+        }
+        else
+            _lastSeen.Clear();
 
         foreach (var unit in units)
             unit.Visible = !unit.IsArrested && !unit.InsideBuilding
@@ -122,6 +147,6 @@ public partial class FogOfWar : Node
         for (var dy = -r; dy <= r; dy++)
             for (var dx = -r; dx <= r; dx++)
                 if (grid[(dy + r) * size + dx + r])
-                    _visible.Add(center + new Vector2I(dx, dy));
+                    _inSight.Add(center + new Vector2I(dx, dy));
     }
 }
