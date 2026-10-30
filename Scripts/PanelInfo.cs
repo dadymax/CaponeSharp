@@ -122,7 +122,11 @@ public partial class PanelInfo : Control
                     Text(T(relation == 1 ? 31 : 32), InfoX, 0x1A3, InfoWidth, 3, relation);
                 break;
             case Company company:
-                Text(company.CompanyName, InfoX, 0x18B, InfoWidth, 2, relation);
+                // Company vt+18h (sub_421CC0): the catalogue name of the row as last seen (+0D4h, refreshed by vt+0E0h
+                // when the company is seen), so a newly built business shows its type, not the old name.
+                var shownName = !company.IsHq && company.IsEconomic && company.ShownEntry is { } shown && !string.IsNullOrEmpty(shown.Name)
+                    ? shown.Name : company.CompanyName;
+                Text(shownName, InfoX, 0x18B, InfoWidth, 2, relation);
                 Text(CompanyKind(company), InfoX, 0x1A3, InfoWidth, 3, relation);
                 if (own && company.IsEconomic)
                 {

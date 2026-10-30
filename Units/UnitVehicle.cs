@@ -31,6 +31,12 @@ public partial class Unit
     public bool IsCar => UnitType == UnitCommon.UnitType.Cadillac;
 
     /// <summary>
+    /// Pavement refuses the Cadillac (unit type 5) and the police car (class 0Ch) — sub_432E80; they keep to roads
+    /// (and I ground).
+    /// </summary>
+    public bool RoadOnly => UnitType is UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.PoliceCar;
+
+    /// <summary>
     /// Order gate sub_42CAF0: a unit whose maximum damage against its own kind (vt+110h sub_42C960 — unit damage, or
     /// building damage for a Cadillac) is 0 gets no Attack, Extort or Patrol: the Thief, the Godfather, the Cadillac.
     /// </summary>

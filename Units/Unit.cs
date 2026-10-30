@@ -209,6 +209,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// <summary>Player order: walk to a point given in the parent's (main scene's) coordinates.</summary>
     public void MoveTo(Vector2 localPosition)
     {
+        if (CanAttack != null)
+            CanAttack.ForcedTarget = null;
         CancelOrder();
         TargetStructure = null;
         MoveMode = null;
@@ -273,7 +275,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             if (CanAttack != null && value is IGameEntity target && target.CanBeAttacked != null)
             {
                 var relation = Teams.GetOrAddTeam(TeamColor).GetTargetRelation(target.TeamColor);
-                if (relation is Teams.TeamRelation.Enemy or Teams.TeamRelation.Neutral)
+                if (relation is Teams.TeamRelation.Enemy or Teams.TeamRelation.Neutral || value == CanAttack.ForcedTarget)
                     CanAttack.Target = target.CanBeAttacked;
             }
             WalkTo(value);
@@ -381,11 +383,23 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         _as2d.Play(move ? MoveLayer(direction) : OriginalUnitSprites.GetAnimLayerName(OriginalUnitSprites.SlType.attack, direction));
     }
 
-    /// <summary>Show one attack swing towards <paramref name="target"/> (used by orders that hit once).</summary>
-    public void AnimationAttackOnce(Node2D target)
+    /// <summary>
+    /// Attack animation towards <paramref name="target"/> for <paramref name="minutes"/> game minutes (orders that hit
+    /// now and then keep it up between their hits, so the unit never drops to its standing picture mid-attack).
+    /// </summary>
+    public void AnimationAttackOnce(Node2D target, int minutes = 20)
     {
         AnimationMoveOrAttack(target.Position - Position, false);
-        _attackPoseUntil = GameClock.Instance?.Minute + 20 ?? 0;
+        _attackPoseUntil = GameClock.Instance?.Minute + minutes ?? 0;
+    }
+
+    /// <summary>The attacking order ended: back to the standing picture.</summary>
+    public void AnimationEndAttack()
+    {
+        if (_attackPoseUntil < 0)
+            return;
+        _attackPoseUntil = -1;
+        AnimationStop(false);
     }
 
     private long _attackPoseUntil = -1;

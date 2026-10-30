@@ -153,6 +153,12 @@ public partial class PoliceRaid : Node
         $"raid car at {(IsInstanceValid(_car) ? _car.Cell.ToString() : "-")}, moving {(IsInstanceValid(_car) && _car.IsMoving)}, state {_state}, "
         + $"target {(IsInstanceValid(_company) ? _company.Cell.ToString() : "-")}";
 
+    private bool NearEnough()
+    {
+        var d = _car.Cell - _company.Cell;
+        return Mathf.Abs(d.X) + Mathf.Abs(d.Y) <= 2;
+    }
+
     public override void _PhysicsProcess(double delta)
     {
         if (!IsInstanceValid(_car) || _car.IsDead)
@@ -163,6 +169,10 @@ public partial class PoliceRaid : Node
             _car.WalkTo(_company);
             return;
         }
+        // The car keeps to the road (sub_432E80), and a business is ringed by pavement: our detours would circle the
+        // block for ever, so the raid starts once the car stands within two cells of it.
+        if (_state == 0 && _car.IsMoving && IsInstanceValid(_company) && NearEnough())
+            _car.StopMoving();
         if (_car.IsMoving)
             return;
         switch (_state)

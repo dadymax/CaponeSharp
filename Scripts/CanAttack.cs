@@ -93,9 +93,14 @@ public partial class CanAttack : Node, IJsonConfigurable
     /// <summary>The attacked map object (unit or company), or null if there is none or it was freed.</summary>
     public Node2D TargetParent => _targetParent != null && IsInstanceValid(_targetParent) ? _targetParent : null;
 
-    /// <summary>Enemies and neutrals can be attacked; self and friends can't.</summary>
+    /// <summary>The target of a Force Attack order: it may be the player's own or an ally's unit or building.</summary>
+    public Node2D ForcedTarget { get; set; }
+
+    /// <summary>Enemies and neutrals can be attacked; self and friends can't, unless named by a Force Attack.</summary>
     private bool IsHostile(Node2D target)
     {
+        if (target != _thisParent && target == ForcedTarget && IsInstanceValid(target))
+            return true;
         if (target != _thisParent && ((_thisParent as Unit)?.IsRogue == true || (target as Unit)?.IsRogue == true))
             return true;
         var targetColor = (target as IGameEntity)?.TeamColor ?? Teams.NeutralTeamColor;

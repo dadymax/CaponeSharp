@@ -34,7 +34,16 @@ public partial class RecruitPanel : Control
                 Position = SlotPosition(recruit.Slot), Size = new Vector2(Size30, Size30), Visible = false,
                 TextureNormal = Icon(recruit.Icon), TextureHover = Icon(recruit.Icon), TexturePressed = Icon(recruit.Icon + 1),
             };
-            button.Pressed += () => Training.Start(Teams.GetCurrentPlayerTeam(), r);
+            button.Pressed += () =>
+            {
+                var team = Teams.GetCurrentPlayerTeam();
+                // The pressed button of the unit in training cancels it.
+                if (Training.Current(team)?.Recruit == r)
+                    Training.Cancel(team);
+                else
+                    Training.Start(team, r);
+                _shown = "";
+            };
             PanelInfo.HookStatus(button, () => _texts.TryGetValue(r, out var t) ? t : "");
             AddChild(button);
             _buttons[recruit] = button;
@@ -86,8 +95,9 @@ public partial class RecruitPanel : Control
             var training = job != null;
             button.Visible = org != null && Training.PrimaryCenter(team) != null
                              && (training ? job.Recruit == recruit : Training.IsOffered(org, recruit));
-            button.Disabled = training;
-            button.TextureDisabled = Icon(recruit.Icon + 1);
+            // The training unit's button is drawn down and stays clickable (to cancel).
+            button.TextureNormal = Icon(training ? recruit.Icon + 1 : recruit.Icon);
+            button.TextureHover = button.TextureNormal;
             var price = PanelInfo.Money(Training.Price(recruit.Type));
             _texts[recruit] = PanelInfo.CFormat(OriginalTexts.Instance.Get(20, recruit.Text), price, Training.ServicePoints(recruit));
         }

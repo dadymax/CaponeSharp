@@ -67,25 +67,25 @@ public partial class Unit
         var here = Cell;
         var destination = Target;
         var goal = _detour ?? destination;
-        var direction = MoveMap.NextDirection(here, goal, _lineStart, destination, IsCar, this);
+        var direction = MoveMap.NextDirection(here, goal, _lineStart, destination, RoadOnly, this);
         if (direction == MoveMap.Arrived)
         {
             if (_detour == null)
                 return MoveMap.Arrived;
             _detour = null;
-            direction = MoveMap.NextDirection(here, destination, _lineStart, destination, IsCar, this);
+            direction = MoveMap.NextDirection(here, destination, _lineStart, destination, RoadOnly, this);
         }
         if (direction != MoveMap.Stuck)
             return direction;
         if (_detour != null || TimesVisited(here) > 1)
             return MoveMap.Stuck;
-        var waypoint = MoveMap.FindDetour(here, destination, IsCar, c => TimesVisited(c) > 0, this);
+        var waypoint = MoveMap.FindDetour(here, destination, RoadOnly, c => TimesVisited(c) > 0, this);
         if (waypoint is not { } w)
             return MoveMap.Stuck;
         _detour = w;
         Remember(w);
         Remember(here);
-        return MoveMap.NextDirection(here, w, _lineStart, destination, IsCar, this);
+        return MoveMap.NextDirection(here, w, _lineStart, destination, RoadOnly, this);
     }
 
     // ---- occupancy of cells (tile vt+134h occupant count, vt+130h occupant), shared by all units ------------------
@@ -152,7 +152,7 @@ public partial class Unit
             for (var i = 0; i < 4; i++)
             {
                 var next = MoveMap.Step(here, (start + i) % 4);
-                if (!MoveMap.IsRoadOrPavement(next) || !MoveMap.Walkable(next, IsCar))
+                if (!MoveMap.IsRoadOrPavement(next) || !MoveMap.Walkable(next, RoadOnly))
                     continue;
                 if (pass == 0 && !MayStayOn(next))
                     continue;

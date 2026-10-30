@@ -718,6 +718,26 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   the tile lists, the unit draw and the map click have no spreading. Scenario check "units sent to one cell spread
   out" (two idle units sent to one cell must meet, then stand on different cells; fails without the spread).
 
+- [x] **Playtest fixes (user, 2026-10-30).**
+  1. Police cars and Cadillacs keep to the road: pavement (S) refuses unit type 5 and class 0Ch, the police car
+     (sub_432E80; PoliceCar::PoliceCar vtable off_48D928 → class 0Ch). `Unit.RoadOnly` for moves, the spread-out
+     step and placement (`FreeCellsAround(roadOnly)`: new cars, police cars, trained Cadillacs). I ground stays open
+     to cars (sub_420C80 = 1). A raid car can't reach a business behind its pavement ring, and our detours then
+     circled the block (the six-cell memory forgets): the raid now starts when the car stands within 2 cells
+     (Manhattan) — not from the EXE. Scenario check "cars keep off the pavement".
+  2. A click on the pressed button of the unit in training cancels it (`Training.Cancel`; nothing is paid before the
+     end). The EXE's cancel path wasn't found (the recruit actions sub_4323F0 only start jobs).
+  3. Force Attack can target own and allied units (`CanAttack.ForcedTarget`; cleared by a Go order).
+  4. Extortion keeps the attack animation between its hourly attempts and drops it when the order ends.
+  5. The panel's name line is the catalogue name of the row as last seen (company vt+18h sub_421CC0 → +0D4h,
+     refreshed by vt+0E0h sub_420E50 when seen), so a built business shows its type. (State 5: text 30,19; not
+     modelled.)
+  6. `game.cfg` [map] `company_chance` (default 0.9; the EXE's 3 in 4) for B / C cells, and
+     `min_one_company_in_rich_blocks` (middle-class and center blocks get a business, a C cell first). Scenario
+     check "middle-class and center blocks have a business (user)".
+  Seen once while testing, not reproduced: after clicking an own company the panel text showed but the portrait
+  box stayed black.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).

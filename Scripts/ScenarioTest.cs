@@ -70,6 +70,7 @@ public partial class ScenarioTest : Node
     private readonly List<string> _notes = new();
     private readonly Dictionary<Company, Team> _hqOwners = new();
     private readonly Dictionary<Company, Team> _owners = new();
+    private readonly Dictionary<Unit, Vector2I> _firstCell = new();
     private readonly Dictionary<Company, (long BuildStart, long Uncollected)> _building = new();
     private readonly Dictionary<Team, int> _thugStarvedHours = new();
     private readonly Dictionary<Team, int> _unitCounts = new();
@@ -137,6 +138,16 @@ public partial class ScenarioTest : Node
             _pending.Remove(p);
             Check(p.Name, ok, p.Detail?.Invoke() ?? "");
         }
+        if (_hour == 1)
+            foreach (var block in CityBlock.All.Where(b => b.District is 1 or 2))
+            {
+                var layout = OriginalBlocks.Instance.Blocks.ElementAtOrDefault(block.Layout);
+                var candidates = layout?.BlockLines.Sum(l => l.Count(ch => "BCMH".IndexOf(ch) >= 0)) ?? 0;
+                if (candidates > 0)
+                    Check("middle-class and center blocks have a business (user)",
+                        block.Companies.Any(c => IsInstanceValid(c) && (c.IsEconomic || c.IsHq)),
+                        $"block {block.Number} (layout {block.Layout}, district {block.District}): {block.Companies.Count} companies");
+            }
         if (_hour == 1)
             foreach (var car in Units().Where(u => u.IsCar && u.OwnerTeam != null))
                 Check("a starting Cadillac carries four Thompson men",
@@ -242,6 +253,14 @@ public partial class ScenarioTest : Node
             Check("unit HP within 1..max", hp > 0 && hp <= max, $"{u.UnitType} of {u.OwnerTeam?.PlayerName ?? "-"}: HP {hp}/{max}");
             if (!u.IsArrested)
                 Check("unit stays on the map", rect.HasPoint(u.Cell), $"{u.UnitType} of {u.OwnerTeam?.PlayerName ?? "-"} at {u.Cell}, map {rect}");
+            // sub_432E80: cars keep off the pavement (an episode may place one there at the start).
+            if (u.RoadOnly && u.Vehicle == null)
+            {
+                if (!_firstCell.TryGetValue(u, out var start))
+                    _firstCell[u] = start = u.Cell;
+                if (u.Cell != start)
+                    Check("cars keep off the pavement", !MoveMap.IsPavement(u.Cell), $"{u.UnitType} of {u.OwnerTeam?.PlayerName ?? "police"} at {u.Cell}");
+            }
         }
 
         foreach (var d in units.Where(u => u.IsDeserter || u.IsRogue))

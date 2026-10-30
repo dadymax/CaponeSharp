@@ -78,7 +78,8 @@ public partial class ExtortOrder : Node
         }
         _attempt++;
         _unit.CanAttack?.HitOnce(_company);
-        _unit.AnimationAttackOnce(_company);
+        // Attacking until the next attempt (user: only the attack animation while the attack goes on).
+        _unit.AnimationAttackOnce(_company, AttemptMinutes + 5);
         if (_unit.IsDead || _unit.IsArrested)
         {
             Finish();
@@ -97,6 +98,9 @@ public partial class ExtortOrder : Node
             return;
         _finished = true;
         if (IsInstanceValid(_unit))
+        {
+            _unit.AnimationEndAttack();
             _unit.OrderFinished(this);
+        }
     }
 }

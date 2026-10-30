@@ -66,6 +66,9 @@ public static class MoveMap
 
     public static Vector2I Step(Vector2I cell, int direction) => cell + Steps[((direction % 4) + 4) % 4];
 
+    /// <summary>S pavement (no cars).</summary>
+    public static bool IsPavement(Vector2I cell) => _sand.Contains(cell);
+
     /// <summary>Tile vt+158h = 1: road or pavement (class 2 ground).</summary>
     public static bool IsRoadOrPavement(Vector2I cell) => _roads.Contains(cell) || _sand.Contains(cell);
 

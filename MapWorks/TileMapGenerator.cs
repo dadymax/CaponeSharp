@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using Godot;
 
@@ -113,6 +114,18 @@ public static class TileMapGenerator
 
             // The original block object (fnBuildingPlacementOnMapByNumber): district = BlockTable category.
             var cityBlock = new CityBlock(bldngCounter, vec.Z, block.Category);
+            var skipped = new List<(int Grade, TileData Data, Vector2I Cell)>();
+
+            void PlaceBusiness(int grade, TileData data, Vector2I at)
+            {
+                var entry = businesses.RandomLegal(grade, block.Category);
+                if (entry == null)
+                    return;
+                var c = companyScene.Instantiate<Company>();
+                c.InitBusiness(entry, cityBlock, at);
+                cityBlock.AddCompany(at, c);
+                data.SetCustomData(CompanyLayerName, c);
+            }
             var cellOf = new Dictionary<Vector2I, Vector2I>();
 
             for (var x = 0; x < block.X; x++)
@@ -158,19 +171,16 @@ public static class TileMapGenerator
                         case 'M':
                         case 'H':
                         {
-                            // B: grade 1 and C: grade 2 businesses 3 times in 4 (otherwise a plain building);
-                            // M, H: always grade 3. The kind is a random legal catalogue row of that grade
-                            // (fnSelectBuildingRandomly; every legal row allows any district).
+                            // B: grade 1 and C: grade 2 businesses with GameConfig.CompanyChance (the EXE: 3 in 4;
+                            // otherwise a plain building); M, H: always grade 3. The kind is a random legal catalogue
+                            // row of that grade (fnSelectBuildingRandomly; every legal row allows any district).
                             var grade = bldngChar switch { 'B' => 1, 'C' => 2, _ => 3 };
-                            if (grade < 3 && GD.Randi() % 4 == 0)
+                            if (grade < 3 && GD.Randf() >= GameConfig.CompanyChance)
+                            {
+                                skipped.Add((grade, td, actual));
                                 break;
-                            var entry = businesses.RandomLegal(grade, block.Category);
-                            if (entry == null)
-                                break;
-                            var c = companyScene.Instantiate<Company>();
-                            c.InitBusiness(entry, cityBlock, actual);
-                            cityBlock.AddCompany(actual, c);
-                            td.SetCustomData(CompanyLayerName, c);
+                            }
+                            PlaceBusiness(grade, td, actual);
                             break;
                         }
                         case 'P':
@@ -185,6 +195,14 @@ public static class TileMapGenerator
 
                     tileMap.SetCell(actual, bldngCounter, bldngTilePosition);
                 }
+
+            // User's rule: middle-class and center blocks always have a business (a C cell first, then a B).
+            if (GameConfig.MinOneCompanyInRichBlocks && block.Category is 1 or 2 && cityBlock.Companies.Count(c => c.IsEconomic) == 0
+                && skipped.Count > 0)
+            {
+                var pick = skipped.OrderByDescending(x => x.Grade).ThenBy(_ => GD.Randi()).First();
+                PlaceBusiness(pick.Grade, pick.Data, pick.Cell);
+            }
 
             // The collector visits the block row by row (sub_429146: index -> x = i % width, y = i / width).
             for (var yo = 0; yo < block.Y; yo++)

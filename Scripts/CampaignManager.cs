@@ -136,7 +136,7 @@ public partial class CampaignManager : Node
     /// Walkable cells nearest to <paramref name="center"/> (rings of growing radius) without a living unit on them,
     /// like World::FindFreeCellNearObject (sub_43B955).
     /// </summary>
-    public List<Vector2I> FreeCellsAround(Vector2I center, int count, int maxRadius = 6)
+    public List<Vector2I> FreeCellsAround(Vector2I center, int count, int maxRadius = 6, bool roadOnly = false)
     {
         var blocked = new HashSet<Vector2I>(TileMap.GetMeta(TileMapGenerator.TileNonWalkable).AsGodotArray<Vector2I>());
         var used = new HashSet<Vector2I>(TileMap.GetUsedCells());
@@ -149,7 +149,7 @@ public partial class CampaignManager : Node
                 {
                     var cell = center + new Vector2I(dx, dy);
                     if (Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy)) == radius && used.Contains(cell)
-                        && !blocked.Contains(cell) && !occupied.Contains(cell))
+                        && !blocked.Contains(cell) && !occupied.Contains(cell) && !(roadOnly && MoveMap.IsPavement(cell)))
                         free.Add(cell);
                 }
         return free;
@@ -176,12 +176,16 @@ public partial class CampaignManager : Node
     }
 
     /// <summary>A new unit of <paramref name="team"/> on a free cell next to <paramref name="cell"/>.</summary>
-    public Unit CreateUnitNear(UnitCommon.UnitType type, Team team, Vector2I cell) => CreateUnit(type, team, FreeCellNear(cell));
+    public Unit CreateUnitNear(UnitCommon.UnitType type, Team team, Vector2I cell) =>
+        CreateUnit(type, team, FreeCellNear(cell, IsRoadOnly(type)));
+
+    /// <summary>Cars (Cadillac, police car) can't stand on pavement (sub_432E80).</summary>
+    public static bool IsRoadOnly(UnitCommon.UnitType type) => type is UnitCommon.UnitType.Cadillac or UnitCommon.UnitType.PoliceCar;
 
     /// <summary>A free walkable cell next to <paramref name="cell"/> (sub_43B955), or the cell itself.</summary>
-    public Vector2I FreeCellNear(Vector2I cell)
+    public Vector2I FreeCellNear(Vector2I cell, bool roadOnly = false)
     {
-        var free = FreeCellsAround(cell, 1);
+        var free = FreeCellsAround(cell, 1, roadOnly: roadOnly);
         return free.Count > 0 ? free[0] : cell;
     }
 
@@ -199,7 +203,7 @@ public partial class CampaignManager : Node
     {
         if (MainScene == null)
             return null;
-        var free = FreeCellsAround(station.Cell, 1);
+        var free = FreeCellsAround(station.Cell, 1, roadOnly: true);
         return CreateUnit(UnitCommon.UnitType.PoliceCar, null, free.Count > 0 ? free[0] : station.Cell);
     }
 

@@ -104,6 +104,19 @@ public static class Training
         return true;
     }
 
+    /// <summary>
+    /// A click on the pressed button of the unit in training cancels it (user, from the original). Nothing was paid
+    /// yet: the price and the service are taken when the training ends.
+    /// </summary>
+    public static bool Cancel(Team team)
+    {
+        if (Current(team) is not { } job)
+            return false;
+        Jobs.Remove(team);
+        GD.Print($"Training: {team.PlayerName} cancelled a {job.Recruit.Type}");
+        return true;
+    }
+
     /// <summary>Event 3E8h: pay the price and the service, then the unit appears next to the center.</summary>
     private static void Finish(Job job)
     {
@@ -120,7 +133,7 @@ public static class Training
         var cm = CampaignManager.Instance;
         if (cm == null || !IsInstanceValid(job.Center))
             return;
-        var free = cm.FreeCellsAround(job.Center.Cell, 1);
+        var free = cm.FreeCellsAround(job.Center.Cell, 1, roadOnly: CampaignManager.IsRoadOnly(job.Recruit.Type));
         var unit = cm.CreateUnit(job.Recruit.Type, job.Team, free.Count > 0 ? free[0] : job.Center.Cell);
         GD.Print($"Training: {job.Team.PlayerName} got a {job.Recruit.Type} '{unit.DisplayName}' for {price}");
         if (job.Team.IsCurrentPlayerColor)

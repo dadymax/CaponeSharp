@@ -90,6 +90,9 @@ public partial class Unit
     /// <summary>Attack / Force Attack a unit or building (actions 1 / 6).</summary>
     public void AttackOrder(Node2D target, bool force)
     {
+        // Force Attack may name an own or allied target (the order's mode 1 ignores relations).
+        if (CanAttack != null)
+            CanAttack.ForcedTarget = force ? target : null;
         TargetStructure = target;
         _orderTarget = target as Unit;
         MoveMode = force || UnitType == UnitCommon.UnitType.Terrorist ? 1 : 3;
