@@ -738,6 +738,11 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   Seen once while testing, not reproduced: after clicking an own company the panel text showed but the portrait
   box stayed black.
 
+- [ ] **Minimap (user, 2026-10-30).** The original has a minimap in the bottom-left corner of the panel (where the
+  remake now shows only the dollar-pyramid background, about x 10..210, y 390..590). To do: find its draw code in
+  the EXE (panel draw near sub_40A245 / sub_40A997; colours per tile class and owner, the view rectangle, a click
+  that moves the view) and add it.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
