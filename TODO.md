@@ -735,8 +735,8 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   6. `game.cfg` [map] `company_chance` (default 0.9; the EXE's 3 in 4) for B / C cells, and
      `min_one_company_in_rich_blocks` (middle-class and center blocks get a business, a C cell first). Scenario
      check "middle-class and center blocks have a business (user)".
-  Seen once while testing, not reproduced: after clicking an own company the panel text showed but the portrait
-  box stayed black.
+  Seen once while testing: after clicking an own company the panel text showed but the portrait box stayed black —
+  fixed 2026-10-31 (see "Company avatar not updating").
 
 - [x] **Minimap (user, 2026-10-30).** The original has a minimap in the bottom-left corner of the panel (where the
   remake now shows only the dollar-pyramid background, about x 10..210, y 390..590). Done 2026-10-31 (`Minimap`,
@@ -772,7 +772,10 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 - [x] Clicks on GUI controls (menu, bottom panel) no longer select/deselect on the map: `Main` uses `_UnhandledInput`.
 
-- [ ] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
+- [x] **Company avatar not updating** when selecting a different company: check `SelectionIcon.UpdateIcon` on reselection.
+  Fixed 2026-10-31: the portrait control (keep-size mode) shrank to 0 × 0 when its texture was cleared while hidden
+  and stayed so — the panel showed the text and an empty portrait box. It is now a fixed 84 × 95 box. Found with the
+  new Debug hook `ClickAt(x, y)` (a map click through `Main.ClickSelect`).
 - [x] **Company portraits**: `SelectionIcon.CompanyPortrait` uses Chicago.tile "info …" pictures per grade as placeholders; find the original building → picture mapping.
   User, 2026-10-29: corner buildings show the wrong portrait. The portraits are in BLOCKINF.BMP, a 4 × 4 table. From
   playing the original (not 100% sure; the user will try to get the original data), by the letter in the block

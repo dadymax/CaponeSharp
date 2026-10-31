@@ -296,6 +296,14 @@ public partial class DebugCommands : Node
         return node?.ToString() ?? "nothing";
     }
 
+    /// <summary>Selects what is under a screen point as a left click on the map would.</summary>
+    public string ClickAt(float x, float y)
+    {
+        Main.Instance?.ClickSelect(new Vector2(x, y));
+        var node = GuiGameback.Instance?.SelectedNode;
+        return node?.ToString() ?? "nothing";
+    }
+
     /// <summary>A unit of <paramref name="type"/> (.epi UNIT type) for the player next to the HQ, optionally carrying money.</summary>
     public string Spawn(int type, long money = 0)
     {

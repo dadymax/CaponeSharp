@@ -357,6 +357,13 @@ public partial class Main : Node2D
 		!unit.IsDead && !unit.IsArrested && unit.OwnerTeam?.IsCurrentPlayerColor == true
 		&& unit.UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar or UnitCommon.UnitType.Policeman);
 
+	/// <summary>Test hook: a left click on the map at a screen point.</summary>
+	public void ClickSelect(Vector2 screenPoint)
+	{
+		ClearSelection();
+		SelectAtPoint(GetCanvasTransform().AffineInverse() * screenPoint);
+	}
+
 	private void SelectAtPoint(Vector2 globalPoint)
 	{
 		if (IntersectPoint(globalPoint) is ISelectable { Selectable: true } selectable)

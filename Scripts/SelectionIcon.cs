@@ -7,7 +7,18 @@ public partial class SelectionIcon : TextureRect
 {
     public Node2D SelectedNode { get; private set; }
 
-    public override void _Ready() => Visible = false;
+    /// <summary>Portraits are 84 × 95 (Chicago.tile "info" / unit faces).</summary>
+    public static readonly Vector2 PortraitSize = new(84, 95);
+
+    public override void _Ready()
+    {
+        Visible = false;
+        // A fixed box: with the default "keep size" mode the control shrank to 0 × 0 when the texture was cleared
+        // while hidden and stayed so, which left the portrait blank after reselecting.
+        ExpandMode = ExpandModeEnum.IgnoreSize;
+        StretchMode = StretchModeEnum.KeepCentered;
+        Size = PortraitSize;
+    }
 
     public void UpdateIcon(Node2D node)
     {
@@ -36,6 +47,7 @@ public partial class SelectionIcon : TextureRect
             return;
         }
         Texture = ImageTexture.CreateFromImage(images[0]);
+        Size = PortraitSize;
     }
 
     /// <summary>
