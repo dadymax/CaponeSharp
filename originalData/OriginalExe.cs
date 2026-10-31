@@ -60,6 +60,8 @@ public class OriginalExe
         var sectionCount = BitConverter.ToUInt16(_data, pe + 6);
         var optionalHeaderSize = BitConverter.ToUInt16(_data, pe + 20);
         _imageBase = BitConverter.ToUInt32(_data, pe + 24 + 28);
+        // Data directory 2: the resource tree.
+        _resourceVa = _imageBase + BitConverter.ToUInt32(_data, pe + 24 + 96 + 2 * 8);
         for (var i = 0; i < sectionCount; i++)
         {
             var o = pe + 24 + optionalHeaderSize + i * 40;
@@ -70,6 +72,61 @@ public class OriginalExe
                 BitConverter.ToUInt32(_data, o + 20),
                 BitConverter.ToUInt32(_data, o + 16)));
         }
+    }
+
+    private uint _resourceVa;
+
+    /// <summary>
+    /// The data of a PE resource: <paramref name="type"/> (1 cursor, 12 cursor group…), then a name or an id, first
+    /// language. Null if missing.
+    /// </summary>
+    public byte[] ReadResource(int type, string name = null, int id = -1)
+    {
+        if (_data == null || _resourceVa == _imageBase)
+            return null;
+        var root = Offset(_resourceVa);
+        if (root < 0)
+            return null;
+        var typeDir = FindEntry(root, root, null, type);
+        var nameDir = typeDir < 0 ? -1 : FindEntry(root, typeDir, name, id);
+        var leaf = nameDir < 0 ? -1 : FindEntry(root, nameDir, null, -1);
+        if (leaf < 0)
+            return null;
+        var rva = BitConverter.ToUInt32(_data, leaf);
+        var size = BitConverter.ToInt32(_data, leaf + 4);
+        var at = Offset(_imageBase + rva);
+        if (at < 0 || at + size > _data.Length)
+            return null;
+        var result = new byte[size];
+        Array.Copy(_data, at, result, 0, size);
+        return result;
+    }
+
+    /// <summary>
+    /// The child of resource directory <paramref name="dir"/> with that name or id (both null / -1: the first one).
+    /// Returns the child's offset (a directory, or for a leaf its data entry); -1 if missing.
+    /// </summary>
+    private int FindEntry(int root, int dir, string name, int id)
+    {
+        int named = BitConverter.ToUInt16(_data, dir + 12), ids = BitConverter.ToUInt16(_data, dir + 14);
+        for (var k = 0; k < named + ids; k++)
+        {
+            var nameField = BitConverter.ToUInt32(_data, dir + 16 + 8 * k);
+            var dataField = BitConverter.ToUInt32(_data, dir + 16 + 8 * k + 4);
+            bool match;
+            if ((nameField & 0x80000000) != 0)
+            {
+                var at = root + (int)(nameField & 0x7FFFFFFF);
+                var length = BitConverter.ToUInt16(_data, at);
+                var entryName = Encoding.Unicode.GetString(_data, at + 2, length * 2);
+                match = name == null ? id < 0 : string.Equals(entryName, name, StringComparison.OrdinalIgnoreCase);
+            }
+            else
+                match = name == null && (id < 0 || nameField == id);
+            if (match)
+                return root + (int)(dataField & 0x7FFFFFFF);
+        }
+        return -1;
     }
 
     /// <summary>File offset of a virtual address, or -1 if it is outside the file's sections.</summary>

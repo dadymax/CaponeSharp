@@ -296,6 +296,26 @@ public partial class DebugCommands : Node
         return node?.ToString() ?? "nothing";
     }
 
+    /// <summary>Saves the four EXE cursors as PNG files (name_hotX_hotY.png) into <paramref name="folder"/>.</summary>
+    public string SaveCursors(string folder)
+    {
+        var exe = OriginalExe.Instance;
+        var saved = 0;
+        foreach (var name in new[] { "ARROWCUR", "GOTOCUR", "ATTACKCU", "PROTECTCU" })
+        {
+            var group = exe.ReadResource(12, name);
+            var data = group == null ? null : exe.ReadResource(1, null, System.BitConverter.ToUInt16(group, 18));
+            if (data != null && OriginalCursors.Decode(data) is { } c)
+            {
+                var big = (Image)c.Item1.Duplicate();
+                big.Resize(128, 128, Image.Interpolation.Nearest);
+                big.SavePng($"{folder}/{name}_{c.Item2.X}_{c.Item2.Y}.png");
+                saved++;
+            }
+        }
+        return $"saved {saved}";
+    }
+
     /// <summary>Selects what is under a screen point as a left click on the map would.</summary>
     public string ClickAt(float x, float y)
     {

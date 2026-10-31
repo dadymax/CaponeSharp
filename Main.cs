@@ -22,7 +22,23 @@ public partial class Main : Node2D
 
 	/// <summary>Order buttons (unit menu sub_42D2C1): the next left click on the map carries out the chosen order.</summary>
 	public enum OrderMode { None, Go, Attack, Extort, ForceGo, ForceAttack, Patrol }
-	public OrderMode PendingOrder { get; set; }
+	/// <summary>The order armed with an order button; its cursor shows until the map click (sub_41E970).</summary>
+	public OrderMode PendingOrder
+	{
+		get => _pendingOrder;
+		set
+		{
+			_pendingOrder = value;
+			OriginalCursors.Set(value switch
+			{
+				OrderMode.Go or OrderMode.ForceGo or OrderMode.Patrol => OriginalCursors.Kind.Goto,
+				OrderMode.Attack or OrderMode.ForceAttack => OriginalCursors.Kind.Attack,
+				OrderMode.Extort => OriginalCursors.Kind.Protect,
+				_ => OriginalCursors.Kind.Arrow,
+			});
+		}
+	}
+	private OrderMode _pendingOrder;
 
 	/// <summary>Selected units the player may command.</summary>
 	public System.Collections.Generic.IEnumerable<Unit> CommandableSelection()
@@ -44,6 +60,9 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
+		// The window class cursor is the EXE's "ArrowCur".
+		if (DisplayServer.GetName() != "headless")
+			OriginalCursors.Set(OriginalCursors.Kind.Arrow);
 		var args = OS.GetCmdlineUserArgs();
 		if (System.Array.IndexOf(args, "--smoke-test") >= 0)
 		{

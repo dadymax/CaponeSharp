@@ -464,7 +464,11 @@ Still open from this part:
   - progress bar (`Blood.bmp`)
   - **action buttons from Chicago.tile**: go/kill/guard/stay/buy/upgrade/extort rows 102–123 and per-unit go/attack buttons 2709–2830. This answers "which buttons, which icons".
 - [ ] Portraits `Faces.bmp`, business signs `Signs.bmp`/`Signs2.bmp`, Cadillac `Car.bmp`, `Park.bmp`, `hq.bmp`, `open.bmp`, Godfather `godf.bmp`/`godfkl.bmp`, credits `CREDIT.bmp`/`CREDITBU.bmp`.
-- [ ] **Mouse cursors** `ArrowCur`, `GotoCur`, `AttackCu`, `ProtectCu` live in the EXE's PE resources (loaded in `fnLegalCrimeMainWindowMain`, 0x419F10). Extract them with a small PE resource reader and use them via `Input.SetCustomMouseCursor`.
+- [x] **Mouse cursors** `ArrowCur`, `GotoCur`, `AttackCu`, `ProtectCu` live in the EXE's PE resources (loaded in `fnLegalCrimeMainWindowMain`, 0x419F10). Extract them with a small PE resource reader and use them via `Input.SetCustomMouseCursor`.
+  Done 2026-10-31 (`OriginalCursors`, `OriginalExe.ReadResource`): the four cursor groups are read from the EXE's PE
+  resources at run time (32 × 32 monochrome; hotspots 1,1 / Attack 10,10). sub_41E970(n): 0 arrow (always, the
+  window's cursor), 1 go, 2 attack, 3 protect while an order is armed (keys / buttons: Go, Force Go, Patrol → go;
+  Attack, Force Attack → attack; Extort → protect) until the map click. Unit test `CursorsComeFromTheExeResources`.
 
 ## 4. Sound (P1 — cheap, big effect)
 

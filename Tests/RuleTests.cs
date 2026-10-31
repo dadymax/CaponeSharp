@@ -112,6 +112,23 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void CursorsComeFromTheExeResources()
+    {
+        // fnLegalCrimeMainWindowMain: LoadCursor ArrowCur / GotoCur / AttackCu / ProtectCu (PE cursor groups).
+        var exe = OriginalExe.Instance;
+        foreach (var (name, hotspot) in new[] { ("ARROWCUR", new Vector2(1, 1)), ("GOTOCUR", new Vector2(1, 1)),
+                     ("ATTACKCU", new Vector2(10, 10)), ("PROTECTCU", new Vector2(1, 1)) })
+        {
+            var group = exe.ReadResource(12, name);
+            Assert.True(group != null, $"{name}: group");
+            var data = exe.ReadResource(1, null, System.BitConverter.ToUInt16(group, 18));
+            var cursor = OriginalCursors.Decode(data);
+            Assert.True(cursor is { } c && c.Item1.GetWidth() == 32 && c.Item1.GetHeight() == 32 && c.Item2 == hotspot,
+                $"{name}: {cursor?.Item1.GetSize()} hotspot {cursor?.Item2}");
+        }
+    }
+
+    [UnitTest]
     public static void BuildingPortraitsAreBlockInfPictures()
     {
         // sub_422158 / sub_415258 / sub_429D30: every portrait is one of BLOCKINF.BMP's 84 x 95 "info" tiles.
