@@ -194,7 +194,7 @@ public partial class BriefingScreen : Control
 /// Animation (sub_43CCD0, bitmap +8 loaded by sub_43CAB5): won — GameWinA.bmp, 100 × 100 frames; when none plays, at
 /// random (GetTickCount % 10 > 3) one of three places (table 0x48D4D4: (599,420), (559,340), (548,410)) starts and
 /// shows row place, frames 0–5 every 250 ms (columns 0, 1, 2, 4, 4, 5), then hides; lost — GameOvAn.bmp, 30 × 40
-/// frames at (750, 470), cycling 0–5 every 250 ms. TODO: music.
+/// frames at (750, 470), cycling 0–5 every 250 ms. Sound WinEffect / LoseEffect; the CD music is not available.
 /// </summary>
 public partial class EndScreen : Control
 {
@@ -239,6 +239,9 @@ public partial class EndScreen : Control
         _background = ScreenPictures.Load(_won ? "GAMEWIN.BMP" : "GAMEOVER.BMP");
         _buttons = ScreenPictures.Load(_won ? "GAMEWINB.BMP" : "GAMEOVBU.BMP");
         _animation = ScreenPictures.Load(_won ? "GAMEWINA.BMP" : "GAMEOVAN.BMP");
+        // sub_43C930: sound 18h / 19h of the screens' sound set (table 0x477A1C) — WinEffect / LoseEffect. The music
+        // is a CD audio track (sub_408BE2 → MCI "cdaudio": 0 won, 4 lost), not in the game files.
+        Sound.Play(_won ? "WinEffect.wav" : "LoseEffect.wav");
         _animPlace = _won ? -1 : 0;
         _animTick = Time.GetTicksMsec();
         if (_buttons != null)

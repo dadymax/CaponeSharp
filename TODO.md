@@ -68,7 +68,9 @@ code (base squad) get random personal names like `Unit::Unit`.
   rows 2–4 = tabs Income/Money/People), animation GameWinA/GameOvAn.
   Animation done 2026-10-31 (sub_43CCD0): GameWinA 100 × 100 frames at one of three random places (0x48D4D4), frames
   0–5 every 250 ms (columns 0,1,2,4,4,5), restarting at random; GameOvAn 30 × 40 frames looping at (750, 470).
-  Still open: the end-screen music.
+  Sound: sub_43C930 plays id 18h / 19h of the screens' sound set (table 0x477A1C, loaded by sub_41D255(2)) —
+  WinEffect.wav / LoseEffect.wav — done. The music is a CD audio track (sub_408BE2 → sub_460A10, MCI "cdaudio":
+  track 0 won, 4 lost), not in the game files: nothing to play.
 - Statistics chart (done 2026-10-29): `Statistics` (sub_460B36 / sub_460BE4) samples every player's weekly net
   income, cash and gangsters every 30 game hours (the original: 30 s of real time) into 31 averaged slots that are
   halved when full; `EndScreen` draws it like sub_43CCD0 with the Income / Money / People tabs (sub_43DB50). The result
