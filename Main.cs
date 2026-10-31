@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Collections.Generic;
 using Godot;
 
@@ -375,6 +376,39 @@ public partial class Main : Node2D
 	private static bool IsCommandable(Unit unit) =>
 		!unit.IsDead && !unit.IsArrested && unit.OwnerTeam?.IsCurrentPlayerColor == true
 		&& unit.UnitType is not (UnitCommon.UnitType.Collector or UnitCommon.UnitType.PoliceCar or UnitCommon.UnitType.Policeman);
+
+	// ---- unit groups (sub_410EC3 keys 0–9: Ctrl stores the selection in group n at +948h + 20 × n) -------------
+	private readonly List<Unit>[] _groups = new List<Unit>[10];
+
+	/// <summary>Ctrl + digit: the selected own units (not collectors) become group <paramref name="n"/>.</summary>
+	public bool StoreGroup(int n)
+	{
+		var units = CommandableSelection().Where(u => u.UnitType != UnitCommon.UnitType.Collector).ToList();
+		if (units.Count == 0)
+			return false;
+		_groups[n] = units;
+		return true;
+	}
+
+	/// <summary>Digit: selects the living units of group <paramref name="n"/>.</summary>
+	public bool RecallGroup(int n)
+	{
+		var units = _groups[n]?.Where(u => IsInstanceValid(u) && IsCommandable(u)).ToList();
+		if (units == null || units.Count == 0)
+			return false;
+		// Already selected: the view goes to the group (sub_409FE7), as a second press in the original.
+		if (_selected.Count == units.Count && units.All(u => _selected.Contains(u)))
+		{
+			Minimap.CenterView(units[0].GlobalPosition);
+			return true;
+		}
+		ClearSelection();
+		foreach (var u in units)
+			Select(u);
+		GuiGameback.UpdateSelectionIcon(units[0]);
+		UnitVoice.Play(units[0], UnitVoice.Kind.Select);
+		return true;
+	}
 
 	/// <summary>Test hook: a left click on the map at a screen point.</summary>
 	public void ClickSelect(Vector2 screenPoint)

@@ -759,7 +759,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   (+20h + 78h × slot): T/P/M/B/S/L/K/C/I recruit slots 6–14 (Thug, Pistol, Thompson, Terrorist, Sniper, Shotgun,
   Hit man, Cadillac, Thief); G/A/E/D/O order slots 0/1/2/4/5 (Go, Attack, Extort, Disguise, Patrol) with their
   cursors; H puts the view on the own HQ (sub_409FE7). Done (`Hotkeys`, physical keys so a Russian layout works).
-  Open: R (sub_414D80) and the digits 0–9 (GetKeyState Ctrl — probably unit groups); Ctrl with M / I / G / A.
+  R repairs the selected own idle company (its slot 5, company vt+0BCh). Digits: Ctrl + n stores the selected own
+  units but collectors as group n (+948h + 20 × n); n selects the group, and when it is already selected moves the
+  view to it (sub_409FE7). MCP-checked (Ctrl+1, deselect, 1). Open: what Ctrl changes for M / I / G / A, and Shift
+  with a digit (GetKeyState 10h).
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 

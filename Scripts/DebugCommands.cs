@@ -316,6 +316,9 @@ public partial class DebugCommands : Node
         return $"saved {saved}";
     }
 
+    /// <summary>The selected units the player may command.</summary>
+    public string Selection() => string.Join(", ", Main.Instance?.CommandableSelection().Select(u => $"{u.UnitType}@{u.Cell}") ?? Enumerable.Empty<string>());
+
     /// <summary>Selects what is under a screen point as a left click on the map would.</summary>
     public string ClickAt(float x, float y)
     {
