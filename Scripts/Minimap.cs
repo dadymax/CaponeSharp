@@ -249,14 +249,21 @@ public partial class Minimap : Control
     /// <summary>Centres the map area of the screen on the clicked minimap point.</summary>
     private void MoveViewTo(Vector2 boxPoint)
     {
-        var camera = Camera;
-        if (camera == null || _map == null)
+        if (_map == null)
             return;
-        var mapLocal = _origin + boxPoint * _cellPixel;
-        var screen = GetViewportRect().Size;
+        CenterView(_map.ToGlobal(_origin + boxPoint * _cellPixel));
+        QueueRedraw();
+    }
+
+    /// <summary>Centres the map area of the screen (above the panel) on a world point.</summary>
+    public static void CenterView(Vector2 global)
+    {
+        var camera = Main.Instance?.GetNodeOrNull<Camera2D>("Camera2D");
+        if (camera == null)
+            return;
+        var screen = camera.GetViewportRect().Size;
         // The camera centres the whole window; the map area ends at the panel's top.
         var shift = new Vector2(0, screen.Y / 2 - PanelInfo.PanelTop / 2f) / camera.Zoom;
-        camera.GlobalPosition = _map.ToGlobal(mapLocal) + shift;
-        QueueRedraw();
+        camera.GlobalPosition = global + shift;
     }
 }

@@ -755,6 +755,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   the view (not looked up in the EXE). Half scale samples every cell at half the pixel size, not exactly the EXE's
   2×2 pick. MCP-checked on Harlem.
 
+- [x] **Key shortcuts (found in the EXE, 2026-10-31).** sub_410EC3 (letters either case) presses panel buttons
+  (+20h + 78h × slot): T/P/M/B/S/L/K/C/I recruit slots 6–14 (Thug, Pistol, Thompson, Terrorist, Sniper, Shotgun,
+  Hit man, Cadillac, Thief); G/A/E/D/O order slots 0/1/2/4/5 (Go, Attack, Extort, Disguise, Patrol) with their
+  cursors; H puts the view on the own HQ (sub_409FE7). Done (`Hotkeys`, physical keys so a Russian layout works).
+  Open: R (sub_414D80) and the digits 0–9 (GetKeyState Ctrl — probably unit groups); Ctrl with M / I / G / A.
+
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).

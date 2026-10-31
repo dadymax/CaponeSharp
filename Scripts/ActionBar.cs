@@ -46,6 +46,7 @@ public partial class ActionBar : Control
 
     public override void _Ready()
     {
+        Instance = this;
         Position = Origin;
         Size = new Vector2(SlotSize * SlotCount, SlotSize);
         MouseFilter = MouseFilterEnum.Ignore;
@@ -83,6 +84,17 @@ public partial class ActionBar : Control
         texture = images is { Count: > 0 } ? ImageTexture.CreateFromImage(images[0]) : null;
         IconCache[tileIndex] = texture;
         return texture;
+    }
+
+    public static ActionBar Instance { get; private set; }
+
+    /// <summary>Key shortcut (sub_410EC3): presses slot <paramref name="slot"/> if it is shown. Returns whether it was.</summary>
+    public bool Press(int slot)
+    {
+        if (slot < 0 || slot >= SlotCount || !_slots[slot].Visible || _actions[slot] == null)
+            return false;
+        _actions[slot].Invoke();
+        return true;
     }
 
     private void Set(int slot, int icon, string tooltip, Action action)

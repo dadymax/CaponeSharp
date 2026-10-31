@@ -23,6 +23,7 @@ public partial class RecruitPanel : Control
 
     public override void _Ready()
     {
+        Instance = this;
         SetAnchorsPreset(LayoutPreset.FullRect);
         MouseFilter = MouseFilterEnum.Ignore;
         _blood = ScreenPictures.Load("BLOOD.BMP");
@@ -48,6 +49,20 @@ public partial class RecruitPanel : Control
             AddChild(button);
             _buttons[recruit] = button;
         }
+    }
+
+    public static RecruitPanel Instance { get; private set; }
+
+    /// <summary>Key shortcut (sub_410EC3): presses the recruit button in panel slot <paramref name="slot"/> if shown.</summary>
+    public bool Press(int slot)
+    {
+        foreach (var (recruit, button) in _buttons)
+            if (recruit.Slot == slot && button.Visible)
+            {
+                button.EmitSignal(BaseButton.SignalName.Pressed);
+                return true;
+            }
+        return false;
     }
 
     private static Vector2 SlotPosition(int slot)
