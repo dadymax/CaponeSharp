@@ -460,8 +460,8 @@ Still open from this part:
 ## 3. Screens and UI from PICS (P1)
 
 - [~] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp` — done 2026-10-29 (`MainMenuScreen`, sub_408F86 / sub_4090D0, button tops from 0x47698C, x 257, 283×42; MainMeBu rows 0–4 lit, 5–9 pressed); the game opens on it, Campaign → briefing, the briefing's Back → menu (PLAN M12: buttons Campaign, Network game, Settings, Developers, Exit; build only Campaign and Exit — Network game, Settings and Developers are FUTURE, explicit user command only); new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
-- [ ] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
-- [ ] End screens: `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
+- [x] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
+- [x] End screens (done; `GameRank.bmp` and `AllyWin.bmp` belong to other windows): `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
 - [ ] In-game windows for the menu stubs: `HelpWin.bmp` (tips), `InfoWin.bmp` (statistics/messages), `MoneyWin.bmp` = the **spending window** with the bribe sliders (see §5).
 - [ ] Bottom panel, as specified in `projectinfo/gui.md`:
   - finances block
@@ -774,10 +774,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 - [x] **Cadillacs take building damage.** Done: `CanAttack.RollDamage`. `Unit::GetMinDamage`/`GetMaxDamage` (`sub_42C890`/`sub_42C960`) use `DamageMin/Max` only when the target is a unit (class 5) that is not a Cadillac (type 5); buildings **and Cadillacs** get `BuildingDamageMin/Max`. `CanAttack.RollDamage` currently uses unit damage against Cadillacs.
-- [ ] **Hit man special case.** In the same getters a Hit man (type 9) returns a fixed 20 damage after a time check against unit field +0D0h (probably: not disguised / recently revealed); otherwise the table's 161–162. Decode the check and model it with the disguise (§5).
+- [x] **Hit man special case.** (Done: `Unit.ExposedHitmanDamage` in `CanAttack.RollDamage`, with the disguise / 30-hour rule.) In the same getters a Hit man (type 9) returns a fixed 20 damage after a time check against unit field +0D0h (probably: not disguised / recently revealed); otherwise the table's 161–162. Decode the check and model it with the disguise (§5).
 - [x] **ALLIANCE is mutual.** Done: `CampaignManager` sets both directions. The loader calls `a->SetRelation(b, 2)` and `b->SetRelation(a, 2)` (0x467714 / 0x467721). `CampaignManager.InitAlliancesFromScenario` sets only `from → to`; set both directions. (The projectinfo spec calls it one-way — the EXE says otherwise.)
-- [ ] **Random personal names.** `Unit::Unit` names every unit except the Collector with `fnGetRandomParameters(world, 1, player)` (0x42A27E); the Collector gets text 1Dh/0Dh. Find the name list and give spawned units a personal name (episode names still override via unit vtable +178h `SetName`).
-- [ ] **Unit HP field.** The unit stores its current HP at +20h (set to MaxHP at creation; vtable +0F4h returns it, +1A8h sets it, +1A0h sets 0). Matches `CanBeAttacked.HP`; no change needed, recorded for reference.
+- [x] **Random personal names.** (Done: `RandomNames.Gangster()` in `CampaignManager.CreateUnit`.) `Unit::Unit` names every unit except the Collector with `fnGetRandomParameters(world, 1, player)` (0x42A27E); the Collector gets text 1Dh/0Dh. Find the name list and give spawned units a personal name (episode names still override via unit vtable +178h `SetName`).
+- [x] **Unit HP field.** The unit stores its current HP at +20h (set to MaxHP at creation; vtable +0F4h returns it, +1A8h sets it, +1A0h sets 0). Matches `CanBeAttacked.HP`; no change needed, recorded for reference.
 
 ## To remake (found in manual test, 2026-10-26)
 
