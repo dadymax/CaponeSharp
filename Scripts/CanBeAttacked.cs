@@ -33,8 +33,15 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         }
     }
 
+    /// <summary>Game minute of the last hit (-1: never).</summary>
+    public long LastHitMinute { get; private set; } = -1;
+
+    /// <summary>Hit within the last game hour (company / unit vt+11Ch, minimap blink vt+0D4h).</summary>
+    public bool RecentlyHit => LastHitMinute >= 0 && (GameClock.Instance?.Minute ?? 0) - LastHitMinute < GameClock.MinutesPerHour;
+
     public void ReceiveDamage(int damage, CanAttack attacker)
     {
+        LastHitMinute = GameClock.Instance?.Minute ?? 0;
         // Both sides count as fighting for the next game hour (unit vt+11Ch).
         (GetParent()?.GetParent() as Unit)?.MarkFighting();
         if (attacker != null && IsInstanceValid(attacker))

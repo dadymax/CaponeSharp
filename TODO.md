@@ -738,10 +738,18 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   Seen once while testing, not reproduced: after clicking an own company the panel text showed but the portrait
   box stayed black.
 
-- [ ] **Minimap (user, 2026-10-30).** The original has a minimap in the bottom-left corner of the panel (where the
-  remake now shows only the dollar-pyramid background, about x 10..210, y 390..590). To do: find its draw code in
-  the EXE (panel draw near sub_40A245 / sub_40A997; colours per tile class and owner, the view rectangle, a click
-  that moves the view) and add it.
+- [x] **Minimap (user, 2026-10-30).** The original has a minimap in the bottom-left corner of the panel (where the
+  remake now shows only the dollar-pyramid background, about x 10..210, y 390..590). Done 2026-10-31 (`Minimap`,
+  sub_40DD60): box (10, 390)..(210, 590) (dword_476BA8..B4). Map layer (sub_40E378 full scale, sub_40DF43 half
+  scale when width + height > 200), drawn once and colour-keyed over the panel: a cell = 2 pixels at its screen
+  position / (20, 10); road and pavement grey 808080, police stations blue, the rest silver C0C0C0; the right pixel
+  of an unseen cell black (a dither over the unexplored map). Live layer (sub_40EBD0 / sub_40E665): companies by
+  relation (own green, enemy red, ally yellow, nobody's blue), seen units (own green, collectors dark green, allies
+  yellow, enemies red, police cyan; a police car even unseen), anything fighting (vt+0D4h → vt+11Ch) blinks black
+  every other redraw (dword_476F50), white view rectangle. Colours from fnMainLoadBMPs (0x40FD33..). Ours redraws
+  the map layer every game hour (the EXE on a full view redraw, sub_410110 arg). A click / drag in the box moves
+  the view (not looked up in the EXE). Half scale samples every cell at half the pixel size, not exactly the EXE's
+  2×2 pick. MCP-checked on Harlem.
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
