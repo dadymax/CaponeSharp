@@ -778,7 +778,14 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 - [x] **MENU button is wrong.** Done: button = the 48×14 "Меню" images at (158,42) normal / (210,42) pressed, measured from the bitmap (EXE coordinates still not located); the drop-down shows Menu.bmp cell 0, hover shows cell i, item zones detected from the bitmap. Was: `GuiMenu` uses the whole `GAMEBUTT.bmp` and cuts it in half vertically. The button is only a small part of the bitmap: two "Меню" images side by side, normal and pressed (see `godottry/projectinfo/image-1.png`). Find the exact rectangles (Chicago.tile record or EXE coordinates) instead of guessing. Check the `Menu.bmp` cutting the same way.
 - [x] **Attack range against companies.** Done: `CanAttack.BuildingAttackRange` = 1.5 for companies. Was: Units shoot companies from their full attack range. In the original, ranged attacks only work against units; a company can only be attacked from a neighbouring tile. Ranged units must walk up to the building.
-- [ ] **Company logos are wrong.** The signs shown on companies (`companies.json` sprite names, per owner/type) don't match the original. Rebuild the mapping from Chicago.tile names (e.g. "Russian open sign", "Own protected business", "Own Bootlegging sign", "Power off … sign") and check against the original game.
+- [x] **Company logos are wrong.** The signs shown on companies (`companies.json` sprite names, per owner/type) don't match the original. Rebuild the mapping from Chicago.tile names (e.g. "Russian open sign", "Own protected business", "Own Bootlegging sign", "Power off … sign") and check against the original game.
+  Done 2026-10-31 (company draw sub_422276, HQ draw sub_415E07): nobody's → "Russian open sign" (0DC8h); legal →
+  "protected business" own / enemy / ally (70Eh / 70Fh / 70Dh); otherwise catalogue +28h first — 4 training center,
+  3 collection center, 7 the troubleshooting sign — then the type (bootlegging, entertainment, gambling,
+  troubleshooting), anything else "illegal business" (710h / 711h / 9D3h, new `Illegal` sign type). A block without
+  power shows the "Power off …" picture (also the HQ: 0DCCh, the second "Russian ally Hq", `@1`); the own sign
+  stands still while the company earns nothing (+0CCh). Fixed: training centers showed the troubleshooting sign.
+  Unit test `CompanySignsAreChicagoTiles`.
 - [x] **Fixed** (`CanAttack` keeps the target object and looks its health component up on each use; re-checks hostility before attacking): **`System.ObjectDisposedException: Cannot access a disposed object. Object name: 'Capone.CanBeAttacked'`** during play. Likely cause (not verified): a unit's `CanAttack.Target` still points at the `CanBeAttacked` of a company whose `CompanyCommon` was replaced by `Company.SetType` (capture) and freed, or of a dead unit. Targets need `IsInstanceValid` checks and must be cleared when the component is replaced.
 
 ## Known issues (carried over)

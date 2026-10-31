@@ -11,7 +11,7 @@ namespace Capone;
 public partial class CompanyCommon : Node
 {
     /// <summary>Sign type (which sign the building shows). Keys of companies.json.</summary>
-    public enum CompanyType { Free, HQ, Occupied, Bootlegging, Entertainment, Gambling, Troubleshooting, SupportFire, SupportMoney, SupportTraining, NonInteractive }
+    public enum CompanyType { Free, HQ, Occupied, Bootlegging, Entertainment, Gambling, Troubleshooting, SupportFire, SupportMoney, SupportTraining, NonInteractive, Illegal }
     /// <summary>Owner relative to the local player; selects the sign animation.</summary>
     public enum CompanyOwner { Neutral, Player, Teammate, Enemy, Disabled }
 

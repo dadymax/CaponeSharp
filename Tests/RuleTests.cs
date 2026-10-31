@@ -129,6 +129,21 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void CompanySignsAreChicagoTiles()
+    {
+        // sub_422276: every sign in companies.json is a Chicago.tile picture (0DC8h, 70Dh–711h, 9D3h, 0D87h–0DACh).
+        var json = Json.ParseString(FileAccess.GetFileAsString("res://Buildings/companies.json")).AsGodotDictionary();
+        foreach (var (type, entry) in json)
+        {
+            var sprites = entry.AsGodotDictionary();
+            if (!sprites.ContainsKey("Sprites"))
+                continue;
+            foreach (var (owner, name) in sprites["Sprites"].AsGodotDictionary())
+                Assert.True(OriginalData.Instance.Tiles.ResolveTile(name.AsString()) != null, $"{type}/{owner}: '{name}'");
+        }
+    }
+
+    [UnitTest]
     public static void BuildingPortraitsAreBlockInfPictures()
     {
         // sub_422158 / sub_415258 / sub_429D30: every portrait is one of BLOCKINF.BMP's 84 x 95 "info" tiles.

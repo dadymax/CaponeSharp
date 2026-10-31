@@ -10,7 +10,7 @@
 			"Player": "Russian own Hq",
 			"Teammate": "Russian ally Hq",
 			"Enemy": "Russian enemy Hq",
-			"Disabled": "Russian ally Hq"
+			"Disabled": "Russian ally Hq@1"
 		}
 	},
 	"Occupied": {
@@ -77,7 +77,15 @@
 			"Disabled": "Power off training center sign"
 		}
 	},
-	"NonInteractive": {
+	"Illegal": {
+    "Sprites": {
+      "Player": "Own illegal business",
+      "Teammate": "Ally illegal business",
+      "Enemy": "Enemy illegal business",
+      "Disabled": "Power off $ sign"
+    }
+  },
+  "NonInteractive": {
 		"isInteractive": false,
 		"Sprites": {
 

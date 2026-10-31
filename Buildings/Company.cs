@@ -207,6 +207,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if (!IsInstanceValid(this))
             return;
         CachedIncomeEnabled = Block?.IncomeEnabledFor(OwnerTeam) ?? true;
+        RefreshSignState();
         if ((OwnerTeam == null || BusinessType == OriginalBusinessTable.BusinessType.Legal) && Hp < MaxHp)
             Heal(HealPerHour);
         clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
@@ -655,22 +656,32 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
             };
     }
 
-    /// <summary>Sign type from catalogue type and ownership (see TODO "company logos").</summary>
+    /// <summary>
+    /// Company draw sub_422276: nobody's → "Russian open sign" (0DC8h); a legal row → "protected business" (70Dh–70Fh);
+    /// otherwise catalogue +28h first — 4 training center (0D95h…), 3 collection center (0D99h…), 7 the troubleshooting
+    /// sign (0DA9h…) — then the type: bootlegging 0DA5h…, entertainment 0DA1h…, gambling 0D9Dh…, troubleshooting
+    /// 0DA9h…, anything else "illegal business" (710h / 711h / 9D3h). In a block without power (vt+18Ch) the
+    /// "Power off …" picture; the own company's sign stands still while it earns nothing (+0CCh).
+    /// </summary>
     private void UpdateSign()
     {
         SignType = IsHq ? CompanyCommon.CompanyType.HQ
             : Entry == null ? SignType
-            : Entry.Type switch
+            : Entry.Type == OriginalBusinessTable.BusinessType.Legal
+                ? OwnerTeam == null ? CompanyCommon.CompanyType.Free : CompanyCommon.CompanyType.Occupied
+            : Entry.Value28 switch
             {
-                OriginalBusinessTable.BusinessType.Legal => OwnerTeam == null
-                    ? CompanyCommon.CompanyType.Free : CompanyCommon.CompanyType.Occupied,
-                OriginalBusinessTable.BusinessType.Bootlegging => CompanyCommon.CompanyType.Bootlegging,
-                OriginalBusinessTable.BusinessType.Entertainment => CompanyCommon.CompanyType.Entertainment,
-                OriginalBusinessTable.BusinessType.Gambling => CompanyCommon.CompanyType.Gambling,
-                OriginalBusinessTable.BusinessType.Troubleshooting => CompanyCommon.CompanyType.Troubleshooting,
-                OriginalBusinessTable.BusinessType.Support => Entry.Value28 == 3
-                    ? CompanyCommon.CompanyType.SupportMoney : CompanyCommon.CompanyType.SupportFire,
-                _ => CompanyCommon.CompanyType.Occupied,
+                4 => CompanyCommon.CompanyType.SupportTraining,
+                3 => CompanyCommon.CompanyType.SupportMoney,
+                7 => CompanyCommon.CompanyType.SupportFire,
+                _ => Entry.Type switch
+                {
+                    OriginalBusinessTable.BusinessType.Bootlegging => CompanyCommon.CompanyType.Bootlegging,
+                    OriginalBusinessTable.BusinessType.Entertainment => CompanyCommon.CompanyType.Entertainment,
+                    OriginalBusinessTable.BusinessType.Gambling => CompanyCommon.CompanyType.Gambling,
+                    OriginalBusinessTable.BusinessType.Troubleshooting => CompanyCommon.CompanyType.Troubleshooting,
+                    _ => CompanyCommon.CompanyType.Illegal,
+                },
             };
         if (InFog)
         {
@@ -736,9 +747,32 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if (!_company.IsInteractive)
             return;
         _company.FillSpriteFrames(_animation.SpriteFrames);
-        var animName = CompanyCommon.SpriteFrameNamesDict[CompanyOwner];
-        if (_animation.SpriteFrames.HasAnimation(animName))
-            _animation.Play(animName);
+        // No power in the block: the "Power off" picture (nobody's companies keep the open sign).
+        _shownPowered = Block?.IsActive ?? true;
+        _shownEarning = CachedIncomeEnabled;
+        var owner = !_shownPowered && OwnerTeam != null ? CompanyCommon.CompanyOwner.Disabled : CompanyOwner;
+        var animName = CompanyCommon.SpriteFrameNamesDict[owner];
+        if (!_animation.SpriteFrames.HasAnimation(animName))
+            return;
+        if (owner == CompanyCommon.CompanyOwner.Player && !_shownEarning)
+        {
+            _animation.Animation = animName; // standing still while it earns nothing
+            _animation.Frame = 0;
+            return;
+        }
+        _animation.Play(animName);
+    }
+
+    private bool _shownPowered = true;
+    private bool _shownEarning = true;
+
+    /// <summary>Redraws the sign when the block's power or the company's earning changed (checked hourly).</summary>
+    private void RefreshSignState()
+    {
+        if (_signPending || InFog)
+            return;
+        if (_shownPowered != (Block?.IsActive ?? true) || _shownEarning != CachedIncomeEnabled)
+            Reinit();
     }
 
     public override string ToString() =>
