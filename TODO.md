@@ -66,6 +66,9 @@ code (base squad) get random personal names like `Unit::Unit`.
   episode = max, `fnWriteConfig`; music `sub_408BE2(0 win / 4 loss)`, sound 24/25; end screen `sub_43CAB5`:
   GameWin/GAMEOVER.bmp, button sheet GameWinB/GameOvBu (283×42 "Back to menu" at 259, 527: row 0 hover, row 1 normal;
   rows 2–4 = tabs Income/Money/People), animation GameWinA/GameOvAn.
+  Animation done 2026-10-31 (sub_43CCD0): GameWinA 100 × 100 frames at one of three random places (0x48D4D4), frames
+  0–5 every 250 ms (columns 0,1,2,4,4,5), restarting at random; GameOvAn 30 × 40 frames looping at (750, 470).
+  Still open: the end-screen music.
 - Statistics chart (done 2026-10-29): `Statistics` (sub_460B36 / sub_460BE4) samples every player's weekly net
   income, cash and gangsters every 30 game hours (the original: 30 s of real time) into 31 averaged slots that are
   halved when full; `EndScreen` draws it like sub_43CCD0 with the Income / Money / People tabs (sub_43DB50). The result

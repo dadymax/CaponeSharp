@@ -191,7 +191,10 @@ public partial class BriefingScreen : Control
 /// <item>The message log at the top left (x 5, y 5 + 16n, font 3, width 700; messages go after 15 s, sub_43C6E0)
 /// shows the result text (message kinds 2 / 3 are drawn red).</item>
 /// </list>
-/// TODO: GameWinA / GameOvAn animation, music.
+/// Animation (sub_43CCD0, bitmap +8 loaded by sub_43CAB5): won — GameWinA.bmp, 100 × 100 frames; when none plays, at
+/// random (GetTickCount % 10 > 3) one of three places (table 0x48D4D4: (599,420), (559,340), (548,410)) starts and
+/// shows row place, frames 0–5 every 250 ms (columns 0, 1, 2, 4, 4, 5), then hides; lost — GameOvAn.bmp, 30 × 40
+/// frames at (750, 470), cycling 0–5 every 250 ms. TODO: music.
 /// </summary>
 public partial class EndScreen : Control
 {
@@ -235,6 +238,9 @@ public partial class EndScreen : Control
         _shownAt = Time.GetTicksMsec();
         _background = ScreenPictures.Load(_won ? "GAMEWIN.BMP" : "GAMEOVER.BMP");
         _buttons = ScreenPictures.Load(_won ? "GAMEWINB.BMP" : "GAMEOVBU.BMP");
+        _animation = ScreenPictures.Load(_won ? "GAMEWINA.BMP" : "GAMEOVAN.BMP");
+        _animPlace = _won ? -1 : 0;
+        _animTick = Time.GetTicksMsec();
         if (_buttons != null)
             AddChild(ScreenPictures.Button(new Vector2(259, 527), ScreenPictures.Part(_buttons, 0, 42, 283, 42),
                 ScreenPictures.Part(_buttons, 0, 0, 283, 42), null, () => Closed?.Invoke()));
@@ -242,11 +248,63 @@ public partial class EndScreen : Control
 
     private bool MessageShown => Time.GetTicksMsec() - _shownAt < MessageSeconds * 1000;
 
+    private static readonly Vector2[] WinPlaces = { new(599, 420), new(559, 340), new(548, 410) };
+    private Texture2D _animation;
+    private int _animPlace = -1; // +18h: won — the place (-1 none); lost — 0
+    private int _animFrame;      // +14h
+    private ulong _animTick;     // +1Ch
+
+    /// <summary>sub_43CCD0's animation step, on real time.</summary>
+    private void StepAnimation()
+    {
+        if (_animation == null)
+            return;
+        var now = Time.GetTicksMsec();
+        if (_won && _animPlace < 0)
+        {
+            if (now % 10 <= 3)
+                return;
+            _animPlace = (int)(now % 3);
+            _animFrame = 0;
+            _animTick = now;
+            QueueRedraw();
+            return;
+        }
+        if (now <= _animTick + 250)
+            return;
+        _animTick = now;
+        if (++_animFrame > 5)
+        {
+            if (_won)
+                _animPlace = -1;
+            else
+                _animFrame = 0;
+        }
+        QueueRedraw();
+    }
+
+    private void DrawAnimation()
+    {
+        if (_animation == null)
+            return;
+        if (_won)
+        {
+            if (_animPlace < 0 || _animFrame > 5)
+                return;
+            var column = _animFrame == 3 ? 4 : _animFrame;
+            DrawTextureRectRegion(_animation, new Rect2(WinPlaces[_animPlace], new Vector2(100, 100)),
+                new Rect2(column * 100, _animPlace * 100, 100, 100));
+        }
+        else
+            DrawTextureRectRegion(_animation, new Rect2(750, 470, 30, 40), new Rect2(_animFrame * 30, 0, 30, 40));
+    }
+
     private bool _messageDrawn;
 
     /// <summary>Real time (the game may still run fast): the message log drops the text after 15 s.</summary>
     public override void _Process(double delta)
     {
+        StepAnimation();
         if (_messageDrawn && !MessageShown)
         {
             _messageDrawn = false;
@@ -344,6 +402,7 @@ public partial class EndScreen : Control
                 OriginalFonts.DrawScreen(this, lines[i], 5, 5 + 16 * i, 700, 3, 1);
         }
         DrawChart();
+        DrawAnimation();
     }
 
     private void DrawChart()
