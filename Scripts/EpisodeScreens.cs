@@ -55,7 +55,19 @@ internal static class ScreenPictures
             ProcessMode = Node.ProcessModeEnum.Always,
         };
         button.Pressed += click;
+        HookScreenSounds(button);
         return button;
+    }
+
+    /// <summary>
+    /// Buttons of the screens (menu, briefing, end): the screens' sound set (table 0x477A1C, sub_41D255(2)) — id 0
+    /// ButtonClick.wav on a click (sub_4092A4, fnCall0x1C_3), id 9 OverButton.wav when the mouse comes over it
+    /// (sub_409380 for the main menu, sub_407760 for a screen's single button).
+    /// </summary>
+    public static void HookScreenSounds(BaseButton button)
+    {
+        button.ButtonDown += () => Sound.Play("ButtonClick.wav");
+        button.MouseEntered += () => Sound.Play("OverButton.wav");
     }
 
     public static string[] Lines(string text) =>
@@ -88,6 +100,8 @@ public partial class MainMenuScreen : Control
         ProcessMode = ProcessModeEnum.Always;
         SetAnchorsPreset(LayoutPreset.FullRect);
         _background = ScreenPictures.Load("MAINMENU.BMP");
+        // The window procedure plays id 0Ah of the screens' set when the main menu opens (0x41B7E0): Welcome.wav.
+        Sound.Play("Welcome.wav");
         var buttons = ScreenPictures.Load("MAINMEBU.BMP");
         if (buttons == null)
             return;

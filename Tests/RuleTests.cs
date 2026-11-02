@@ -112,6 +112,17 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void SoundTableMatchesTheExe()
+    {
+        // off_478700: sub_408A92 plays by index.
+        Assert.Equal("Click.wav", Sound.FileOf(0), "id 0");
+        Assert.Equal("OutOfFunds.wav", Sound.FileOf(0x18), "id 18h (Spend refused)");
+        Assert.Equal("ThugIdle1.wav", Sound.FileOf(0xC5), "id C5h (Thug idle)");
+        Assert.Equal("SniperIdle5.wav", Sound.FileOf(0xA5), "id A5h");
+        Assert.True(Sound.FileOf(0x19) == null, "id 19h is an empty slot");
+    }
+
+    [UnitTest]
     public static void CursorsComeFromTheExeResources()
     {
         // fnLegalCrimeMainWindowMain: LoadCursor ArrowCur / GotoCur / AttackCu / ProtectCu (PE cursor groups).

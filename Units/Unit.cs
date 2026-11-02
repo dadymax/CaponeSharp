@@ -292,6 +292,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         Map = (GetParent() as Main)?.Map ?? MapTileMath.Tilemap;
 
         _as2d = FindChild("Animation") as AnimatedSprite2D;
+        if (_as2d != null)
+            _as2d.AnimationLooped += OnAnimationLooped;
         _shape = FindChild("Shape") as CollisionShape2D;
 
         // Scene sub-resources are shared between instances; give each unit its own copy.
@@ -403,6 +405,43 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     }
 
     private long _attackPoseUntil = -1;
+
+    // ---- idle chatter (unit animation step vt+150h sub_42E660) -------------------------------------------------------
+
+    /// <summary>sub_408BB2: one countdown shared by all units; fires and restarts at GetTickCount % 100.</summary>
+    private static int _chatterCountdown;
+    private int _idleCount; // +0DCh
+
+    /// <summary>Idle voice bases per unit type (sub_42E660 switch; others use the Thug's), five voices each.</summary>
+    private static int IdleVoiceBase(UnitCommon.UnitType type) => type switch
+    {
+        UnitCommon.UnitType.Pistol => 0x80,
+        UnitCommon.UnitType.Thompson => 0xB9,
+        UnitCommon.UnitType.Terrorist => 0x60,
+        UnitCommon.UnitType.Sniper => 0xA1,
+        UnitCommon.UnitType.Shotgun => 0x95,
+        UnitCommon.UnitType.Hitman => 0x74,
+        UnitCommon.UnitType.Thief => 0xAD,
+        _ => 0xC5,
+    };
+
+    /// <summary>
+    /// Each time a standing unit's idle animation comes round, the shared countdown ticks; when it fires the unit's
+    /// counter grows, and an own unit past 15 says one of its five idle lines (GetTickCount % 5).
+    /// </summary>
+    private void OnAnimationLooped()
+    {
+        if (IsDead || _as2d.Animation != OriginalUnitSprites.IdleName)
+            return;
+        if (--_chatterCountdown >= 1)
+            return;
+        _chatterCountdown = (int)(Time.GetTicksMsec() % 100);
+        _idleCount++;
+        if (OwnerTeam?.IsCurrentPlayerColor != true || _idleCount <= 15)
+            return;
+        _idleCount = 0;
+        Sound.PlayId(IdleVoiceBase(UnitType) + (int)(Time.GetTicksMsec() % 5));
+    }
 
     #endregion
 

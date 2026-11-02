@@ -88,6 +88,7 @@ public partial class ActionBar : Control
 
     public static ActionBar Instance { get; private set; }
 
+
     /// <summary>Key shortcut (sub_410EC3): presses slot <paramref name="slot"/> if it is shown. Returns whether it was.</summary>
     public bool Press(int slot)
     {

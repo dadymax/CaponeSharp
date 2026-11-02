@@ -74,6 +74,35 @@ public static class Sound
 
     public static string RandomOf(string[] files) => files[GD.RandRange(0, files.Length - 1)];
 
+    /// <summary>The game's sound table (off_478700, 205 entries; sub_408A92 plays by index). Null for empty slots.</summary>
+    public const uint TableAddress = 0x478700;
+    public const int TableSize = 205;
+    private static string[] _table;
+
+    public static string FileOf(int id)
+    {
+        if (_table == null)
+        {
+            _table = new string[TableSize];
+            var exe = OriginalExe.Instance;
+            if (exe.IsLoaded)
+                for (var i = 0; i < TableSize; i++)
+                {
+                    var p = exe.ReadU32(TableAddress + (uint)(i * 4));
+                    _table[i] = p != 0 && exe.IsValidAddress(p) ? exe.ReadCString(p) : null;
+                }
+        }
+        return id >= 0 && id < TableSize ? _table[id] : null;
+    }
+
+    /// <summary>sub_408A92(id): plays entry <paramref name="id"/> of the sound table (nothing for an empty slot).</summary>
+    public static void PlayId(int id)
+    {
+        var file = FileOf(id);
+        if (!string.IsNullOrEmpty(file))
+            Play(file);
+    }
+
     public static void Play(string file)
     {
         if (!Enabled || DisplayServer.GetName() == "headless")

@@ -826,6 +826,15 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [x] ~~Group (rectangle) select~~: fixed in the C# port.
 - [x] ~~PICS dir check with `res://L:/…`~~: not present in the C# port.
 
+- [x] **Sounds (2026-11-02).** `Sound.PlayId` plays by the EXE's table (off_478700). Idle chatter (unit step
+  sub_42E660): each idle-animation round ticks a countdown shared by all units (sub_408BB2, restarts at
+  GetTickCount % 100); when it fires the unit's counter (+0DCh) grows, and an own unit past 15 says one of five idle
+  lines from its type's base (Pistol 80h, Thompson B9h, Terrorist 60h, Sniper A1h, Shotgun 95h, Hit man 74h, Thief
+  ADh, others the Thug's C5h; GetTickCount % 5). Screens use the second set (0x477A1C): Welcome.wav when the main
+  menu opens (0x41B7E0), ButtonClick.wav on a screen button press, OverButton.wav on hover (sub_409380 /
+  sub_407760). No sound was found for the in-game panel buttons. Network-game sounds (NewGame / NewGamer) skipped.
+  Unit test `SoundTableMatchesTheExe`.
+
 ## Playtest (user, 2026-11-02)
 
 - [x] **Campaign select: Up / Down buttons do nothing.** On the briefing (campaign select) screen the Up and Down
