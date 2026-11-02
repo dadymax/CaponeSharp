@@ -106,8 +106,10 @@ code (base squad) get random personal names like `Unit::Unit`.
   game hour until full (so the menu figure overstates the real cost 5×, as in the original); the panel bar runs to
   now + missing HP × 12 min. `Company.StartRepair`, `ActionBar` slot 6. MCP-tested 300 → 500 HP.
 - Done later: training center (`Training.IsTrainingCenter`), raids / demolition / brownout on other players'
-  companies (M8), the tooltip line (`PanelInfo.StatusText`). Open: freezing (`Company.Frozen` exists but nothing sets
-  it yet — find what freezes a company in the EXE), button hover animation (12 frames).
+  companies (M8), the tooltip line (`PanelInfo.StatusText`). "Freezing" is not a rule: company +0C4h (thought to
+  be a frozen flag) is the running job (setter vt+9Ch sub_4239A0, getter vt+0A0h sub_4239C0; the menu sub_421370 opens
+  only while it is 0; event case 13 cancels a job of type 16h) — `Company.Busy`. The dead `Frozen` flag is removed.
+  Open: button hover animation (12 frames).
 
 ## Recruiting — R9/M9 (2026-10-27)
 

@@ -74,8 +74,6 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     public bool CachedIncomeEnabled { get; private set; } = true;
     /// <summary>+0BCh: income percentage, reset to 100 every week.</summary>
     public int Percent { get; set; } = 100;
-    /// <summary>+0C4h: frozen businesses earn nothing.</summary>
-    public bool Frozen { get; set; }
 
     private CompanyCommon _company;
     private AnimatedSprite2D _animation;
@@ -231,7 +229,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if (Entry.Income > 0)
         {
             // vt+0A0h: nothing is earned while a job (conversion sub_427050, repair sub_4289E8) runs here.
-            if ((Block?.IsActive ?? true) && !Frozen && !Busy && CachedIncomeEnabled)
+            if ((Block?.IsActive ?? true) && !Busy && CachedIncomeEnabled)
                 Uncollected += Income() / IncomeTicksPerWeek;
         }
         else

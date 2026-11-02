@@ -334,7 +334,7 @@ public partial class Organisation
                 if (node is not Company company || company.OwnerTeam != Team || !company.IsEconomic)
                     continue;
                 // sub_430C30: only companies with income enabled (+0CCh), an active block and no job running (vt+0A0h).
-                if (!company.CachedIncomeEnabled || company.Block is { IsActive: false } || company.Frozen || company.Busy)
+                if (!company.CachedIncomeEnabled || company.Block is { IsActive: false } || company.Busy)
                     continue;
                 var income = company.Income();
                 net += income;
