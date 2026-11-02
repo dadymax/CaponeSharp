@@ -434,9 +434,9 @@ Everything below is read from the original files at runtime; `--smoke-test` chec
 
 Still open from this part:
 - [ ] Unit types 6 and 11 are identified by sprites only (police car / "Police Batman"); 10–12 share identical filler stats (cost 150000, no damage) — real Thief/Godfather/police behaviour is code, not table data.
-- [ ] Unknown table fields: +0x00 float, +0x1C second price, +0x24 (600/1050/1200, probably training time), +0x26 (2 = area attack), +0x28 (Thompson 50), +0x2E (Shotgun 300), +0x30 (Thompson 1).
+- [x] Unit table fields (checked 2026-11-02 by every direct read of 0x484030..0x484060): +00h fire rate, +26h attack kind, +28h stray chance, +2Eh reload minutes, +30h fires from a car, +24h training minutes (sub_427505) are all used. +10h/+12h are 0 in every row (padding). +1Ch is never read directly; it equals +20h except the police car (400 000 / 375 000) and the Collector (15 000 / 5 000) — probably a list price for the menu; +20h is the unit value / weekly salary (Unit::Unit sub_42A150 copies it to +0A0h).
 - [x] Game clock (R1): game time is in **minutes**; 60-minute turns, at most one per 1000 ms → 1 game hour = 1 real second at speed 1 (`GameClock`, scheduler like World::Schedule `sub_43AF10` / `sub_43ABD0`). Unit speed = tile length × 60 / TicksPerTile per second. `GameClock.Speed` (cmd `--speed=N`, keys `-`/`=`) speeds everything up for tests.
-- [ ] Attack rate and army favour are still from `units.json` (handheld data); find them in the EXE.
+- [x] Attack rate comes from the EXE table (`CanAttack`: fire rate +00h, reload +2Eh); army favour from the services table 0x488268 (`Training.ServicePoints`). `ArmyFavor` in units.json is no longer used.
 - [ ] Thief walk frames and the Terrorist attack frames are not named in Chicago.tile (idle/walk used as fallback). The EXE's per-type animation tile table is not located yet.
 - [ ] UNIT flags: A = 0 clears the unit's value (vtable+0x174), B → vtable+0x1EC (stationary guard?). Stored on `Unit.EpiFlagA/B`, not used.
 - [x] VCOND 7 (sub_463BC3): a living unit of the player of the type (13 = any) within the radius of the cell;
