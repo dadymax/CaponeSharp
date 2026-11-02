@@ -45,8 +45,8 @@ Still to do from this brick:
   own company: Income y 437, Uncollected y 455 (not support), Market share y 470 (types 1–4); own unit: Salary y 437
   (if ≠ 0), Collector/Thief "Money carried" y 455; others: "Owner: %s" y 437 (yellow ally, red otherwise).
   HP bar: black 233..318 × 493..502, fill from 235, 81 px at 100 %, green > 50 %, yellow > 25 %, red.
-- Open: action buttons and recruit progress bars (rects at 0x476BC8: 546..680 × 447..553, Blood.bmp source),
-  the "Expenses" chart (green bars per business type, vt+C0h), the text 5,31/5,32 meaning (enemy/ally HQ).
+- Done later: action buttons (`ActionBar`), recruit progress bars (blood bar, M9), the "Expenses" chart (`SharesPanel`).
+  Open: the text 5,31/5,32 meaning (enemy/ally HQ).
 
 Also fixed: a win now pauses the scene tree (units acted in physics frames after the clock stopped); units created in
 code (base squad) get random personal names like `Unit::Unit`.
@@ -105,9 +105,9 @@ code (base squad) get random personal names like `Unit::Unit`.
   (sub_422F13) = price / max HP × 0.5 (integer division first); the job heals 5 HP (vt+ECh) and pays one vt+160h per
   game hour until full (so the menu figure overstates the real cost 5×, as in the original); the panel bar runs to
   now + missing HP × 12 min. `Company.StartRepair`, `ActionBar` slot 6. MCP-tested 300 → 500 HP.
-- Open: training center (case 12), raids/demolition/brownout on other players' companies
-  (items 14h/18h/1Dh, 26h/2Bh/2Fh/32h…), freezing, the original tooltip line (texts probably go to the message bar),
-  button hover animation (12 frames).
+- Done later: training center (`Training.IsTrainingCenter`), raids / demolition / brownout on other players'
+  companies (M8), the tooltip line (`PanelInfo.StatusText`). Open: freezing (`Company.Frozen` exists but nothing sets
+  it yet — find what freezes a company in the EXE), button hover animation (12 frames).
 
 ## Recruiting — R9/M9 (2026-10-27)
 
