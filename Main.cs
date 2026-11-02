@@ -51,6 +51,7 @@ public partial class Main : Node2D
 
 	/// <summary>Episode (1-based) to start after a scene reload by the end screen; 0 = none.</summary>
 	public static int PendingEpisode;
+	private static bool _backToMenu;
 
 	/// <summary>
 	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
@@ -88,6 +89,13 @@ public partial class Main : Node2D
 					episode = n;
 		var skipBriefing = System.Array.IndexOf(args, "--skip-briefing") >= 0;
 		PendingEpisode = 0;
+		if (_backToMenu)
+		{
+			// Left the episode from the menu: the main menu, whatever the command line asked for.
+			_backToMenu = false;
+			skipBriefing = false;
+			episode = CampaignProgress.Current;
+		}
 		var scenarioTest = ScenarioTest.Requested(args);
 		if (scenarioTest)
 		{
@@ -248,11 +256,13 @@ public partial class Main : Node2D
 	}
 
 	/// <summary>The info window (InfoWindow, sub_447CB0) over the game, on the GUI layer.</summary>
-	public InfoWindow ShowInfoWindow(string title, string text, System.Action closed)
+	public InfoWindow ShowInfoWindow(string title, string text, System.Action closed) =>
+		ShowInfoWindow(new InfoWindow(title, text), closed);
+
+	public InfoWindow ShowInfoWindow(InfoWindow window, System.Action closed)
 	{
 		var layer = new CanvasLayer { Name = "InfoLayer", Layer = 5, ProcessMode = ProcessModeEnum.Always };
 		AddChild(layer);
-		var window = new InfoWindow(title, text);
 		window.Closed += () =>
 		{
 			layer.QueueFree();
@@ -445,6 +455,28 @@ public partial class Main : Node2D
 		GuiGameback.UpdateSelectionIcon(units[0]);
 		UnitVoice.Play(units[0], UnitVoice.Kind.Select);
 		return true;
+	}
+
+	/// <summary>
+	/// Menu "Exit" (sub_411F84 → info window mode 2): "Покинуть игру" (5,82) / "Покинуть игру" (5,83) and
+	/// "** Вы уверены? **" (5,84) on line 4; OK leaves the episode for the main menu, "Вернуться" goes back.
+	/// </summary>
+	public void ConfirmLeave()
+	{
+		if (GetTree().Root.FindChild("InfoWindow", true, false) != null)
+			return;
+		var t = OriginalTexts.Instance;
+		var window = new InfoWindow(t.Get(5, 82), new[] { t.Get(5, 83), "", "", "", t.Get(5, 84) }, 2);
+		window.Answered += ok =>
+		{
+			if (!ok)
+				return;
+			PendingEpisode = 0;
+			_backToMenu = true;
+			GetTree().Paused = false;
+			GetTree().CallDeferred(SceneTree.MethodName.ReloadCurrentScene);
+		};
+		ShowInfoWindow(window, null);
 	}
 
 	/// <summary>Test hook: a left click on the map at a screen point.</summary>

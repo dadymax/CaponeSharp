@@ -835,6 +835,12 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   sub_407760). No sound was found for the in-game panel buttons. Network-game sounds (NewGame / NewGamer) skipped.
   Unit test `SoundTableMatchesTheExe`.
 
+- [x] **Menu: Exit asks first (2026-11-02).** sub_411F84 opens the info window in mode 2: title "Покинуть игру"
+  (5,82), lines 0 "Покинуть игру" (5,83) and 4 "** Вы уверены? **" (5,84), buttons OK (7,1) / "Вернуться" (7,2)
+  from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
+  longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
+  statistics, money transfer (MoneyWin), reroll.
+
 ## Playtest (user, 2026-11-02)
 
 - [x] **Campaign select: Up / Down buttons do nothing.** On the briefing (campaign select) screen the Up and Down

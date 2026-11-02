@@ -193,8 +193,8 @@ public partial class GuiMenu : Control
                 break;
             case "reroll": GD.Print("GuiMenu: Reroll — stub"); break;
             case "exit":
-                GD.Print("GuiMenu: Exit");
-                GetTree().Quit();
+                // Asks first (info window mode 2); OK leaves the episode for the main menu.
+                Main.Instance?.ConfirmLeave();
                 break;
         }
     }
