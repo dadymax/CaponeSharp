@@ -52,6 +52,9 @@ public partial class Main : Node2D
 	/// <summary>Episode (1-based) to start after a scene reload by the end screen; 0 = none.</summary>
 	public static int PendingEpisode;
 	private static bool _backToMenu;
+	/// <summary>Menu "Переиграть": the episode to start again at once (no briefing).</summary>
+	private static int _restartEpisode;
+	private int _episode;
 
 	/// <summary>
 	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
@@ -102,6 +105,12 @@ public partial class Main : Node2D
 			_backToMenu = false;
 			skipBriefing = false;
 			episode = CampaignProgress.Current;
+		}
+		if (_restartEpisode > 0)
+		{
+			episode = _restartEpisode;
+			skipBriefing = true;
+			_restartEpisode = 0;
 		}
 		var scenarioTest = ScenarioTest.Requested(args);
 		if (scenarioTest)
@@ -220,6 +229,7 @@ public partial class Main : Node2D
 
 	private void StartEpisode(int episode)
 	{
+		_episode = episode;
 		var campaignManager = _campaignManager;
 		var scenario = campaignManager.StartScenario(this, episode - 1);
 		if (scenario == null)
@@ -476,10 +486,12 @@ public partial class Main : Node2D
 	}
 
 	/// <summary>
-	/// Menu "Exit" (sub_411F84 → info window mode 2): "Покинуть игру" (5,82) / "Покинуть игру" (5,83) and
+	/// Menu "Exit" (sub_411F84 → info window mode 2, action 5): "Покинуть игру" (5,82) / "Покинуть игру" (5,83) and
 	/// "** Вы уверены? **" (5,84) on line 4; OK leaves the episode for the main menu, "Вернуться" goes back.
+	/// Menu "Переиграть" (single player only, sub_414DA0 = 0) opens the same window with action 8: OK ends the
+	/// game (sub_419D00), shows "loading" (9,43) and starts the same episode again (sub_43A5A7) without the briefing.
 	/// </summary>
-	public void ConfirmLeave()
+	public void ConfirmLeave(bool restart = false)
 	{
 		if (GetTree().Root.FindChild("InfoWindow", true, false) != null)
 			return;
@@ -490,7 +502,10 @@ public partial class Main : Node2D
 			if (!ok)
 				return;
 			PendingEpisode = 0;
-			_backToMenu = true;
+			if (restart && _episode > 0)
+				_restartEpisode = _episode;
+			else
+				_backToMenu = true;
 			GetTree().Paused = false;
 			GetTree().CallDeferred(SceneTree.MethodName.ReloadCurrentScene);
 		};

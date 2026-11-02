@@ -195,7 +195,10 @@ public partial class GuiMenu : Control
                 else if (CampaignManager.Instance?.CurrentScenario is { } scenario)
                     Main.Instance?.ShowInfoWindow(OriginalTexts.Instance.Get(5, 85), scenario.TipText, null);
                 break;
-            case "reroll": GD.Print("GuiMenu: Reroll — stub"); break;
+            case "reroll":
+                // Action 8: the exit confirmation, then the same episode again.
+                Main.Instance?.ConfirmLeave(restart: true);
+                break;
             case "exit":
                 // Asks first (info window mode 2); OK leaves the episode for the main menu.
                 Main.Instance?.ConfirmLeave();

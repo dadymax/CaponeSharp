@@ -839,7 +839,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (5,82), lines 0 "Покинуть игру" (5,83) and 4 "** Вы уверены? **" (5,84), buttons OK (7,1) / "Вернуться" (7,2)
   from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
   longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
-  money transfer (MoneyWin), reroll (statistics done 2026-11-02, below).
+  money transfer (MoneyWin) (statistics and reroll done 2026-11-02, below).
   Fixed with it: the game clock is an autoload, so after leaving an episode (or after the end screen) its timed
   events ran on in the menu — the left player was "eliminated" and a defeat window opened over the main menu. The
   main scene now resets and pauses the clock when it starts; starting a scenario runs it again.
@@ -854,6 +854,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (vt+1CCh ≠ 0). Computed once on opening; a second menu select does nothing while it is open. "Вернуться"
   (350, 468)–(450, 493) shows (0, 400, 100, 25) under the mouse (OverButton on entering) and closes on a click
   (ButtonClick); Escape / Enter close it too (remake convenience). `RankWindow`, unit test `RankPlacesFollowTheExe`.
+
+- [x] **Menu: Переиграть (2026-11-02).** The menu items in sub_411F84 by rectangle (0x476C48..0x476CB4, x 5..96):
+  y 18 alliances, 33 messages, 48 statistics, 63 money, 78 tips, 93 "Переиграть", 108 exit. "Переиграть" (single
+  player only: game +186h = 0, sub_414DA0) opens the same "Покинуть игру / ** Вы уверены? **" window as Exit, but
+  with action 8 instead of 5 (main window +0D888h, sub_41EA00). On OK, fnMainWndMsgProcess case 8 ends the game
+  (sub_419D00), shows "loading" (9,43) and builds the same episode again (sub_43A5A7, episode dword_4A0E74) — no
+  briefing. `Main.ConfirmLeave(restart: true)`. Action 5 (exit) goes back to the main menu (sub_408EA0).
 
 ## Playtest (user, 2026-11-02)
 
