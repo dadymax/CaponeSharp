@@ -146,6 +146,14 @@ public partial class Main : Node2D
 			layer.QueueFree();
 			ShowMainMenu(episode);
 		};
+		screen.Switch += step =>
+		{
+			var next = Mathf.Clamp(episode + step, 1, Mathf.Min(CampaignProgress.MaxReached, scenarios.Count));
+			if (next == episode)
+				return;
+			layer.QueueFree();
+			ShowBriefing(next);
+		};
 		layer.AddChild(screen);
 	}
 

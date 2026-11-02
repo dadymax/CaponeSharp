@@ -125,6 +125,15 @@ public partial class BriefingScreen : Control
 
     public event Action Started;
     public event Action Back;
+    /// <summary>The up (+1) / down (−1) arrow of the episode bar.</summary>
+    public event Action<int> Switch;
+
+    /// <summary>
+    /// The arrows painted in ScenDisp.bmp above and below the episode bar (the scroll control at briefing +28h,
+    /// sub_4644A1 / sub_406C00; one 7-pixel step per episode): up the next episode, down the previous one, within
+    /// 1 .. the furthest reached (user).
+    /// </summary>
+    public static readonly Rect2 UpArrow = new(728, 98, 48, 25), DownArrow = new(728, 426, 48, 25);
 
     public BriefingScreen() { }
 
@@ -148,6 +157,15 @@ public partial class BriefingScreen : Control
             AddChild(ScreenPictures.Button(new Vector2(500, 523),
                 _background != null ? ScreenPictures.Part(_background, 500, 523, 200, 42) : null,
                 ScreenPictures.Part(buttons, 0, 84, 200, 42), ScreenPictures.Part(buttons, 0, 126, 200, 42), () => Back?.Invoke()));
+        }
+        foreach (var (rect, step) in new[] { (UpArrow, 1), (DownArrow, -1) })
+        {
+            var arrow = new Button { Flat = true, Position = rect.Position, Size = rect.Size, FocusMode = FocusModeEnum.None };
+            arrow.AddThemeStyleboxOverride("normal", new StyleBoxEmpty());
+            arrow.AddThemeStyleboxOverride("hover", new StyleBoxEmpty());
+            arrow.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
+            arrow.Pressed += () => Switch?.Invoke(step);
+            AddChild(arrow);
         }
     }
 

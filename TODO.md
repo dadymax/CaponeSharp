@@ -828,9 +828,11 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 ## Playtest (user, 2026-11-02)
 
-- [ ] **Campaign select: Up / Down buttons do nothing.** On the briefing (campaign select) screen the Up and Down
+- [x] **Campaign select: Up / Down buttons do nothing.** On the briefing (campaign select) screen the Up and Down
   buttons must switch the current episode between 1 and the highest unlocked one (`max_reached`: starts at 1 and
-  grows with each won episode).
+  grows with each won episode). Done 2026-11-02: the arrows painted in ScenDisp.bmp (up 728,98 / down 728,426,
+  48 × 25; the EXE's scroll control at briefing +28h, 7 px per episode) switch the briefing to the next / previous
+  episode within 1 .. `CampaignProgress.MaxReached`. MCP-checked (4 → 3 → 4, stops at 4).
 - [ ] **Takeover sound in episode 4.** The player has only four units, yet the "company taken over" sound plays
   when a computer player takes a company. Check which sound plays and whose takeovers should be heard (only the
   local player's?).
