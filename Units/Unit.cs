@@ -146,9 +146,38 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     public void SetOwner(UnitCommon.UnitOwner owner)
     {
+        var changed = owner != _unitOwner;
         _unitOwner = owner;
         if (_unitInstance != null)
             _unitInstance.OwnerType = owner;
+        // Own / ally / enemy picture sets (OWNMAN, ALLYMAN, …): reload them in place when the relation changes.
+        if (changed && _as2d?.SpriteFrames != null && _unitInstance != null)
+        {
+            var animation = _as2d.Animation;
+            var frame = _as2d.Frame;
+            var playing = _as2d.IsPlaying();
+            _unitInstance.FillSpriteFrames(_as2d.SpriteFrames);
+            if (_as2d.SpriteFrames.HasAnimation(animation))
+            {
+                _as2d.Animation = animation;
+                _as2d.Frame = Mathf.Min(frame, Mathf.Max(0, _as2d.SpriteFrames.GetFrameCount(animation) - 1));
+                if (playing)
+                    _as2d.Play(animation);
+            }
+        }
+    }
+
+    /// <summary>The local player's relation to the owner decides the picture set (after an alliance change).</summary>
+    public void RefreshOwnerRelation()
+    {
+        if (OwnerTeam == null || OwnerTeam.TeamColor == Teams.NeutralTeamColor || IsDeserter)
+            return;
+        SetOwner(Teams.GetCurrentPlayerTeam()?.GetTargetRelation(OwnerTeam.TeamColor) switch
+        {
+            Teams.TeamRelation.Self => UnitCommon.UnitOwner.Player,
+            Teams.TeamRelation.Friend => UnitCommon.UnitOwner.Teammate,
+            _ => UnitCommon.UnitOwner.Enemy,
+        });
     }
 
     /// <summary>The unit joins <paramref name="team"/> (unit vt+74h with a new owner, e.g. a bought snitch).</summary>

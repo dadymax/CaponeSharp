@@ -645,6 +645,13 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         Block?.OnCompanyAcquired(this);
     }
 
+    /// <summary>The local player's relation to the owner changed (alliances): sign colour and owner kind.</summary>
+    public void RefreshOwnerRelation()
+    {
+        UpdateOwnerRelation();
+        UpdateSign();
+    }
+
     private void UpdateOwnerRelation()
     {
         var current = Teams.GetCurrentPlayerTeam();

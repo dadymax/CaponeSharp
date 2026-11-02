@@ -180,7 +180,10 @@ public partial class GuiMenu : Control
     {
         switch (MenuItems[index])
         {
-            case "alliances": GD.Print("GuiMenu: Alliances — stub"); break;
+            case "alliances":
+                // Main window +944h: a new alliances window replaces an open one.
+                Main.Instance?.ShowAllianceWindow();
+                break;
             case "messages": GD.Print("GuiMenu: Messages — stub"); break;
             case "statistics":
                 // Main window +0A20h: opened once (a second select does nothing while it is open).

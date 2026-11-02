@@ -462,7 +462,7 @@ Still open from this part:
 - [~] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp` — done 2026-10-29 (`MainMenuScreen`, sub_408F86 / sub_4090D0, button tops from 0x47698C, x 257, 283×42; MainMeBu rows 0–4 lit, 5–9 pressed); the game opens on it, Campaign → briefing, the briefing's Back → menu (PLAN M12: buttons Campaign, Network game, Settings, Developers, Exit; build only Campaign and Exit — Network game, Settings and Developers are FUTURE, explicit user command only); new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
 - [x] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
 - [x] End screens (done; `GameRank.bmp` and `AllyWin.bmp` belong to other windows): `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
-- [ ] In-game windows for the menu stubs (tips → InfoWin, statistics → GameRank and money → MoneyWin done 2026-11-02; `MoneyWin.bmp` is the transfer to other players, not the bribe sliders): `HelpWin.bmp` (unknown use), `MessSend.bmp` (messages, multiplayer), `AllyWin.bmp` (alliances).
+- [ ] In-game windows for the menu stubs (tips → InfoWin, statistics → GameRank and money → MoneyWin done 2026-11-02; `MoneyWin.bmp` is the transfer to other players, not the bribe sliders): `HelpWin.bmp` (unknown use), `MessSend.bmp` (messages, multiplayer chat). `AllyWin.bmp` (alliances) done 2026-11-02.
 - [ ] Bottom panel, as specified in `projectinfo/gui.md`:
   - finances block
   - Recruit panel (`Recruit.bmp`)
@@ -839,7 +839,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (5,82), lines 0 "Покинуть игру" (5,83) and 4 "** Вы уверены? **" (5,84), buttons OK (7,1) / "Вернуться" (7,2)
   from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
   longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
-  (statistics, reroll and money transfer done 2026-11-02, below).
+  (statistics, reroll, money transfer and alliances done 2026-11-02, below; messages is multiplayer chat).
   Fixed with it: the game clock is an autoload, so after leaving an episode (or after the end screen) its timed
   events ran on in the menu — the left player was "eliminated" and a defeat window opened over the main menu. The
   main scene now resets and pauses the clock when it starts; starting a scenario runs it again.
@@ -871,6 +871,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   shares), messages 25,3 / 25,4 and sound 4 for the local side; nothing when refused. `MoneyWindow`, unit test
   `MoneyTransferFollowsTheExe`. The original draws the ticks of columns 2–3 off the list (y not reduced); drawn in
   place here.
+
+- [x] **Menu: Альянсы (2026-11-02).** Main window +944h: sub_45B796 builds, sub_45BA00 loads `Pics\AllyWin.bmp`
+  (key pixel (349, 397)), sub_45BA83 draws, sub_45BD30 / sub_45C0A0 / sub_45BF06 handle down / move / up. Four
+  squares: columns = the local stance, rows = theirs (player vt+0E0h: 1 not cooperating, 2 cooperating). Each
+  other player is a hand with the name below; start slots from tables 0x48E010 / 0x48E078 / 0x48E0E0 / 0x48E148
+  (13 each, cycling); a hand is dragged sideways in its row and snaps into a square (bounds 0x48E1E8, middle x 378,
+  y 329). "Изменить" posts event sub_432AA0 per player (left column 1, right 2) → vt+0DCh sets only the local
+  stance. Here the unit pictures (own / ally / enemy sets) and company signs of that player are refreshed at once
+  (`Unit.RefreshOwnerRelation`, `Company.RefreshOwnerRelation`; the original reads the relation when drawing).
+  `AllianceWindow`, unit test `AllianceSquaresFollowTheExe`. Open: whether computer players react to it.
 
 ## Playtest (user, 2026-11-02)
 

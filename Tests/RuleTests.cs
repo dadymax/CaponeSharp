@@ -98,6 +98,23 @@ public static class EconomyTests
     private static Organisation NewOrg(long funds) => new(new Team(Colors.Red) { PlayerName = "test" }, funds);
 
     [UnitTest]
+    public static void AllianceSquaresFollowTheExe()
+    {
+        // sub_45B796: row = their stance (vt+0E0h, 1 not cooperating / 2 cooperating), column = ours.
+        var me = new Team(Colors.Red) { PlayerName = "me" };
+        var ai = new Team(Colors.Blue) { PlayerName = "ai" };
+        Assert.Equal(0, AllianceWindow.SquareOf(me, ai), "nobody cooperates by default: top left");
+        me.SetTargetRelation(ai.TeamColor, Teams.TeamRelation.Friend);
+        Assert.Equal(1, AllianceWindow.SquareOf(me, ai), "only we: top right");
+        ai.SetTargetRelation(me.TeamColor, Teams.TeamRelation.Friend);
+        Assert.Equal(3, AllianceWindow.SquareOf(me, ai), "both: bottom right");
+        ai.Org = new Organisation(ai, 0);
+        AllianceWindow.Apply(me, new[] { (ai, false) });
+        Assert.Equal(Teams.TeamRelation.Enemy, me.GetTargetRelation(ai.TeamColor), "Изменить sets our stance");
+        Assert.Equal(Teams.TeamRelation.Friend, ai.GetTargetRelation(me.TeamColor), "theirs stays");
+    }
+
+    [UnitTest]
     public static void MoneyTransferFollowsTheExe()
     {
         // sub_462C13: amount = 50 000 × (slider + 1), slider 0..19; sub_4294B0: paid only when affordable (vt+70h).

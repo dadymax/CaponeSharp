@@ -289,6 +289,21 @@ public partial class Main : Node2D
 		return window;
 	}
 
+	/// <summary>The menu's alliances window (sub_45B796 / sub_45BA83) on the GUI layer.</summary>
+	public AllianceWindow ShowAllianceWindow()
+	{
+		(GetTree().Root.FindChild("AllianceWindow", true, false) as AllianceWindow)?.Close();
+		var local = Teams.GetCurrentPlayerTeam();
+		if (local == null)
+			return null;
+		var layer = new CanvasLayer { Name = "AllianceLayer", Layer = 5, ProcessMode = ProcessModeEnum.Always };
+		AddChild(layer);
+		var window = new AllianceWindow(local, MoneyWindow.OtherPlayers(local));
+		window.TreeExited += layer.QueueFree;
+		layer.AddChild(window);
+		return window;
+	}
+
 	/// <summary>The menu's money transfer window (sub_4629A6 / sub_462C13) on the GUI layer.</summary>
 	public MoneyWindow ShowMoneyWindow()
 	{
