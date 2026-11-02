@@ -462,7 +462,7 @@ Still open from this part:
 - [~] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp` — done 2026-10-29 (`MainMenuScreen`, sub_408F86 / sub_4090D0, button tops from 0x47698C, x 257, 283×42; MainMeBu rows 0–4 lit, 5–9 pressed); the game opens on it, Campaign → briefing, the briefing's Back → menu (PLAN M12: buttons Campaign, Network game, Settings, Developers, Exit; build only Campaign and Exit — Network game, Settings and Developers are FUTURE, explicit user command only); new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
 - [x] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
 - [x] End screens (done; `GameRank.bmp` and `AllyWin.bmp` belong to other windows): `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
-- [ ] In-game windows for the menu stubs (tips → InfoWin and statistics → GameRank done 2026-11-02): `HelpWin.bmp` (tips), `InfoWin.bmp` (messages), `MoneyWin.bmp` = the **spending window** with the bribe sliders (see §5).
+- [ ] In-game windows for the menu stubs (tips → InfoWin, statistics → GameRank and money → MoneyWin done 2026-11-02; `MoneyWin.bmp` is the transfer to other players, not the bribe sliders): `HelpWin.bmp` (unknown use), `MessSend.bmp` (messages, multiplayer), `AllyWin.bmp` (alliances).
 - [ ] Bottom panel, as specified in `projectinfo/gui.md`:
   - finances block
   - Recruit panel (`Recruit.bmp`)
@@ -839,7 +839,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (5,82), lines 0 "Покинуть игру" (5,83) and 4 "** Вы уверены? **" (5,84), buttons OK (7,1) / "Вернуться" (7,2)
   from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
   longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
-  money transfer (MoneyWin) (statistics and reroll done 2026-11-02, below).
+  (statistics, reroll and money transfer done 2026-11-02, below).
   Fixed with it: the game clock is an autoload, so after leaving an episode (or after the end screen) its timed
   events ran on in the menu — the left player was "eliminated" and a defeat window opened over the main menu. The
   main scene now resets and pauses the clock when it starts; starting a scenario runs it again.
@@ -861,6 +861,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   with action 8 instead of 5 (main window +0D888h, sub_41EA00). On OK, fnMainWndMsgProcess case 8 ends the game
   (sub_419D00), shows "loading" (9,43) and builds the same episode again (sub_43A5A7, episode dword_4A0E74) — no
   briefing. `Main.ConfirmLeave(restart: true)`. Action 5 (exit) goes back to the main menu (sub_408EA0).
+
+- [x] **Menu: Деньги = money transfer (2026-11-02).** Main window +0AE4h: sub_4629A6 lists the other players in
+  the game, sub_462B86 loads `Pics\MoneyWin.bmp` (key pixel (367, 312)), sub_462C13 draws, sub_4630A8 / sub_463450
+  handle the mouse. "Перевести деньги другим игрокам": tick boxes in 3 columns × 6 rows, the amount slider (the
+  generic slider class sub_406996: positions 0..19, arrows step by one, track click jumps and drags) gives
+  50 000 × (position + 1). "Перевести" posts event sub_429470 per ticked player; sub_4294B0 pays when the giver
+  can afford it (vt+70h sub_430951: cash − amount + 200 000 ≥ 0): giver Spend, receiver Deposit (split by its bribe
+  shares), messages 25,3 / 25,4 and sound 4 for the local side; nothing when refused. `MoneyWindow`, unit test
+  `MoneyTransferFollowsTheExe`. The original draws the ticks of columns 2–3 off the list (y not reduced); drawn in
+  place here.
 
 ## Playtest (user, 2026-11-02)
 

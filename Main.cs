@@ -289,6 +289,18 @@ public partial class Main : Node2D
 		return window;
 	}
 
+	/// <summary>The menu's money transfer window (sub_4629A6 / sub_462C13) on the GUI layer.</summary>
+	public MoneyWindow ShowMoneyWindow()
+	{
+		(GetTree().Root.FindChild("MoneyWindow", true, false) as MoneyWindow)?.Close();
+		var layer = new CanvasLayer { Name = "MoneyLayer", Layer = 5, ProcessMode = ProcessModeEnum.Always };
+		AddChild(layer);
+		var window = new MoneyWindow(MoneyWindow.OtherPlayers(Teams.GetCurrentPlayerTeam()));
+		window.TreeExited += layer.QueueFree;
+		layer.AddChild(window);
+		return window;
+	}
+
 	/// <summary>The menu's statistics window (sub_45FD50 / sub_460290) on the GUI layer.</summary>
 	public RankWindow ShowRankWindow()
 	{

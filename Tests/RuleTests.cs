@@ -98,6 +98,23 @@ public static class EconomyTests
     private static Organisation NewOrg(long funds) => new(new Team(Colors.Red) { PlayerName = "test" }, funds);
 
     [UnitTest]
+    public static void MoneyTransferFollowsTheExe()
+    {
+        // sub_462C13: amount = 50 000 × (slider + 1), slider 0..19; sub_4294B0: paid only when affordable (vt+70h).
+        Assert.Equal(50_000L, MoneyWindow.AmountOf(0), "lowest amount");
+        Assert.Equal(1_000_000L, MoneyWindow.AmountOf(MoneyWindow.Positions - 1), "highest amount");
+        var giver = NewOrg(300_000);
+        var receiver = NewOrg(100_000);
+        giver.Team.Org = giver;
+        receiver.Team.Org = receiver;
+        Assert.True(!MoneyWindow.Transfer(giver.Team, receiver.Team, 600_000), "beyond the 200 000 overdraft: refused");
+        Assert.Equal(300_000L, giver.Cash, "nothing paid when refused");
+        Assert.True(MoneyWindow.Transfer(giver.Team, receiver.Team, 450_000), "within the overdraft: paid");
+        Assert.Equal(-150_000L, giver.Cash, "giver pays");
+        Assert.Equal(550_000L, receiver.Cash, "receiver deposits");
+    }
+
+    [UnitTest]
     public static void MarketShareGrowsWithIncomeAndRivalsCapIt()
     {
         // sub_430C30 / sub_430BE8: share = own income / max(all players' income of the type, 5 000 000).

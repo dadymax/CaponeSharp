@@ -187,7 +187,10 @@ public partial class GuiMenu : Control
                 if (GetTree().Root.FindChild("RankWindow", true, false) == null)
                     Main.Instance?.ShowRankWindow();
                 break;
-            case "money": GD.Print("GuiMenu: Money details — stub"); break;
+            case "money":
+                // Main window +0AE4h: a new transfer window replaces an open one.
+                Main.Instance?.ShowMoneyWindow();
+                break;
             case "tips":
                 // sub_414760(1): the episode's TIPTEXT in the info window; a second call closes it.
                 if (GetTree().Root.FindChild("InfoWindow", true, false) is InfoWindow open)
