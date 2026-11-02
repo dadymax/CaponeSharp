@@ -825,3 +825,23 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [ ] **RID leaks at exit** with `--headless --quit-after`: harmless.
 - [x] ~~Group (rectangle) select~~: fixed in the C# port.
 - [x] ~~PICS dir check with `res://L:/…`~~: not present in the C# port.
+
+## Playtest (user, 2026-11-02)
+
+- [ ] **Campaign select: Up / Down buttons do nothing.** On the briefing (campaign select) screen the Up and Down
+  buttons must switch the current episode between 1 and the highest unlocked one (`max_reached`: starts at 1 and
+  grows with each won episode).
+- [ ] **Takeover sound in episode 4.** The player has only four units, yet the "company taken over" sound plays
+  when a computer player takes a company. Check which sound plays and whose takeovers should be heard (only the
+  local player's?).
+- [ ] **Death animation is wrong.** When a unit dies its animation plays incorrectly. Check the killed layers per
+  unit type (units.json `killed` / `killed2`, Chicago.tile "… killed"), frame order, looping and how long the
+  corpse stays.
+- [ ] **No defeat when all units die (episode 4).** When all of the player's units are killed the episode doesn't
+  end in defeat. Find the original's defeat rule (bankruptcy sub_43B677, losing the last gangster?) and apply it.
+- [ ] **End-of-episode popup.** When an episode is won or lost, a popup window (HelpWin.bmp or InfoWin.bmp) must
+  first show SUCCESSTEXT or FAILURETEXT; only then the end screen with the charts. Now the end screen opens at once
+  and the result text is drawn on it, which is wrong. (EXE: info window class sub_447C10 / sub_447A41 with texts
+  5,52h / 5,53h — see sub_411F84 near 0x412B2E.)
+- [ ] **Tip popup at the start.** When an episode starts a popup (HelpWin.bmp or InfoWin.bmp) must show TIPTEXT
+  from the .epi.
