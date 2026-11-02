@@ -840,6 +840,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
   longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
   statistics, money transfer (MoneyWin), reroll.
+  Fixed with it: the game clock is an autoload, so after leaving an episode (or after the end screen) its timed
+  events ran on in the menu — the left player was "eliminated" and a defeat window opened over the main menu. The
+  main scene now resets and pauses the clock when it starts; starting a scenario runs it again.
 
 ## Playtest (user, 2026-11-02)
 

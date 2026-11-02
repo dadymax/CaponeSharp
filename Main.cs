@@ -62,6 +62,13 @@ public partial class Main : Node2D
 
 	public override void _Ready()
 	{
+		// A new main scene (start, end screen, leaving an episode): the last episode's timed events must not run on in
+		// the menus — the clock is an autoload. Starting a scenario resets and runs it again.
+		if (GameClock.Instance != null)
+		{
+			GameClock.Instance.Reset();
+			GameClock.Instance.Paused = true;
+		}
 		// The window class cursor is the EXE's "ArrowCur".
 		if (DisplayServer.GetName() != "headless")
 			OriginalCursors.Set(OriginalCursors.Kind.Arrow);
