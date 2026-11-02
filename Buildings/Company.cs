@@ -344,11 +344,13 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if (pays)
         {
             GD.Print($"Company {KindName} '{CompanyName}' pays {unit.OwnerTeam.PlayerName} (attempt {attempt}, chance {chance}%)");
-            Sound.Play(Sound.RandomOf(Sound.BusinessPay));
+            // sub_422FB4: the pay / refuse voices only for the local player's own extortion.
+            if (unit.OwnerTeam?.IsCurrentPlayerColor == true)
+                Sound.Play(Sound.RandomOf(Sound.BusinessPay));
             SetOwnerTeam(unit.OwnerTeam);
             return true;
         }
-        if (attempt == 0)
+        if (attempt == 0 && unit.OwnerTeam?.IsCurrentPlayerColor == true)
             Sound.Play(Sound.RandomOf(Sound.BusinessRefuse));
         GD.Print($"Company {KindName} '{CompanyName}' refuses (attempt {attempt}, chance {chance}%)");
         return false;

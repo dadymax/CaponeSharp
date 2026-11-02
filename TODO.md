@@ -833,9 +833,11 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   grows with each won episode). Done 2026-11-02: the arrows painted in ScenDisp.bmp (up 728,98 / down 728,426,
   48 × 25; the EXE's scroll control at briefing +28h, 7 px per episode) switch the briefing to the next / previous
   episode within 1 .. `CampaignProgress.MaxReached`. MCP-checked (4 → 3 → 4, stops at 4).
-- [ ] **Takeover sound in episode 4.** The player has only four units, yet the "company taken over" sound plays
+- [x] **Takeover sound in episode 4.** The player has only four units, yet the "company taken over" sound plays
   when a computer player takes a company. Check which sound plays and whose takeovers should be heard (only the
-  local player's?).
+  local player's?). Fixed 2026-11-02: in Company::Extort (sub_422FB4) the pay voices (ids 45h–4Ah, BusinessPay)
+  and the first-refusal voices (30h–33h…, BusinessRefuse) play only when the extorting unit is the local player's;
+  ours played them for every player.
 - [ ] **Death animation is wrong.** When a unit dies its animation plays incorrectly. Check the killed layers per
   unit type (units.json `killed` / `killed2`, Chicago.tile "… killed"), frame order, looping and how long the
   corpse stays.
