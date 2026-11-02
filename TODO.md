@@ -462,7 +462,7 @@ Still open from this part:
 - [~] Main menu `MAINMENU.bmp` + buttons `MAINMEBU.bmp` — done 2026-10-29 (`MainMenuScreen`, sub_408F86 / sub_4090D0, button tops from 0x47698C, x 257, 283×42; MainMeBu rows 0–4 lit, 5–9 pressed); the game opens on it, Campaign → briefing, the briefing's Back → menu (PLAN M12: buttons Campaign, Network game, Settings, Developers, Exit; build only Campaign and Exit — Network game, Settings and Developers are FUTURE, explicit user command only); new game `NEWGAME.bmp`/`NEWGAMEB.bmp`; preferences `PREFEREN.bmp`/`PREFERBU.bmp`.
 - [x] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
 - [x] End screens (done; `GameRank.bmp` and `AllyWin.bmp` belong to other windows): `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
-- [ ] In-game windows for the menu stubs: `HelpWin.bmp` (tips), `InfoWin.bmp` (statistics/messages), `MoneyWin.bmp` = the **spending window** with the bribe sliders (see §5).
+- [ ] In-game windows for the menu stubs (tips → InfoWin and statistics → GameRank done 2026-11-02): `HelpWin.bmp` (tips), `InfoWin.bmp` (messages), `MoneyWin.bmp` = the **spending window** with the bribe sliders (see §5).
 - [ ] Bottom panel, as specified in `projectinfo/gui.md`:
   - finances block
   - Recruit panel (`Recruit.bmp`)
@@ -839,10 +839,21 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (5,82), lines 0 "Покинуть игру" (5,83) and 4 "** Вы уверены? **" (5,84), buttons OK (7,1) / "Вернуться" (7,2)
   from InfoWin's strip (0, 340, 400, 40). OK leaves the episode for the main menu (`Main.ConfirmLeave`; the game no
   longer quits outright), Back closes the window. Still stubs in the menu: alliances (AllyWin), messages,
-  statistics, money transfer (MoneyWin), reroll.
+  money transfer (MoneyWin), reroll (statistics done 2026-11-02, below).
   Fixed with it: the game clock is an autoload, so after leaving an episode (or after the end screen) its timed
   events ran on in the menu — the left player was "eliminated" and a defeat window opened over the main menu. The
   main scene now resets and pauses the clock when it starts; starting a scenario runs it again.
+
+- [x] **Menu: Statistics window (2026-11-02).** Main window +0A20h: sub_45FD50 computes, sub_460206 loads
+  `Pics\GameRank.bmp`, sub_460290 draws, sub_4603F0 / sub_4603A2 handle the mouse. GameRank's top 600 × 400 at
+  (100, 100), "Ваше положение относительно других кланов"; a hand (50 × 60 at (100, 400), colour key = the pixel
+  at (239, 421)) per column at x 140 / 258 / 376 / 496 / 602 (table 0x48E4EC), y = 135 + place. Place =
+  H − (value − min) × H / (max − min) over the players in the game (vt+54h), H = 375 − 135, clamped; 120 when
+  all are equal. Columns: Деньги = cash (vt+60h), Доходы = weekly net income (vt+64h), Гангстеры = own units
+  other than Collectors, % = own legal companies (class 0, vt+1CCh = 0; vt+1CCh = catalogue type ≠ 0), $ = own businesses
+  (vt+1CCh ≠ 0). Computed once on opening; a second menu select does nothing while it is open. "Вернуться"
+  (350, 468)–(450, 493) shows (0, 400, 100, 25) under the mouse (OverButton on entering) and closes on a click
+  (ButtonClick); Escape / Enter close it too (remake convenience). `RankWindow`, unit test `RankPlacesFollowTheExe`.
 
 ## Playtest (user, 2026-11-02)
 

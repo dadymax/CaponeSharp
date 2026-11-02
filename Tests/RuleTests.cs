@@ -123,6 +123,23 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void RankPlacesFollowTheExe()
+    {
+        // sub_45FD50: H − (value − min) × H / (max − min), H = 375 − 135; equal players → 120 (the middle).
+        var me = new long[] { 50_000, 1_000, 4, 2, 0 };
+        var rival = new long[] { 150_000, 1_000, 0, 6, 0 };
+        var places = RankWindow.Places(me, new[] { me, rival });
+        Assert.Equal(RankWindow.Height, places[0], "the poorest is at the bottom");
+        Assert.Equal(RankWindow.Middle, places[1], "equal incomes: the middle");
+        Assert.Equal(0, places[2], "the most gangsters: the top");
+        Assert.Equal(RankWindow.Height, places[3], "fewest companies: the bottom");
+        Assert.Equal(RankWindow.Middle, places[4], "nobody has businesses: the middle");
+        var third = new long[] { 100_000, 1_000, 2, 4, 0 };
+        Assert.Equal(120, RankWindow.Places(third, new[] { me, rival, third })[0], "half way: the middle");
+        Assert.True(RankWindow.ColumnX.SequenceEqual(new[] { 140, 258, 376, 496, 602 }), "columns (table 0x48E4EC)");
+    }
+
+    [UnitTest]
     public static void CursorsComeFromTheExeResources()
     {
         // fnLegalCrimeMainWindowMain: LoadCursor ArrowCur / GotoCur / AttackCu / ProtectCu (PE cursor groups).

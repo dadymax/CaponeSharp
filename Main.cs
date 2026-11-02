@@ -279,6 +279,17 @@ public partial class Main : Node2D
 		return window;
 	}
 
+	/// <summary>The menu's statistics window (sub_45FD50 / sub_460290) on the GUI layer.</summary>
+	public RankWindow ShowRankWindow()
+	{
+		var layer = new CanvasLayer { Name = "RankLayer", Layer = 5, ProcessMode = ProcessModeEnum.Always };
+		AddChild(layer);
+		var window = new RankWindow(RankWindow.LocalPlaces(GetTree()));
+		window.TreeExited += layer.QueueFree;
+		layer.AddChild(window);
+		return window;
+	}
+
 	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>
 	/// <summary>
 	/// The FBI "visits" the local player (HQ vt+104h, 30 game hours): the original sets the main window's +0A40h flag,

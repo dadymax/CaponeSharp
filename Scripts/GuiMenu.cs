@@ -182,7 +182,11 @@ public partial class GuiMenu : Control
         {
             case "alliances": GD.Print("GuiMenu: Alliances — stub"); break;
             case "messages": GD.Print("GuiMenu: Messages — stub"); break;
-            case "statistics": GD.Print("GuiMenu: Statistics — stub"); break;
+            case "statistics":
+                // Main window +0A20h: opened once (a second select does nothing while it is open).
+                if (GetTree().Root.FindChild("RankWindow", true, false) == null)
+                    Main.Instance?.ShowRankWindow();
+                break;
             case "money": GD.Print("GuiMenu: Money details — stub"); break;
             case "tips":
                 // sub_414760(1): the episode's TIPTEXT in the info window; a second call closes it.
