@@ -839,8 +839,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [ ] **Death animation is wrong.** When a unit dies its animation plays incorrectly. Check the killed layers per
   unit type (units.json `killed` / `killed2`, Chicago.tile "… killed"), frame order, looping and how long the
   corpse stays.
-- [ ] **No defeat when all units die (episode 4).** When all of the player's units are killed the episode doesn't
+- [x] **No defeat when all units die (episode 4).** When all of the player's units are killed the episode doesn't
   end in defeat. Find the original's defeat rule (bankruptcy sub_43B677, losing the last gangster?) and apply it.
+  Done 2026-11-02 as the user's rule: the EXE eliminates a player only when its HQ is lost (sub_4151C5 / sub_415F20)
+  or by bankruptcy in Spend (sub_430860), and VCOND 3 (episode 4's only condition) has no failure branch; episode 4
+  starts the player without a base (PLAYER 1 0 0). Now the hourly statistics eliminate a player without an HQ who
+  has no unit left (jailed units count) and trains nobody → "Game over" (19,1). Scenario check "a player without an
+  HQ who lost every unit is defeated (user)" (episode 4).
 - [ ] **End-of-episode popup.** When an episode is won or lost, a popup window (HelpWin.bmp or InfoWin.bmp) must
   first show SUCCESSTEXT or FAILURETEXT; only then the end screen with the charts. Now the end screen opens at once
   and the result text is drawn on it, which is wrong. (EXE: info window class sub_447C10 / sub_447A41 with texts

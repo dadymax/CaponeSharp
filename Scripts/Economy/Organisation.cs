@@ -114,6 +114,11 @@ public partial class Organisation
         if (Eliminated)
             return; // the HQ object is removed from the world (sub_43AB50), so its events stop
         UpdateStats();
+        if (HasNothingLeft())
+        {
+            Eliminate();
+            return;
+        }
         InformerTick();
         // sub_430A58: while the FBI visits the local player, "FBI \"visits\" you ..." (20,2) is shown (sub_408C10).
         if (Team.IsCurrentPlayerColor && (FbiVisitActive || _fbiShown))
@@ -176,6 +181,25 @@ public partial class Organisation
             if (node is Unit { IsDead: false } unit && unit.OwnerTeam == Team && unit.UnitType != UnitCommon.UnitType.Collector)
                 return true;
         return false;
+    }
+
+    /// <summary>
+    /// User's rule (playtest 2026-11-02), not found in the EXE (its eliminations: HQ lost sub_4151C5 / sub_415F20,
+    /// bankruptcy in Spend sub_430860): a player without an HQ (episodes that start without a base, e.g. 4) whose
+    /// last unit is gone — none alive, jailed ones count as alive — and who trains nobody is defeated.
+    /// </summary>
+    private bool HasNothingLeft()
+    {
+        if (Team.HqCompany != null && GodotObject.IsInstanceValid(Team.HqCompany))
+            return false;
+        if (Training.Current(Team) != null)
+            return false;
+        if (Engine.GetMainLoop() is not SceneTree tree)
+            return false;
+        foreach (var node in tree.GetNodesInGroup(Unit.GroupName))
+            if (node is Unit { IsDead: false } unit && GodotObject.IsInstanceValid(unit) && unit.OwnerTeam == Team)
+                return false;
+        return true;
     }
 
     /// <summary>

@@ -168,6 +168,8 @@ public partial class ScenarioTest : Node
             SendThief();
             KillACollector();
         }
+        if (_hour == _days * 24 - 6)
+            WipeOutBaselessPlayer();
         if (_hour >= _days * 24)
             DestroyComputerPlayers();
     }
@@ -178,6 +180,12 @@ public partial class ScenarioTest : Node
         if (_ended)
             return;
         RunChecks();
+        if (_expectDefeat)
+        {
+            _expectDefeat = false;
+            Check("a player without an HQ who lost every unit is defeated (user)", !won, $"won {won}: {text}");
+            _pending.RemoveAll(p => p.Name.StartsWith("a player without an HQ"));
+        }
         var day = _clock.Minute / GameClock.MinutesPerDay + 1;
         End($"{(won ? "won" : "lost")} on day {day}: {text?.Replace('\n', ' ')}");
     }
@@ -404,6 +412,21 @@ public partial class ScenarioTest : Node
     /// A Cadillac for the local player: a Thug boards it, rides along, gets out on Unload, boards again, and the car is
     /// destroyed with him inside (he is hurt and gets out alive or dies).
     /// </summary>
+    private bool _expectDefeat;
+
+    /// <summary>A local player without an HQ (episode 4) loses every unit: the episode must end in defeat.</summary>
+    private void WipeOutBaselessPlayer()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        if (human?.Org == null || human.Org.Eliminated || human.HqCompany != null)
+            return;
+        foreach (var u in Units().Where(u => u.OwnerTeam == human && !u.IsDead).ToList())
+            u.CanBeAttacked?.ReceiveDamage(u.CanBeAttacked.HP, null);
+        _expectDefeat = true;
+        _pending.Add((_hour + 3, "a player without an HQ who lost every unit is defeated (user)", () => false,
+            () => "no defeat within 3 hours"));
+    }
+
     /// <summary>Two idle units sent to one cell spread out to a cell each (unit think → sub_42B500).</summary>
     private void TestSpreadOut()
     {
