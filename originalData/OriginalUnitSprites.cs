@@ -75,6 +75,9 @@ public class OriginalUnitSprites
             if (sf.HasAnimation(layer))
                 sf.RemoveAnimation(layer);
             sf.AddAnimation(layer);
+            // Falling down and lying there: the death pictures (2 frames) play once and hold the last frame.
+            if (layer == SpriteLayersDict[SpriteLayersEnum.killed] || layer == SpriteLayersDict[SpriteLayersEnum.killed2])
+                sf.SetAnimationLoop(layer, false);
             if (frames == null)
                 continue;
             foreach (var texture in frames)

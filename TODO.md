@@ -838,9 +838,12 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   local player's?). Fixed 2026-11-02: in Company::Extort (sub_422FB4) the pay voices (ids 45h–4Ah, BusinessPay)
   and the first-refusal voices (30h–33h…, BusinessRefuse) play only when the extorting unit is the local player's;
   ours played them for every player.
-- [ ] **Death animation is wrong.** When a unit dies its animation plays incorrectly. Check the killed layers per
+- [x] **Death animation is wrong.** When a unit dies its animation plays incorrectly. Check the killed layers per
   unit type (units.json `killed` / `killed2`, Chicago.tile "… killed"), frame order, looping and how long the
-  corpse stays.
+  corpse stays. Fixed 2026-11-02: the death pictures (Chicago.tile "… killed" / "… die", 2 frames: falling, lying)
+  looped for the 3 hours the body stays; now they play once and hold the lying frame. Types without death pictures
+  (Thief, Cadillac, Policeman) kept walking / shooting in place; now the body stops. MCP-checked (killed:1 still).
+  Not verified against the EXE: the exact frame timing of the fall.
 - [x] **No defeat when all units die (episode 4).** When all of the player's units are killed the episode doesn't
   end in defeat. Find the original's defeat rule (bankruptcy sub_43B677, losing the last gangster?) and apply it.
   Done 2026-11-02 as the user's rule: the EXE eliminates a player only when its HQ is lost (sub_4151C5 / sub_415F20)

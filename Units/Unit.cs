@@ -588,6 +588,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             ? OriginalUnitSprites.SpriteLayersEnum.killed2 : OriginalUnitSprites.SpriteLayersEnum.killed];
         if (_as2d != null && _as2d.SpriteFrames.HasAnimation(killed) && _as2d.SpriteFrames.GetFrameCount(killed) > 0)
             _as2d.Play(killed);
+        else
+            _as2d?.Pause(); // no death pictures for this type: the body stops moving
         GD.Print($"Unit {DisplayName} ({UnitType}) died");
         // sub_42B8A3 / sub_42B880: the local player's units die with their own sound.
         if (OwnerTeam?.IsCurrentPlayerColor == true)
