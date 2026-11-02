@@ -445,7 +445,7 @@ Still open from this part:
   2026-10-29). `MapTileMath.ToOriginal`.
 - [x] BRIBEADVANCE authority numbering verified 2026-11-02: the reader (sub_4670A5 at 0x467D67, " %d %d %f %ld ") calls player vt+0C4h (sub_432D40: favour +0B8h[a] = points) and vt+0C8h (sub_432D60: money +0A4h[a]), the same arrays the services check (sub_4310A0) with authority 1 army / 2 FBI / 3 politician / 4 police. `Organisation.Favour/AuthorityMoney` use the same indices.
 - [x] Company stats come from the EXE catalogue (`OriginalBusinessTable`); `Company` is rebuilt on it (PLAN M3). `companies2.json` is no longer read (delete it once the logos are remade); `companies.json` still maps sign types to Chicago.tile sprites.
-- [ ] Episode texts (briefing/success/failure) are parsed but not shown yet (§3).
+- [x] Episode texts are shown: briefing (`BriefingScreen`), TIPTEXT at the start and SUCCESSTEXT / FAILURETEXT at the end in the info window.
 
 ## 2. Text and localisation (P1)
 
@@ -584,7 +584,7 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 ## 7. Tooling
 
-- [ ] Remaining EXE readers (sound table, cursors). Done: `OriginalTexts`, `OriginalBusinessTable`.
+- [x] EXE readers: `OriginalTexts`, `OriginalBusinessTable`, sound table (`Sound.FileOf`, 0x478700), cursors (`OriginalCursors`).
 - [x] Headless smoke test: `-- --smoke-test` (EXE tables, every map and episode, sprite names).
 - [x] Headless scenario checks `-- --scenario-test` (`Scripts/ScenarioTest.cs`, PLAN M13). Run:
   `Godot --headless --fixed-fps 60 --path . -- --scenario-test[=1,4,8,13,15] [--days=14] [--speed=16]` (about 20 s).
