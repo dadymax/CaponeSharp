@@ -316,6 +316,9 @@ public partial class DebugCommands : Node
         return $"saved {saved}";
     }
 
+    /// <summary>An original text (section, index).</summary>
+    public string Text(int section, int index) => OriginalTexts.Instance.Get(section, index);
+
     /// <summary>The selected units the player may command.</summary>
     public string Selection() => string.Join(", ", Main.Instance?.CommandableSelection().Select(u => $"{u.UnitType}@{u.Cell}") ?? Enumerable.Empty<string>());
 

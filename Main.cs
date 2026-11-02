@@ -185,6 +185,13 @@ public partial class Main : Node2D
 		var count = _campaignManager.CurrentCampaign.GetScenarioCount();
 		if (won)
 			CampaignProgress.Won(episode, count);
+		// sub_41D3E0 (message kinds 2 / 3): the result text in the info window (title 9,37) first, then the end
+		// screen after OK.
+		ShowInfoWindow(OriginalTexts.Instance.Get(9, 37), text, () => OpenEndScreen(won, text, episode, count));
+	}
+
+	private void OpenEndScreen(bool won, string text, int episode, int count)
+	{
 		var layer = AddScreenLayer();
 		var screen = new EndScreen(won, text, Statistics.Current);
 		screen.Closed += () =>
@@ -224,13 +231,35 @@ public partial class Main : Node2D
 
 		campaignManager.TileMap = Map;
 		campaignManager.AssignBases();
-		// The view starts on the local player's headquarters.
-		if (GetNodeOrNull<Camera2D>("Camera2D") is { } camera && Teams.GetCurrentPlayerTeam()?.HqCompany is { } hq)
-			camera.GlobalPosition = hq.GlobalPosition;
 		campaignManager.SpawnStartingUnits();
+		// sub_40A160: the view starts on the local player's headquarters, or (no base, e.g. episode 4) on one of the
+		// player's units (sub_409FE7).
+		var player = Teams.GetCurrentPlayerTeam();
+		Node2D start = player?.HqCompany;
+		start ??= GetTree().GetNodesInGroup(Unit.GroupName).OfType<Unit>().FirstOrDefault(u => u.OwnerTeam == player && !u.IsDead);
+		if (start != null)
+			Minimap.CenterView(start.GlobalPosition);
 		campaignManager.StartEconomy();
 		AddChild(new DebugCommands { Name = "Debug" });
 		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
+		// sub_40A160 → sub_414760(1): in a single-player game the episode's tips open in the info window.
+		if (ScenarioTest.Instance == null && DisplayServer.GetName() != "headless" && !string.IsNullOrWhiteSpace(scenario.TipText))
+			ShowInfoWindow(OriginalTexts.Instance.Get(5, 85), scenario.TipText, null);
+	}
+
+	/// <summary>The info window (InfoWindow, sub_447CB0) over the game, on the GUI layer.</summary>
+	public InfoWindow ShowInfoWindow(string title, string text, System.Action closed)
+	{
+		var layer = new CanvasLayer { Name = "InfoLayer", Layer = 5, ProcessMode = ProcessModeEnum.Always };
+		AddChild(layer);
+		var window = new InfoWindow(title, text);
+		window.Closed += () =>
+		{
+			layer.QueueFree();
+			closed?.Invoke();
+		};
+		layer.AddChild(window);
+		return window;
 	}
 
 	/// <summary>Map clicks. Unhandled input, so clicks on GUI controls (menu, bottom panel) don't reach the map.</summary>

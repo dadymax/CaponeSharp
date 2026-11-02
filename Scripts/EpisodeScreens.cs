@@ -415,13 +415,7 @@ public partial class EndScreen : Control
             DrawTexture(_background, Vector2.Zero);
         if (_buttons != null)
             DrawTextureRectRegion(_buttons, new Rect2(40, 145, 267, 26), new Rect2(0, 84 + 26 * Tab, 267, 26));
-        _messageDrawn = MessageShown;
-        if (_messageDrawn)
-        {
-            var lines = ScreenPictures.Lines(_text);
-            for (var i = 0; i < lines.Length; i++)
-                OriginalFonts.DrawScreen(this, lines[i], 5, 5 + 16 * i, 700, 3, 1);
-        }
+        // The result text is shown before, in the info window (user; sub_41D3E0) — not on this screen.
         DrawChart();
         DrawAnimation();
     }

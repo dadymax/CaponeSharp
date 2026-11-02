@@ -851,9 +851,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   starts the player without a base (PLAYER 1 0 0). Now the hourly statistics eliminate a player without an HQ who
   has no unit left (jailed units count) and trains nobody → "Game over" (19,1). Scenario check "a player without an
   HQ who lost every unit is defeated (user)" (episode 4).
-- [ ] **End-of-episode popup.** When an episode is won or lost, a popup window (HelpWin.bmp or InfoWin.bmp) must
+- [x] **End-of-episode popup.** When an episode is won or lost, a popup window (HelpWin.bmp or InfoWin.bmp) must
   first show SUCCESSTEXT or FAILURETEXT; only then the end screen with the charts. Now the end screen opens at once
   and the result text is drawn on it, which is wrong. (EXE: info window class sub_447C10 / sub_447A41 with texts
   5,52h / 5,53h — see sub_411F84 near 0x412B2E.)
-- [ ] **Tip popup at the start.** When an episode starts a popup (HelpWin.bmp or InfoWin.bmp) must show TIPTEXT
+- [x] **Tip popup at the start.** When an episode starts a popup (HelpWin.bmp or InfoWin.bmp) must show TIPTEXT
   from the .epi.
+  Both done 2026-11-02 (`InfoWindow`, `Main.ShowInfoWindow`): the EXE's info window (sub_447A41 / sub_447A97,
+  drawn by sub_447CB0): InfoWin.bmp 400 × 300 at (200, 150) plus its one-button strip at (200, 410); title at
+  (205, 152) font 2 yellow; lines from (210, 180) 15 px apart, font 3 green; OK (7,0) at (380, 418), button
+  (350, 418)–(450, 440) with the pressed picture (0, 380, 100, 25). At the start (sub_40A160 → sub_414760(1)) the
+  TIPTEXT under "Полезный совет" (5,85); at the end (sub_41D3E0, message kinds 2 / 3) the result text under
+  "Игра окончена!" (9,37), the end screen after OK; the end screen no longer draws the text. Also: without an HQ
+  the view starts on the player's units. MCP-checked in episode 4 (tips → OK → defeat → OK → end screen).
