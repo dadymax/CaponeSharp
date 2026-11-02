@@ -184,7 +184,13 @@ public partial class GuiMenu : Control
             case "messages": GD.Print("GuiMenu: Messages — stub"); break;
             case "statistics": GD.Print("GuiMenu: Statistics — stub"); break;
             case "money": GD.Print("GuiMenu: Money details — stub"); break;
-            case "tips": GD.Print("GuiMenu: Tips — stub"); break;
+            case "tips":
+                // sub_414760(1): the episode's TIPTEXT in the info window; a second call closes it.
+                if (GetTree().Root.FindChild("InfoWindow", true, false) is InfoWindow open)
+                    open.Close();
+                else if (CampaignManager.Instance?.CurrentScenario is { } scenario)
+                    Main.Instance?.ShowInfoWindow(OriginalTexts.Instance.Get(5, 85), scenario.TipText, null);
+                break;
             case "reroll": GD.Print("GuiMenu: Reroll — stub"); break;
             case "exit":
                 GD.Print("GuiMenu: Exit");

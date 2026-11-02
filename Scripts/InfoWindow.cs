@@ -75,7 +75,7 @@ public partial class InfoWindow : Control
         }
     }
 
-    private void Close()
+    public void Close()
     {
         if (IsQueuedForDeletion())
             return;
