@@ -364,8 +364,8 @@ is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
   `Organisation.RogueUnits` keeps the units (not Collectors) as neutrals hostile to everyone, other rogues included
   (`Unit.GoRogue`, `UnitAI.IsHostileTo`, `CanAttack.IsHostile`). MCP-tested in episode 8: Морган's 33 units vanished,
   his 24 companies became unowned legal ones; with rogue units on, Рико's fighters fought each other.
-- Open: the HQ building of a player eliminated by bankruptcy stays on the map, owned by them; other removal paths
-  `sub_429658` (text 25,9) and `sub_43C052` (19,7).
+- Done: the HQ of a player eliminated by bankruptcy is removed (see "HQ of a bankrupt player"); the other removal
+  paths `sub_429658` / `sub_43C052` are multiplayer only.
 
 ### Economy facts recovered (this brick)
 
@@ -574,7 +574,7 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   - Cadillac recruitable
   - **Godfather** boss unit (UNIT type 12, its own sounds and pictures; VCOND 3 `p 12` = kill the boss)
   - Shotgun man = Raid
-- [ ] **Calendar**: "Bang: Full year!" and monthly "Salary $%ld" suggest a game calendar with periodic salary payments. Look for the code that formats these strings.
+- [x] **Calendar** (checked 2026-11-02: there is none). "Bang: Full year!" is a debug log (fnWriteErr) in the event scheduler sub_416C16 when its 372-slot (0x174) wheel wraps; "Salary $%ld" is the unit panel line. Salaries are paid by sub_42A535 (done).
 
 ## 6. AI players (P3)
 
@@ -663,8 +663,12 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   companies or collectors (couriers). Done 2026-10-29: a box is drawn while dragging (`SelectionBox`); it picks the
   player's own gangsters whose position is inside (no companies, collectors, police or other players' units); a drag
   under 4 pixels is a click.
-- [ ] **HQ of a bankrupt player.** The original's sub_43B677 removes the player object; what happens to its HQ
-  building is not traced. sharptry removes it (`Company.RemoveHq`), consistent with "an HQ can't be captured".
+- [x] **HQ of a bankrupt player** (traced 2026-11-02). sub_43B677 → sub_43B711 → World::RemoveObject sub_43AB50,
+  which calls the player's vt+28h (sub_430A40: only +88h = 0, the "alive" flag) and drops it from the object list.
+  Nothing in the EXE touches the player's HQ, units or companies. sharptry follows the user's observation of the
+  game (assets released, units gone) and removes the HQ too (`Company.RemoveHq`), since an HQ can't change owner.
+  The other removal paths are multiplayer only: sub_429658 (a player leaves, texts 25,x) and sub_43C052 (network
+  drop, 19,x, from the network handler sub_41D700).
 - [x] **HQ placement.** An HQ must stand on a medium standalone building — letter B in the block description map
   (Chicago.tile block rows) — not on any company cell. Done 2026-10-29: the HQ takes the B cell nearest to the
   start point (original coordinates, within 12 cells) that no other HQ took. On most maps the start point itself is a
