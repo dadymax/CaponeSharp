@@ -161,6 +161,8 @@ public partial class ScenarioTest : Node
             TestConstruction();
         if (_hour == 12)
             TestSpreadOut();
+        if (_hour == 14)
+            TestFight();
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
         if (_hour == System.Math.Min(30, _days * 12 + 6))
@@ -550,6 +552,44 @@ public partial class ScenarioTest : Node
     }
 
     /// <summary>An enemy collector carrying money is killed by the local player: the money goes to the killer.</summary>
+    /// <summary>
+    /// A scripted fight: a Thompson man of the local player is ordered to attack an enemy Pistol man created next to
+    /// him. Shots must land (the target loses HP) and the fight must end with a death within a game day.
+    /// </summary>
+    private void TestFight()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var enemy = Teams.TeamsInGame.Values.FirstOrDefault(t => t != human && t.Org is { Eliminated: false }
+                                                                && human?.GetTargetRelation(t.TeamColor) == Teams.TeamRelation.Enemy);
+        // Away from the other checks' units: the company farthest from every unit of the local player.
+        var own = Units().Where(u => u.OwnerTeam == human).Select(u => u.Cell).ToList();
+        Vector2I? place = own.Count == 0 ? null : Companies().Where(c => c.IsEconomic)
+            .OrderByDescending(c => own.Min(o => Mathf.Abs(o.X - c.Cell.X) + Mathf.Abs(o.Y - c.Cell.Y)))
+            .Select(c => (Vector2I?)c.Cell).FirstOrDefault();
+        if (enemy == null || place == null)
+        {
+            Note("no enemy player or place for the scripted fight");
+            return;
+        }
+        var shooter = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Thompson, human, place.Value);
+        var target = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Pistol, enemy, shooter.Cell);
+        if (shooter == null || target == null)
+        {
+            Note("scripted fight: units not created");
+            return;
+        }
+        var full = target.CanBeAttacked.HP;
+        var hurt = false;
+        shooter.AttackOrder(target, false);
+        _pending.Add((_hour + 24, "a scripted fight hurts and kills", () =>
+        {
+            var targetGone = !IsInstanceValid(target) || target.IsDead;
+            hurt |= targetGone || target.CanBeAttacked.HP < full;
+            return hurt && (targetGone || !IsInstanceValid(shooter) || shooter.IsDead);
+        }, () => $"target HP {(IsInstanceValid(target) ? target.CanBeAttacked.HP : 0)} of {full}, shooter "
+                 + (IsInstanceValid(shooter) ? $"{shooter.CanBeAttacked.HP} HP at {shooter.Cell}" : "gone")));
+    }
+
     private void KillACollector()
     {
         var human = Teams.GetCurrentPlayerTeam();

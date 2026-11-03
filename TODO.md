@@ -599,7 +599,8 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   a hit with no (or a freed) attacker left an object at 0 HP alive (`CanBeAttacked` now always raises HPisZERO);
   a player eliminated by bankruptcy kept the HQ building (now removed, `Company.RemoveHq`).
 - [ ] Scenario checks still to add: VCOND progress, collector money reaching the HQ, police arrests/jail, the
-  computer player converting and attacking; a scripted fight to check damage and deaths.
+  computer player converting and attacking. Done 2026-11-03: a scripted fight (Thompson man vs an enemy Pistol man at
+  the company farthest from the player's units; shots must land and someone must die within a day).
 - [x] Unit tests `-- --unit-test[=filter]` (`Tests/`, a small runner inside Godot; every static `[UnitTest]` method):
   22 tests — line of sight (open field, walls, map edge, Sniper 8/9), overdraft, Spend, Deposit split and ledger,
   service points, market-share and legalization factors, extortion chance by income, price tiers, licences, raid /
