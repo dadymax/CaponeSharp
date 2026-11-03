@@ -212,12 +212,19 @@ public partial class Unit
                && owner.GetTargetRelation(otherOwner.TeamColor) == Teams.TeamRelation.Enemy;
     }
 
-    /// <summary>vt+164h: go after <paramref name="target"/> and attack it.</summary>
+    /// <summary>
+    /// vt+164h (sub_42A8E1): go after <paramref name="target"/> and attack it — a move order in mode 3 toward the
+    /// target, or toward the car it rides in. Never for a unit in a car (Cadillac, police car) or one that can't
+    /// damage the target (vt+110h: no weapon).
+    /// </summary>
     private void Chase(Unit target)
     {
-        if (CanAttack == null)
+        if (CanAttack == null || Vehicle != null || !HasWeapon)
             return;
+        var goal = target.Vehicle ?? target;
         CanAttack.Target = target.CanBeAttacked;
-        WalkTo(target);
+        WalkTo(goal);
+        MoveMode = 3;
+        _orderTarget = target;
     }
 }

@@ -246,8 +246,9 @@ Terminate); police stations and own objects show the name. The Russian texts hav
   paid), then a police car with "lawyers can't help" (sub_4460C5 with 1). MCP-tested in episode 4 (30 points paid, car
   sent). Order 0Ch "Pay snitch to switch sides ($200.000)" (29,12, slot 1, icon table 0x4844EC) needs unit +0D8h =
   2 000 000 (vt+1E4h sub_42CED7), set by the FBI snitch service — done, see "HQ authority services".
-- Open: mode 4 (action 4 is not on the menu), enemy buildings, police targeting, the
-  Terrorist/Cadillac chase rule.
+- Chase (vt+164h sub_42A8E1, done 2026-11-03): never for a unit in a car (container class 5 / 0Ch) or one that can't
+  damage the target (vt+110h, no weapon — so no Cadillac or Thief); otherwise a mode-3 move toward the target, or the
+  car it rides in. Mode 4 / order 4 is refused by the gate. Open: enemy buildings as idle targets, police targeting.
 - Movement (done 2026-10-29, `MoveMap` + `UnitMovement`, A* removed): the original walks tile by tile. Each cell,
   sub_427EF5 scores the (up to two) neighbours toward the destination with sub_427CC0 (6 destination, 0 blocked,
   5 free road / pavement, 4 free other ground or a moving occupant, 2 a standing one, 1 crowded), ties go to the
