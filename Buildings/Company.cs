@@ -208,7 +208,59 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         RefreshSignState();
         if ((OwnerTeam == null || BusinessType == OriginalBusinessTable.BusinessType.Legal) && Hp < MaxHp)
             Heal(HealPerHour);
+        if (IsFortification)
+            FortificationShot();
         clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+    }
+
+    // ---- fortification ("Укрепление", catalogue rows 48 / 49, +28h = 7) ----------------------------------------------
+
+    /// <summary>Catalogue +28h = 7 (company vt+1A8h): the fortification, which shoots like a Pistol man.</summary>
+    public bool IsFortification => IsEconomic && Entry?.Value28 == 7;
+
+    /// <summary>Company vt+0E8h (sub_4234C0): sight radius 4.</summary>
+    public const int FortificationRange = 4;
+    /// <summary>Weapon of kind 7 (0x47FD90…, company vt+108h–114h): 1 bullet, 10–15 damage to anything, 90 % hit.</summary>
+    public const int FortificationDamageMin = 10, FortificationDamageMax = 15, FortificationHitChance = 90;
+
+    /// <summary>
+    /// Company::Think (vt+5Ch sub_423500, called by the hourly event): a fortification builds its sight grid (radius 4,
+    /// sub_447870) and takes the last unit, scanning x then y, that stands on a visible cell, lives, is exposed
+    /// (vt+19Ch) and is an enemy of the owner (relation 1) or has no owner (an unowned fortification only those). It
+    /// shoots it at once with the bullet routine (vt+104h = sub_438873; no aiming or reload) and makes the shot sound
+    /// (id 5) when either side is in sight.
+    /// </summary>
+    private void FortificationShot()
+    {
+        if (Engine.GetMainLoop() is not SceneTree tree || MapTileMath.Tilemap == null)
+            return;
+        var center = Cell;
+        var grid = Vision.Build(center, FortificationRange);
+        Unit target = null;
+        var best = (X: int.MinValue, Y: int.MinValue);
+        foreach (var unit in tree.GetNodesInGroup(Unit.GroupName).OfType<Unit>())
+        {
+            if (!IsInstanceValid(unit) || unit.IsDead || unit.IsArrested || unit.InsideBuilding || unit.Vehicle != null
+                || !unit.IsExposed || !Vision.Visible(grid, center, FortificationRange, unit.Cell))
+                continue;
+            var enemy = unit.OwnerTeam == null || unit.OwnerTeam == Teams.NeutralTeam || unit.IsDeserter
+                        || (OwnerTeam != null && OwnerTeam.GetTargetRelation(unit.OwnerTeam.TeamColor) == Teams.TeamRelation.Enemy);
+            if (!enemy || unit.OwnerTeam == OwnerTeam)
+                continue;
+            var key = (unit.Cell.X, unit.Cell.Y);
+            if (key.CompareTo(best) <= 0)
+                continue;
+            best = key;
+            target = unit;
+        }
+        if (target == null)
+            return;
+        if (Visible || target.Visible)
+            Sound.PlayId(5);
+        if ((int)(GD.Randi() % 100) > FortificationHitChance)
+            return;
+        var damage = FortificationDamageMin + (int)(GD.Randi() % (FortificationDamageMax - FortificationDamageMin));
+        target.CanBeAttacked?.ReceiveDamage(damage, null);
     }
 
     private void ScheduleIncomeTick(GameClock clock)

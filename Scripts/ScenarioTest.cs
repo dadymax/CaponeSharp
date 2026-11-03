@@ -186,6 +186,8 @@ public partial class ScenarioTest : Node
             TestPolice();
         if (_hour == 18)
             TestHitman();
+        if (_hour == 20)
+            TestFortification();
         if (_hour == _days * 24 - 7)
         {
             // Collectors (sub_428D62) bring the uncollected money of their block home once a week of company income
@@ -685,6 +687,36 @@ public partial class ScenarioTest : Node
             $"hidden {hidden}, exposed {exposed}, Pistol man HP {victim.CanBeAttacked.MaxHP}");
         hitman.Vanish();
         victim.Vanish();
+    }
+
+    /// <summary>
+    /// A fortification (catalogue row 48 / 49, +28h = 7) shoots like a Pistol man (Company::Think sub_423500): an enemy
+    /// Pistol man placed by it must lose hit points within a few game hours.
+    /// </summary>
+    private void TestFortification()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var enemy = Teams.TeamsInGame.Values.FirstOrDefault(t => t != human && t.Org is { Eliminated: false });
+        var row = OriginalBusinessTable.Instance.Entries.FirstOrDefault(r => r.Value28 == 7);
+        var company = Companies().Where(c => c.IsEconomic && c.OwnerTeam == null && !c.Busy && c.Block != null)
+            .OrderBy(c => c.Cell.X).FirstOrDefault();
+        if (human?.Org == null || enemy == null || row == null || company == null)
+        {
+            Note("no fortification check");
+            return;
+        }
+        company.SetOwnerTeam(human);
+        company.SetRow(row);
+        var target = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Pistol, enemy, company.Cell);
+        if (target == null)
+        {
+            Note("fortification check: unit not created");
+            return;
+        }
+        var full = target.CanBeAttacked.HP;
+        _pending.Add((_hour + 6, "a fortification shoots enemy units", () =>
+            !IsInstanceValid(target) || target.IsDead || target.CanBeAttacked.HP < full,
+            () => $"{company} fortification {company.IsFortification}, target at {target.Cell} HP {target.CanBeAttacked.HP}/{full}"));
     }
 
     private void KillACollector()

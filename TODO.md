@@ -980,7 +980,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   each player object (sub_4043D0); only UNIT / VCOND / BRIBEADVANCE look players up by id (first match, sub_467050).
   Fixed in `CampaignManager.AssignBases` (per PLAYER entry); scenario check "every player with a base has its own HQ";
   episode 6 added to the default scenario test.
-- [ ] 6. Support business #1 "Укрепление" (fortification) must shoot enemy units like a Pistol man; now it does nothing.
+- [x] 6. Support business #1 "Укрепление" (fortification) must shoot enemy units like a Pistol man; now it does nothing.
+  Done (EXE): rows 48 / 49 have +28h = 7. Company::Think (vt+5Ch sub_423500, run by the hourly event 4 of sub_420ED5)
+  for kind 7: sight grid radius 4 (vt+0E8h sub_4234C0, sub_447870); the last unit (x then y) on a visible cell that
+  lives, is exposed and is an enemy of the owner (relation 1) or ownerless (an unowned one: only ownerless units);
+  one bullet at once (vt+104h = sub_438873, no aim / reload): weapon 0x47FD90 = a Pistol man's — rate 1.0, damage
+  10–15 (the same against buildings), hit 90 %; shot sound id 5 when either side is in sight. `Company.FortificationShot`,
+  scenario check. Open: the kill credit (money carried by a killed collector) — passed as no attacker here.
 - [x] 7. A hidden (covered) Hit man must kill any unit with one shot (not cars or buildings); now he doesn't.
   Cause: the remake stamped the shot time before rolling the damage, so the Hit man was always "exposed" (30 damage).
   sub_42BD15 fires first (sub_438873) and stamps +0D0h afterwards. Fixed; the exposed damage is 20–30 (14h / 1Eh,
