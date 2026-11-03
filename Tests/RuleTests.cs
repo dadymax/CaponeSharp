@@ -115,6 +115,22 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void UnitHostilityRules()
+    {
+        var me = new Team(Colors.Red) { PlayerName = "me" };
+        var ai = new Team(Colors.Blue) { PlayerName = "ai" };
+        Assert.True(Unit.Hostile(me, false, false, ai, false, false), "players are enemies by default (relation 1)");
+        Assert.True(!Unit.Hostile(me, false, false, me, false, false), "own units are not");
+        me.SetTargetRelation(ai.TeamColor, Teams.TeamRelation.Friend);
+        Assert.True(!Unit.Hostile(me, false, false, ai, false, false), "our stance: cooperating");
+        Assert.True(Unit.Hostile(ai, false, false, me, false, false), "theirs is their own: still hostile");
+        Assert.True(Unit.Hostile(null, true, false, me, false, false), "a deserter fights owned units");
+        Assert.True(Unit.Hostile(me, false, false, null, true, false), "owned units fight deserters");
+        Assert.True(!Unit.Hostile(null, true, false, null, false, false), "deserters leave unowned units alone");
+        Assert.True(Unit.Hostile(null, false, true, null, false, true), "rogues fight everyone");
+    }
+
+    [UnitTest]
     public static void PaydayFollowsTheExe()
     {
         // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.

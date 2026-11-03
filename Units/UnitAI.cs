@@ -185,16 +185,23 @@ public partial class Unit
     /// Enemy players' units; a rogue unit and everyone around it are enemies to each other; a deserter and every
     /// player's unit are enemies (deserters leave each other and the police alone).
     /// </summary>
-    internal bool IsHostileTo(Unit other)
+    internal bool IsHostileTo(Unit other) =>
+        Hostile(OwnerTeam, IsDeserter, IsRogue, other.OwnerTeam, other.IsDeserter, other.IsRogue);
+
+    /// <summary>
+    /// The unit AI's choice of enemies: rogues fight everyone; a deserter fights any owned unit and is fought by them;
+    /// otherwise only an owner's own stance counts (vt+0E0h == 1) — one-sided, as the alliances window sets it.
+    /// </summary>
+    public static bool Hostile(Team owner, bool deserter, bool rogue, Team otherOwner, bool otherDeserter, bool otherRogue)
     {
-        if (IsRogue || other.IsRogue)
+        if (rogue || otherRogue)
             return true;
-        if (IsDeserter)
-            return other.OwnerTeam != null;
-        if (other.IsDeserter)
-            return OwnerTeam != null;
-        return OwnerTeam != null && other.OwnerTeam != null
-               && OwnerTeam.GetTargetRelation(other.TeamColor) == Teams.TeamRelation.Enemy;
+        if (deserter)
+            return otherOwner != null;
+        if (otherDeserter)
+            return owner != null;
+        return owner != null && otherOwner != null
+               && owner.GetTargetRelation(otherOwner.TeamColor) == Teams.TeamRelation.Enemy;
     }
 
     /// <summary>vt+164h: go after <paramref name="target"/> and attack it.</summary>
