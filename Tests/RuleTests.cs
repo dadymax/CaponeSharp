@@ -115,6 +115,20 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void PaydayFollowsTheExe()
+    {
+        // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.
+        var org = NewOrg(0);
+        Assert.Equal(Unit.PayResult.Paid, Unit.Pay(org, 70_000, UnitCommon.UnitType.Pistol), "within the overdraft");
+        Assert.Equal(-10_000L, org.Cash, "a day's pay");
+        var broke = NewOrg(-195_000);
+        Assert.Equal(Unit.PayResult.Quits, Unit.Pay(broke, 70_000, UnitCommon.UnitType.Pistol), "beyond: the gangster quits");
+        Assert.Equal(Unit.PayResult.Unpaid, Unit.Pay(broke, 70_000, UnitCommon.UnitType.Collector), "a Collector stays unpaid");
+        Assert.Equal(-195_000L, broke.Cash, "nothing paid");
+        Assert.Equal(Unit.PayResult.Paid, Unit.Pay(broke, 0, UnitCommon.UnitType.Thug), "no salary (episode flag A = 0)");
+    }
+
+    [UnitTest]
     public static void MoneyTransferFollowsTheExe()
     {
         // sub_462C13: amount = 50 000 × (slider + 1), slider 0..19; sub_4294B0: paid only when affordable (vt+70h).

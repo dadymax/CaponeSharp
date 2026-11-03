@@ -536,19 +536,31 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         if (!IsInstanceValid(this) || IsDead)
             return;
         var org = OwnerTeam?.Org;
-        if (org != null && Salary > 0 && !IsArrested)
+        if (org != null && !IsArrested && Pay(org, Salary, UnitType) == PayResult.Quits)
         {
-            // sub_42A535: the owner must afford the day's pay within the overdraft (vt+70h), else a gangster quits
-            // (a Collector just goes unpaid); Spend itself would always pay while the player has gangsters.
-            if (org.CanAfford(Salary / 7))
-                org.Spend(Salary / 7);
-            else if (UnitType != UnitCommon.UnitType.Collector)
-            {
-                Resign();
-                return;
-            }
+            Resign();
+            return;
         }
         clock.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
+    }
+
+    public enum PayResult { Paid, Unpaid, Quits }
+
+    /// <summary>
+    /// sub_42A535, once a game day: the owner must afford the day's pay (weekly salary / 7) within the overdraft
+    /// (vt+70h) and pays it; else a gangster quits and a Collector just goes unpaid. (Spend itself would always pay
+    /// while the player has gangsters.) A unit without salary costs nothing.
+    /// </summary>
+    public static PayResult Pay(Organisation org, int weeklySalary, UnitCommon.UnitType type)
+    {
+        if (weeklySalary <= 0)
+            return PayResult.Paid;
+        if (org.CanAfford(weeklySalary / 7))
+        {
+            org.Spend(weeklySalary / 7);
+            return PayResult.Paid;
+        }
+        return type == UnitCommon.UnitType.Collector ? PayResult.Unpaid : PayResult.Quits;
     }
 
     /// <summary>A gangster who quit (owner none): he fights every player's units (unit AI, unowned units).</summary>
