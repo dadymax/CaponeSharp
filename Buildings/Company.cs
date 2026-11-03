@@ -587,8 +587,8 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     }
 
     /// <summary>
-    /// Demolished (HP 0, vt+FCh sub_422DE0): the company leaves the world. TODO: the original also calls vt+30h(40h)
-    /// (probably the rubble graphic); the block tile still shows the building here.
+    /// Demolished (HP 0, vt+FCh sub_422DE0): the company leaves the world; sub_43BCE0 leaves plain building cells
+    /// (vtable off_47CDB0) on its footprint, so the block tile keeps showing the building and stays blocked.
     /// </summary>
     public void Demolish()
     {

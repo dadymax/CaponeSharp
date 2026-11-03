@@ -272,7 +272,10 @@ Known gaps in the brick (do later):
   30,20/30,21; HP 0 and removal, sub_422DE0); brownout (slot 3, 30,17/18, any company of a powered block, politician
   1Ch 2 weeks / 19h 1 week / 15h 3.5 days via block command 1 sub_420150; block vt+18Ch = powered). MCP-tested in
   episode 15: raid closed an Интим-салон, demolition removed a Собачьи бега, brownout cut block 10 for 2 weeks.
-  Open: the rubble graphic after demolition (company vt+30h(40h)).
+  No rubble (checked 2026-11-03): sub_422DE0 calls vt+30h(40h) (sub_4386F5 → sub_414F80: a world notification, code
+  40h, unused) and sub_43BCE0, which puts a plain building-cell object (fnSetGroundWalkabilityToNone, vtable
+  off_47CDB0 — the same one the map loader uses for ordinary buildings) on each footprint cell and removes the
+  company. So the building tile stays and its cells stay blocked, as here.
 - UNIT flag A = 0 → salary 0 is assumed (`CampaignManager.SpawnUnit`).
 - Smoke test leaks nodes (RID warnings at exit).
 
