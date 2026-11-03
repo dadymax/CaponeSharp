@@ -73,3 +73,32 @@ These were bugs in the GDScript code that C#'s static typing either exposed or m
 - Combat uses the EXE table: damage ranges against units and against buildings, hit chance instead of evasion, fractional attack range.
 - BMP transparency keys are replaced on the raw RGBA buffer (much faster than per-pixel calls).
 - Companies dropped by the 3-in-4 random roll are freed instead of leaking.
+
+## Tuning unit animations
+
+The playtests show that some animations need hand tuning. Three places control them:
+
+1. **Which pictures** — `Units/units.json`, `Sprites` of each unit type. For each owner (`Player`, `Enemy`,
+   `Teammate`; `"Neutral": "Enemy"` copies another owner) there is an array of 11 layers, in this order:
+   `idle`, `move SE`, `move NE`, `move NW`, `move SW`, `attack SE`, `attack NE`, `attack NW`, `attack SW`,
+   `killed`, `killed2`. Each entry names a Chicago.tile record:
+   - `"Own Thompson man attack SE"` — the record with that comment (case does not matter);
+   - `"Own Thompson man idle@2"` — the third record with that comment (Chicago.tile repeats some names);
+   - `"#2678"` — a record by index (counting from the first line after the tile count, as the EXE does);
+   - `""` — none: a move layer falls back to idle, an attack layer to idle / move, `killed2` to `killed`.
+
+   The frames of a layer are the coordinate pairs of that record in Chicago.tile. The EXE's own choice per unit
+   type, owner and activity is the picture method sub_42D8D0 (see `TODO.md`: e.g. the Thief walks with the Thug's
+   pictures and attacks with the Hit man's, the Terrorist's attack uses his walk pictures). `-- --smoke-test`
+   reports names that don't resolve. To list the record names:
+   `python -c "L=open('Chicago.tile',encoding='cp1251').read().splitlines(); n=int(L[0]); t=L[n+2:n+2+int(L[n+1])]; [print(i, r.split(';',1)[1].strip()) for i,r in enumerate(t) if ';' in r]"`
+   (run in `godottry/original_game`).
+2. **How fast** — `game.cfg`, section `[animation]`: `idle_fps`, `move_fps`, `attack_fps`, `killed_fps` for every
+   unit, and `<Type>.<kind>_fps` for one type (`Thompson.attack_fps=8`). Default 5 frames per second.
+   `attack_hold_minutes` sets how long a unit keeps its attack picture between an order's hits (extortion);
+   one game hour is one real second.
+3. **Where** — the picture's offset from the unit's cell is the `Animation` node position in `Units/Unit.tscn`
+   (0, −14). The facing (SE / NE / NW / SW) comes from the move or target direction on screen
+   (`MapTileMath.GetDirection`). Death pictures play once and hold the last frame.
+
+`game.cfg` and `units.json` are read when the game starts; restart it after a change.

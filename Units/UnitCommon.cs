@@ -224,7 +224,12 @@ public partial class UnitCommon : Node
 
     public void FillSpriteFrames(SpriteFrames sf)
     {
-        if (_spriteFrameDict.TryGetValue(OwnerType, out var ous))
-            ous.FillSpriteFrames(sf);
+        if (!_spriteFrameDict.TryGetValue(OwnerType, out var ous))
+            return;
+        ous.FillSpriteFrames(sf);
+        // Frame rates from game.cfg [animation] (see README "Tuning unit animations").
+        foreach (var layer in OriginalUnitSprites.SpriteLayers)
+            if (sf.HasAnimation(layer))
+                sf.SetAnimationSpeed(layer, GameConfig.AnimationFps(Type.ToString(), layer.ToString()));
     }
 }

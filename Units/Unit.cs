@@ -427,10 +427,10 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// Attack animation towards <paramref name="target"/> for <paramref name="minutes"/> game minutes (orders that hit
     /// now and then keep it up between their hits, so the unit never drops to its standing picture mid-attack).
     /// </summary>
-    public void AnimationAttackOnce(Node2D target, int minutes = 20)
+    public void AnimationAttackOnce(Node2D target, int minutes = -1)
     {
         AnimationMoveOrAttack(target.Position - Position, false);
-        _attackPoseUntil = GameClock.Instance?.Minute + minutes ?? 0;
+        _attackPoseUntil = GameClock.Instance?.Minute + (minutes < 0 ? GameConfig.AttackHoldMinutes : minutes) ?? 0;
     }
 
     /// <summary>The attacking order ended: back to the standing picture.</summary>

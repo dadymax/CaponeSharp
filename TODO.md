@@ -973,7 +973,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Fix plan (after the user confirms in the original): Down = (−20, 9.5); place block rows without the flip; keep
   `GetDirection` on fixed screen vectors (SE/NE/NW/SW are screen directions); re-check `MapTests` (HQ on B cells, start
   points "one row off"), the minimap, fog, vision and MoveMap tests, and the scenario test.
-- [ ] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
+- [x] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
+  Done: README "Tuning unit animations" (pictures in units.json, speed and attack hold in game.cfg [animation], offset
+  and facing); new game.cfg keys `<kind>_fps`, `<Type>.<kind>_fps`, `attack_hold_minutes`.
 - [x] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
   start. Cause: both PLAYER lines use id 1, and the bases were handed out by id, so both went to the user; the
   computer player had nothing, was eliminated at once and the user won as the last player. The EXE sets a base up on
