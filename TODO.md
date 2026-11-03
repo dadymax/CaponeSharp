@@ -131,14 +131,18 @@ code (base squad) get random personal names like `Unit::Unit`.
   building (class 9), else an own training-center business (catalogue +28h = 4).
 - Progress: Blood.bmp (6 columns × 60×210, animated) rises over 728..789 × 390..589 by progress × 210; the job's
   button stays down. Conversions (class 15h) instead show GameButt.bmp's frame + coin bar over the six action slots
-  (frame 0,0–258,43 at (230, 504), fill 0,63 up to 252 px at (233, 507)) — TODO.
+  (frame 0,0–258,43 at (230, 504), fill 0,63 up to 252 px at (233, 507)) — done (`ActionBar._Draw`).
 - The recruit-price table 0x4884EC / 0x480E18 differs from 0x484030 for the Collector (15 000 vs 5 000) and type 6.
 - Done: "Set as primary training center" (command 12, slot 4, icon 0xD45, text 30,8; HQ +0CEh via vt+90h,
   `Organisation.PrimaryCenter`), shown on an own training center that isn't primary. MCP-tested: Thug 600 → 300 min.
 - Verified (sub_420ED5 at 0x42114B): a row with catalogue income ≤ 0 calls owner Spend(−Income() / 441) on each of the
   441 weekly ticks, so a Тренировочный центр costs ~500 000 a week and a failing Spend repeats "out of funds" every
   tick — corrected: Spend keeps paying while the player has gangsters, so there is no repeated message; with none
-  left and negative net income the player is eliminated. Open: the owner type factor the original applies to type 5 (HQ +120h?) is assumed 1.
+  left and negative net income the player is eliminated. The owner's per-type factor (HQ vt+0ACh sub_432CE0 reads
+  float +10Ch[type]) has only 5 entries (types 0–4, zeroed by the constructor); for type 5 (support) it reads +120h,
+  the FBI-visit start minute (int, −1801 at start; vt+118h sets it): as a float that is a NaN before any FBI visit and
+  a denormal (≈ 0) after one — an original bug whose result (__DBLLNG87 of NaN) can't be settled without running the
+  original. Kept at factor 1 (support upkeep = catalogue income).
 - Cadillac passengers: done (see §5 Units).
 
 ## Bribe shares — "Расходы" chart (2026-10-27)
