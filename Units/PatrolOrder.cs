@@ -6,7 +6,8 @@ namespace Capone;
 /// Patrol (order 8; object sub_4292E0, vtable off_483E54): the two ends are the unit's cell and the clicked cell
 /// (+60h / +64h). The unit walks to one end (shared order step sub_428500 → move order sub_4279E7); when the leg is
 /// done (vt+88h, sub_4293C7) it waits one game hour (event 3EAh) and heads for the other end. It ends when the unit
-/// dies or gets another order. TODO: the stance it walks with (unit vt+194h by the order's mode) — fighting on the way.
+/// dies or gets another order. The constructor passes mode 3 to the shared order (sub_4284B0), so the legs are walked in
+/// the Attack stance: the unit AI (ThinkUnderOrder) fights what comes in range on the way and at the ends.
 /// </summary>
 public partial class PatrolOrder : Node
 {

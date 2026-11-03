@@ -186,7 +186,7 @@ Terminate); police stations and own objects show the name. The Russian texts hav
   the target end (+2Ch = +60h / +64h) and re-run after one game hour (event 3EAh); sub_428500 then sets the unit's
   target / stance (vt+1A4h, vt+194h with 1/2/4 by the order's mode +5Ch) and steps the move order sub_4279E7.
   `Units/PatrolOrder.cs`, slot 6 (icons 0x484484, text 29,8). MCP-tested: a Thug shuttles between its cell and the
-  clicked cell. Open: the stance (fighting on the way).
+  clicked cell. The legs use mode 3 (sub_4292E0 passes 3 to sub_4284B0): fighting on the way, done in `ThinkUnderOrder`.
 - Gate sub_42CCE5 (unit vt+1C4h): Collectors and units inside a car have no orders; own units: orders 1/2/8 need unit
   vt+110h (probably "can fight"), 2 also checks vt+A0h; order 0Ah "Disguise" (29,10, icons 0x4844EC) needs vt+B8h
   and 60 min since the last use (Hit man). Others' units: 0Bh "Ask cops to arrest gangster" (29,11, icon 0xAD8),
