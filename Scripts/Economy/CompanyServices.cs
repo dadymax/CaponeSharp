@@ -190,7 +190,7 @@ public partial class PoliceRaid : Node
                         _company.ReleaseToNeutral();
                     _state = 2;
                     if (IsInstanceValid(_car) && IsInstanceValid(_station))
-                        _car.WalkTo(_station);
+                        _car.DriveTo(_station);
                 });
                 break;
             case 2:

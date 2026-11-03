@@ -182,7 +182,7 @@ public partial class PoliceJob : Node
     {
         _state = State.Returning;
         if (IsInstanceValid(_station))
-            _car.WalkTo(_station);
+            _car.DriveTo(_station);
         _walking = true;
     }
 

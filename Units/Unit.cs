@@ -255,6 +255,15 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     }
 
     /// <summary>Walk next to a map object, following it if it moves (the move job keeps the target object, +2Ch).</summary>
+    /// <summary>A road-only car goes to the road cell nearest the building; anyone else walks to the building.</summary>
+    public void DriveTo(Node2D building)
+    {
+        if (RoadOnly && MoveMap.NearestRoad(Map.LocalToMap(building.Position)) is { } road)
+            WalkToCell(road);
+        else
+            WalkTo(building);
+    }
+
     public void WalkTo(Node2D target)
     {
         _moveTargetNode = target;

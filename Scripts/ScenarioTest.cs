@@ -168,6 +168,8 @@ public partial class ScenarioTest : Node
             TestSpreadOut();
         if (_hour == 14)
             TestFight();
+        if (_hour == 16)
+            TestPolice();
         if (_hour == _days * 24 - 7)
         {
             // Collectors (sub_428D62) bring the uncollected money of their block home once a week of company income
@@ -604,6 +606,39 @@ public partial class ScenarioTest : Node
             return hurt && (targetGone || !IsInstanceValid(shooter) || shooter.IsDead);
         }, () => $"target HP {(IsInstanceValid(target) ? target.CanBeAttacked.HP : 0)} of {full}, shooter "
                  + (IsInstanceValid(shooter) ? $"{shooter.CanBeAttacked.HP} HP at {shooter.Cell}" : "gone")));
+    }
+
+    /// <summary>
+    /// The cops are called on a Pistol man of the local player standing by a police station (Police.Dispatch, no
+    /// lawyers): the car must arrest him and take him to jail (he leaves the game) within two game days.
+    /// </summary>
+    private void TestPolice()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var station = Companies().FirstOrDefault(c => c.IsPoliceStation);
+        if (human?.Org == null || human.Org.Eliminated || station == null || Police.Instance == null)
+        {
+            Note("no local player or police station for the arrest check");
+            return;
+        }
+        var gangster = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Pistol, human, station.Cell);
+        if (gangster == null)
+        {
+            Note("arrest check: unit not created");
+            return;
+        }
+        bool arrested = false, jailed = false;
+        // Jail (unit vt+1A0h) takes the arrested unit out of the game.
+        gangster.Died += _ => { jailed = gangster.IsArrested; arrested |= jailed; };
+        Police.Instance.Dispatch(gangster, lawyersCanHelp: false);
+        _pending.Add((_hour + 48, "the police arrest and jail a gangster", () =>
+        {
+            arrested |= IsInstanceValid(gangster) && gangster.IsArrested;
+            return jailed;
+        }, () => $"arrested {arrested}, jailed {jailed}, gangster "
+                 + (IsInstanceValid(gangster) ? $"at {gangster.Cell}, dead {gangster.IsDead}" : "gone")
+                 + $"; station {station.Cell}; cars " + string.Join(", ", Units().Where(u => u.UnitType == UnitCommon.UnitType.PoliceCar)
+                     .Select(c => $"{c.Cell} moving {c.IsMoving} job {c.CurrentOrder?.Name}"))));
     }
 
     private void KillACollector()

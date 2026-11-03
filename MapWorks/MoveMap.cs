@@ -66,6 +66,24 @@ public static class MoveMap
 
     public static Vector2I Step(Vector2I cell, int direction) => cell + Steps[((direction % 4) + 4) % 4];
 
+    /// <summary>
+    /// The road cell (cars may stand on it) closest to <paramref name="cell"/> by Manhattan distance, searching outward
+    /// up to <paramref name="range"/>; null when none. Road-only cars drive there to "reach" a building, which is
+    /// ringed by pavement.
+    /// </summary>
+    public static Vector2I? NearestRoad(Vector2I cell, int range = 12)
+    {
+        for (var r = 0; r <= range; r++)
+            for (var dx = -r; dx <= r; dx++)
+            {
+                var dy = r - Mathf.Abs(dx);
+                foreach (var c in dy == 0 ? new[] { cell + new Vector2I(dx, 0) } : new[] { cell + new Vector2I(dx, dy), cell + new Vector2I(dx, -dy) })
+                    if (_roads.Contains(c) && Walkable(c, true))
+                        return c;
+            }
+        return null;
+    }
+
     /// <summary>S pavement (no cars).</summary>
     public static bool IsPavement(Vector2I cell) => _sand.Contains(cell);
 
