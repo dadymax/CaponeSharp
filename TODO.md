@@ -189,7 +189,12 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
 - Done (M10): order acknowledgements sub_42CEF8 → `UnitVoice` — selection "…Click", go "…Order" (Cadillac CarGo /
   CarClick), attack/extort "…ClickEnemy" (Hit man uses the Bombman voice), forced go "…OrderHurry"; played for the
   first commanded own unit (not collectors).
-- Open: the vt+1C4h gate per type, Stand Ground's guarding, Disguise, Force variants, Frenzy, Unload, enemy-unit buttons, attacking
+- Gate sub_42CCE5 decoded 2026-11-03: own units get only orders 0 Go, 1 Attack, 2 Extort, 8 Patrol (1/2/8 need
+  unit vt+110h, i.e. a weapon) and 0Ah Disguise; never 3 Stand Ground (so its button stays hidden). Order 2 also needs
+  the owner's HQ flag +1D2h (vt+0A0h), which sub_4043D0 clears (vt+9Ch(0)) for a player set up without a base: in
+  episodes 4, 13 and 18 the user can't extort (`Organisation.MayExtort`, scenario check). Disguise, Force variants,
+  Unload and enemy-unit buttons are done.
+- Open: Frenzy, attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
 ## Victory conditions and defeat (2026-10-27)

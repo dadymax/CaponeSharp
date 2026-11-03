@@ -333,7 +333,7 @@ public partial class CampaignManager : Node
             team.PlayerName = pData.Name;
             team.HasBase = pData.HasBase;
             team.IsCurrentPlayerColor = i == humanIndex;
-            team.Org = new Organisation(team, CurrentScenario.Funds);
+            team.Org = new Organisation(team, CurrentScenario.Funds) { MayExtort = pData.HasBase };
         }
         GD.Print($"CampaignManager: initialized {Teams.TeamsInGame.Count} teams, funds {CurrentScenario.Funds} each");
     }

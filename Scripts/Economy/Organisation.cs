@@ -169,6 +169,9 @@ public partial class Organisation
         return false;
     }
 
+    /// <summary>+1D2h (vt+9Ch / vt+0A0h): 1 from the constructor, 0 for a player set up without a base.</summary>
+    public bool MayExtort { get; set; } = true;
+
     /// <summary>The player is out of the game (sub_43B677).</summary>
     public bool Eliminated { get; private set; }
 

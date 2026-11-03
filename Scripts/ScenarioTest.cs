@@ -158,6 +158,14 @@ public partial class ScenarioTest : Node
                 Check("a starting Cadillac carries four Thompson men",
                     car.Passengers.Count() == Unit.CarSeats && car.Passengers.All(p => p.UnitType == UnitCommon.UnitType.Thompson),
                     $"{car.OwnerTeam.PlayerName}'s car: {string.Join(", ", car.Passengers.Select(p => p.UnitType))}");
+        if (_hour == 1 && Teams.GetCurrentPlayerTeam() is { HasBase: false } baseless)
+        {
+            // Gate sub_42CCE5: without a base (HQ +1D2h = 0) the player's units may not extort.
+            var unit = Units().FirstOrDefault(u => u.OwnerTeam == baseless && u.HasWeapon);
+            var company = Companies().FirstOrDefault(c => c.IsEconomic && c.OwnerTeam == null);
+            if (unit != null && company != null)
+                Check("a player without a base can't extort", !ExtortOrder.CanExtort(unit, company), $"{unit.UnitType} vs {company}");
+        }
         if (_hour == 6)
             MakeDeserter();
         if (_hour == 8)
@@ -463,6 +471,7 @@ public partial class ScenarioTest : Node
             return;
         }
         var (a, b) = (idle[0], idle[1]);
+        var bStart = b.Cell;
         b.MoveTo(b.Map.MapToLocal(a.Cell));
         var met = false;
         _pending.Add((_hour + 16, "units sent to one cell spread out", () =>
@@ -472,7 +481,9 @@ public partial class ScenarioTest : Node
             var idleBoth = a.HasNoJob && b.HasNoJob;
             if (idleBoth && a.Cell == b.Cell)
                 met = true;
-            return met && idleBoth && a.Cell != b.Cell;
+            // The meeting is sampled hourly and may be missed (arrive and spread within the hour): b must have walked
+            // over and both stand idle on different cells.
+            return idleBoth && a.Cell != b.Cell && b.Cell != bStart && MapTileMath.GetDistance(a, b) <= 2;
         }, () => $"{a.UnitType} at {a.Cell}, {b.UnitType} at {b.Cell}, met {met}, road/pavement neighbours "
                  + string.Join(" ", Enumerable.Range(0, 4).Select(d => MoveMap.Step(a.Cell, d))
                      .Select(c => $"{c}:{MoveMap.IsRoadOrPavement(c)}/{MoveMap.Walkable(c, false)}"))

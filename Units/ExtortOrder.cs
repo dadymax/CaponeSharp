@@ -39,6 +39,10 @@ public partial class ExtortOrder : Node
     {
         if (!company.IsEconomic || unit.OwnerTeam == null || company.OwnerTeam == unit.OwnerTeam)
             return false;
+        // Order gate sub_42CCE5, order 2: the owner's HQ flag +1D2h (vt+0A0h) must be set; a player who starts without
+        // a base has it cleared (sub_4043D0 → vt+9Ch(0)), so the commando episodes 4, 13 and 18 allow no extortion.
+        if (unit.OwnerTeam.Org is { MayExtort: false })
+            return false;
         if (company.OwnerTeam != null
             && unit.OwnerTeam.GetTargetRelation(company.OwnerTeam.TeamColor) == Teams.TeamRelation.Friend)
             return false;

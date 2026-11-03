@@ -169,7 +169,8 @@ public partial class ActionBar : Control
         if (armed)
             Set(1, TypeIcon(force ? ForceAttackIcons : AttackIcons, unit.UnitType), OriginalTexts.Instance.Get(29, force ? 7 : 1),
                 () => Arm(force ? Main.OrderMode.ForceAttack : Main.OrderMode.Attack));
-        if (armed)
+        // Extort also needs the owner's HQ flag +1D2h (gate sub_42CCE5): not for a player without a base.
+        if (armed && unit.OwnerTeam?.Org?.MayExtort != false)
             Set(2, TypeIcon(ExtortIcons, unit.UnitType), OriginalTexts.Instance.Get(29, 3), () => Arm(Main.OrderMode.Extort));
         // Slot 5: order 8 "Patrol" (29,8) between the unit's cell and the clicked cell (PatrolOrder).
         if (armed)
