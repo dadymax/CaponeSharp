@@ -141,6 +141,8 @@ public static class TileMapGenerator
                     // (buildings, trees, lamps) are sorted by y with the units, so a tile in front can't cover a unit's feet.
                     if (flat[x, y])
                         td.ZIndex = GroundZ;
+                    else
+                        td.YSortOrigin = -1; // a company (its sign) on the same cell sorts after its building
                     td.SetCustomData(TileNonWalkable, true);
 
                     var actualBlockPosition = MapTileMath.Add(tileMap, Vector2I.Zero, blockPosition);
@@ -228,8 +230,8 @@ public static class TileMapGenerator
                 continue;
             if (company.GetParent() == null)
                 (parent ?? (Node)tileMap).AddChild(company);
+            // Sorted by depth with the units like the original's object list (was ZIndex 999: signs over every unit).
             company.Position = tileMap.MapToLocal(coords);
-            company.ZIndex = 999;
         }
 
         tileMap.SetMeta(TileNonWalkable, nonWalkableMap);

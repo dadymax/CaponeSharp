@@ -956,8 +956,10 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 - [x] 1. Briefing: the episode Up / Down arrows must click like the main-menu buttons (ButtonClick / OverButton); now silent.
   Done: `ScreenPictures.HookScreenSounds` on both arrows.
-- [ ] 2. A unit walking past a block corner with a neutral company is drawn under the company's sign animation; units
-  must be drawn over the sign.
+- [x] 2. A unit walking past a block corner with a neutral company is drawn under the company's sign animation; units
+  must be drawn over the sign. Cause: every company (with its sign) had ZIndex 999 (from the first port). Now companies
+  are sorted by depth with the units, like the original's object list; tall building tiles sort 1 px earlier
+  (YSortOrigin −1) so a sign still shows over its own building. MCP-checked in episode 7 (a Thug in front of a sign).
 - [ ] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
   (map → screen projection, sub_414A30) against the original; the user will also check the original game.
 - [ ] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
@@ -973,5 +975,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   sub_42BD15 fires first (sub_438873) and stamps +0D0h afterwards. Fixed; the exposed damage is 20–30 (14h / 1Eh,
   was 30). From hiding he does his table damage 161–162: one shot kills every unit except the Terrorist (200 HP), as in
   the EXE. "Hidden" means no shot for 30 game hours; the Disguise order doesn't change his damage. Scenario check.
-- [ ] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
-  speed. Verify against the EXE (sub_431DF3, sub_427505).
+- [~] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
+  speed. Checked 2026-11-03: the EXE does speed it up. The training job (sub_427505, event 1) ends at now + table time
+  / vt+84h, and vt+84h (sub_431DF3) = 1 + the number of own class-0 companies with vt+1A8h = 4 (training centers). The
+  time comes from table 0x480E18 +28h, the same data as 0x484030 +24h (the copy starts 4 bytes earlier): 600 / 1050 /
+  1200 minutes. So one center halves the time (Thug 600 → 300 min, 10 → 5 s), two make it a third. Kept; the user
+  may compare with the original game.
