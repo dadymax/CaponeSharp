@@ -76,7 +76,9 @@ code (base squad) get random personal names like `Unit::Unit`.
   income, cash and gangsters every 30 game hours (the original: 30 s of real time) into 31 averaged slots that are
   halved when full; `EndScreen` draws it like sub_43CCD0 with the Income / Money / People tabs (sub_43DB50). The result
   text shows at the top left for 15 s (message log). Unit tests `StatisticsTests`.
-- Open: the animations, music, story scrolling past 13 lines (`sub_406D24` scroller).
+- The end-screen animations are done; the music is CD audio (not in the files). No story scrolling is needed: the
+  record holds 14 STORYTEXT lines (sub_4644A1, +4) and the longest story has 14; the briefing's scroll control (+28h) is
+  the episode bar (done).
 - Command line: `--skip-briefing` starts the episode at once (MCP tests); `--episode=N` overrides the saved progress.
 
 ## Business conversion — R5/M6 (2026-10-27)
