@@ -962,6 +962,17 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (YSortOrigin −1) so a sign still shows over its own building. MCP-checked in episode 7 (a Thug in front of a sign).
 - [ ] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
   (map → screen projection, sub_414A30) against the original; the user will also check the original game.
+  Analysis 2026-11-03 — the remake's map is the original mirrored along the y axis:
+  - EXE sub_414A30 (map cell → screen): sx = C + x·W − y·W, sy = (x + y)·H + C2 — x runs right-down, y left-down
+    (.epi UNIT x / y are the low / high words of the position, sub_4670A5 → sub_43BC06).
+  - Remake `MapTileMath.FromOriginal` = Right·x + Down·y with Right = (20, 9.5) (right-down, correct) and
+    Down = (20, −9.5) (right-UP, the negative of the original's y). `TileMapGenerator` flips each block's rows
+    (`yInverted`), so every block looks right inside, but block positions, start points and units are mirrored.
+  - Episode 4: player units ≈ (59, 35), Big Jim's base (90, 13): original screen ∝ (dx − dy, dx + dy) = (53, 9) →
+    right; remake (dx + dy, dx − dy)·… = mostly down — what the playtest saw.
+  Fix plan (after the user confirms in the original): Down = (−20, 9.5); place block rows without the flip; keep
+  `GetDirection` on fixed screen vectors (SE/NE/NW/SW are screen directions); re-check `MapTests` (HQ on B cells, start
+  points "one row off"), the minimap, fog, vision and MoveMap tests, and the scenario test.
 - [ ] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
 - [x] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
   start. Cause: both PLAYER lines use id 1, and the bases were handed out by id, so both went to the user; the
