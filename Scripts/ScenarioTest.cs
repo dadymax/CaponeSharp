@@ -93,6 +93,7 @@ public partial class ScenarioTest : Node
         if (!OS.GetCmdlineUserArgs().Any(a => a.StartsWith("--speed=")))
             _clock.Speed = DefaultSpeed;
         _errorsAtStart = GameClock.EventErrors;
+        CollectorJob.Delivered += OnDelivered;
         foreach (var c in Companies())
         {
             if (c.IsHq)
@@ -115,8 +116,12 @@ public partial class ScenarioTest : Node
         GD.Print($"--- Episode {_episode}: {players}");
     }
 
+    private long _delivered;
+    private void OnDelivered(Team owner, long amount) => _delivered += amount;
+
     public override void _ExitTree()
     {
+        CollectorJob.Delivered -= OnDelivered;
         if (_clock != null && IsInstanceValid(_clock))
             _clock.TurnPassed -= OnTurn;
         if (Instance == this)
@@ -163,6 +168,17 @@ public partial class ScenarioTest : Node
             TestSpreadOut();
         if (_hour == 14)
             TestFight();
+        if (_hour == _days * 24 - 7)
+        {
+            // Collectors (sub_428D62) bring the uncollected money of their block home once a week of company income
+            // has built up; any player with an HQ and companies should have had a delivery by now.
+            var owners = Companies().Where(c => c.IsEconomic && c.OwnerTeam?.HqCompany != null).Select(c => c.OwnerTeam).Distinct().ToList();
+            if (owners.Count == 0)
+                Note("no player with an HQ owns companies: no collector check");
+            else
+                Check("collectors bring money to the HQ", _delivered > 0,
+                    $"delivered {_delivered}; owners {string.Join(", ", owners.Select(t => t.PlayerName))}");
+        }
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
         if (_hour == System.Math.Min(30, _days * 12 + 6))

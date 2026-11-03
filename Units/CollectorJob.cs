@@ -160,6 +160,9 @@ public partial class CollectorJob : Node
     private static bool IsCashPoint(Node2D target) =>
         target is Company { IsHq: true } || target is Company { Entry.Value28: 3 };
 
+    /// <summary>Raised when a collector hands money in (owner, amount carried).</summary>
+    public static event System.Action<Team, long> Delivered;
+
     private void Deliver(Team owner)
     {
         var amount = _collector.CarriedMoney;
@@ -168,6 +171,7 @@ public partial class CollectorJob : Node
         {
             var kept = owner.Org.Deposit(amount);
             GD.Print($"Collector of {owner.PlayerName} delivered {amount} from block {_block.Number} ({kept} to cash): {owner.Org}");
+            Delivered?.Invoke(owner, amount);
         }
         if (_collector.CanBeAttacked is { } health)
             health.HP = health.MaxHP;
