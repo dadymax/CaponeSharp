@@ -343,15 +343,25 @@ public class ComputerPlayer
         salaries = 0;
         foreach (var unit in AllUnits().Where(u => u.OwnerTeam == team))
         {
-            var type = (int)unit.UnitType;
-            if (type >= 0 && type < StrengthWeight.Length)
-                strength += StrengthWeight[type];
+            strength += WeightOf(unit.UnitType);
             salaries += unit.Salary;
             if (unit.UnitType == UnitCommon.UnitType.Thug)
                 thugs++;
         }
         return strength;
     }
+
+    /// <summary>Strength weight of a unit type (table in sub_461F88); 0 for types without one.</summary>
+    public static int WeightOf(UnitCommon.UnitType type) =>
+        (int)type is var t && t >= 0 && t < StrengthWeight.Length ? StrengthWeight[t] : 0;
+
+    /// <summary>sub_4620D7: weaker when the human's strength + 5 exceeds ours; the human is a target when we are more than twice as strong.</summary>
+    public static (bool Weaker, bool Target) Compare(int mine, int theirs) =>
+        theirs + 5 > mine ? (true, false) : (false, mine / 2 > theirs);
+
+    /// <summary>+1ECh (attack the human HQ) keeps its value: on at 12 or more strength beyond the Thugs, off below 7.</summary>
+    public static bool AttackHq(bool wasAttacking, int armyStrength) =>
+        armyStrength >= 12 || (armyStrength >= 7 && wasAttacking);
 
     /// <summary>
     /// vt+154h (sub_462028): the last listed unit of another player (not a Collector) near the AI's training center.
@@ -384,10 +394,9 @@ public class ComputerPlayer
         var human = Teams.GetCurrentPlayerTeam();
         if (human?.Org != null && human != Team && !human.Org.Eliminated)
         {
-            var theirs = Strength(human, out _, out _);
-            if (theirs + 5 > mine)
-                _weaker = true;
-            else if (mine / 2 > theirs)
+            var (weaker, target) = Compare(mine, Strength(human, out _, out _));
+            _weaker = weaker;
+            if (target)
                 _target = human;
             incomeLead = Math.Min(incomeLead, Org.NetIncome - human.Org.NetIncome);
         }
@@ -425,16 +434,9 @@ public class ComputerPlayer
         else if (_target != null)
             _attackTarget = true;
 
-        // +1ECh keeps its value between cycles: on at 12 or more strength beyond the Thugs, off below 7.
         var wasAttacking = _attackHuman;
         if (p[10] != 0)
-        {
-            var army = mine - myThugs;
-            if (army >= 12)
-                _attackHuman = true;
-            else if (army < 7)
-                _attackHuman = false;
-        }
+            _attackHuman = AttackHq(_attackHuman, mine - myThugs);
         if (_recruitChosen || _recruitThug || _convert || _attackIntruder || _attackHuman != wasAttacking)
             GD.Print($"AI {Team.PlayerName}: strength {mine} (thugs {myThugs}), cash {Org.Cash}, recruit {(_recruitChosen ? chosen.ToString() : _recruitThug ? "Thug" : "-")}, "
                  + $"convert {_convert}, intruder {_intruder?.UnitType.ToString() ?? "-"}, target {_target?.PlayerName ?? "-"}, attack HQ {_attackHuman}");

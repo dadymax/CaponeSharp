@@ -159,6 +159,21 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void ComputerPlayerStrategyChoices()
+    {
+        // sub_461F88 weights: Thug 1, Pistol 4, Thompson 16, Terrorist 6, Sniper 5, Cadillac 14, Shotgun 8, Hit man 10.
+        Assert.Equal(16, ComputerPlayer.WeightOf(UnitCommon.UnitType.Thompson), "Thompson man");
+        Assert.Equal(0, ComputerPlayer.WeightOf(UnitCommon.UnitType.Collector), "Collector counts nothing");
+        Assert.Equal((true, false), ComputerPlayer.Compare(20, 16), "human + 5 > ours: weaker");
+        Assert.Equal((false, false), ComputerPlayer.Compare(21, 16), "even: neither");
+        Assert.Equal((false, true), ComputerPlayer.Compare(40, 16), "more than twice as strong: target the human");
+        Assert.True(ComputerPlayer.AttackHq(false, 12), "on at 12");
+        Assert.True(!ComputerPlayer.AttackHq(false, 11), "not yet at 11");
+        Assert.True(ComputerPlayer.AttackHq(true, 7), "keeps attacking down to 7");
+        Assert.True(!ComputerPlayer.AttackHq(true, 6), "stops below 7");
+    }
+
+    [UnitTest]
     public static void PaydayFollowsTheExe()
     {
         // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.
