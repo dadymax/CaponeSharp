@@ -174,6 +174,24 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void MapHintTexts()
+    {
+        // sub_40C2C2 switch tables 0x40CB5E / 0x40CC19 / 0x40CCD4 (buildings) and 0x40CE9C / 0x40CF8F (units).
+        Assert.Equal(-1, MapHint.TextId(true, false, 1, MapHint.NoOrder), "no own unit selected: the name");
+        Assert.Equal(41, MapHint.TextId(true, false, 1, 0), "enemy company, default: Extort");
+        Assert.Equal(40, MapHint.TextId(true, true, 1, 0), "enemy HQ, default: Attack");
+        Assert.Equal(43, MapHint.TextId(true, false, 1, 2), "Extort armed");
+        Assert.Equal(44, MapHint.TextId(true, false, 1, 4), "Destroy");
+        Assert.Equal(51, MapHint.TextId(true, false, 3, 0), "nobody's company: Extort");
+        Assert.Equal(-1, MapHint.TextId(true, false, 3, 1), "nobody's company with Attack: the name");
+        Assert.Equal(-1, MapHint.TextId(true, false, 0, 0), "own company: the name");
+        Assert.Equal(55, MapHint.TextId(false, false, 1, 0), "enemy unit: Attack");
+        Assert.Equal(58, MapHint.TextId(false, false, 1, 4), "Terminate");
+        Assert.Equal(60, MapHint.TextId(false, false, 2, 6), "ally unit, Force Attack");
+        Assert.Equal(-1, MapHint.TextId(false, false, 3, 0), "nobody's unit: the name");
+    }
+
+    [UnitTest]
     public static void PaydayFollowsTheExe()
     {
         // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.

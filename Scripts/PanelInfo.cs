@@ -91,7 +91,7 @@ public partial class PanelInfo : Control
     }
 
     /// <summary>Relation colour index (object vt+E4h): own green, enemy red, ally yellow, nobody light green.</summary>
-    private static int RelationColor(Team owner, Team player)
+    public static int RelationColor(Team owner, Team player)
     {
         if (owner == null || owner == Teams.NeutralTeam)
             return 3;

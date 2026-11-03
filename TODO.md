@@ -148,10 +148,11 @@ sub_413350 / sub_413A04) sets its width (0–134) and sub_409C60 rebalances: pie
 (a quarter each when all zero), a shortfall goes to the next row (row 0 after the last); shares written via
 sub_414CB0. Hover (sub_40C2C2) prints texts 5,63/64/67/70/73 at (232, 555) and the favour 5,65–75 at (232, 573);
 that line is also the panel's status line: button texts now show there (`PanelInfo.StatusText`, `HookStatus`) instead
-of OS tooltips; hovering a company / unit on the map prints its name there (`Main.UpdateMapHint`, from the motion
-event's position — `GetGlobalMousePosition` reads the OS cursor and misses MCP-injected events; map clicks still use
-it). The order hints (5,40–62: "Attack/Extort/Destroy %s") depend on the chosen order button ([+8E0h], unit order
-buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
+of OS tooltips. The map hover label (done 2026-11-03, `MapHint`, sub_40C2C2 from 0x40C9FB): drawn on the map at the
+hovered object (font 3, width 150, centred, colour by relation: own/none green, enemy red, ally yellow, nobody's light
+green); with an own unit selected it reads the order text for the armed order (none / Go = the default action) —
+5,40–54 for buildings (enemy / ally / nobody's: Extort, an HQ Attack, Attack, Destroy), 5,55–62 for units (Attack,
+Terminate); police stations and own objects show the name. The Russian texts have no %s. Unit test `MapHintTexts`. MCP-tested: 22.6 % to the police → 11 745 bribed, 2.4 favour points by day 6.
 
 ## Unit orders — action bar (2026-10-27)
 
@@ -195,8 +196,8 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   episodes 4, 13 and 18 the user can't extort (`Organisation.MayExtort`, scenario check). Disguise, Force variants,
   Unload and enemy-unit buttons are done.
 - Frenzy: order 4 (29,5 "Frency", no Russian text) is refused by the gate for every unit, so it is not in the game.
-- Open: attacking
-  buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
+- Done: the order-mode cursor and the map hover hints (texts 5,40–62). Open: order 4 "Destroy %s" (attacking
+  buildings) is not reachable from the menu either (gate) — only the hint texts exist.
 
 ## Victory conditions and defeat (2026-10-27)
 

@@ -590,38 +590,66 @@ public partial class Main : Node2D
 		GuiGameback.UpdateSelectionIcon(null);
 	}
 
-	private string _mapHint = "";
+	private MapHint _mapHintLabel;
+	private Vector2? _mouseGlobal;
 
-	/// <summary>
-	/// sub_40C2C2: the name of the company or unit under the cursor goes to the panel's status line.
-	/// TODO: with an order button chosen it reads "Extort %s" / "Attack %s" / "Destroy %s" (texts 5,40–62).
-	/// </summary>
-	private void UpdateMapHint(Vector2 globalPoint)
+	/// <summary>sub_40C2C2: the label over the object under the mouse (<see cref="MapHint"/>).</summary>
+	private void UpdateMapHint(Vector2 globalPoint) => _mouseGlobal = globalPoint;
+
+	/// <summary>The selected own unit's order mode for the hint: armed order, else 0 (the default action); -1 without one.</summary>
+	private int HintOrderMode()
 	{
-		var hint = IntersectPoint(globalPoint) switch
+		if (!CommandableSelection().Any())
+			return MapHint.NoOrder;
+		return PendingOrder switch
 		{
-			Company { IsHq: true } hq => hq.OwnerTeam?.PlayerName ?? hq.KindName,
-			Company company => company.CompanyName,
-			Unit unit => unit.DisplayName,
-			_ => "",
+			OrderMode.None or OrderMode.Go => 0,
+			OrderMode.Attack => 1,
+			OrderMode.Extort => 2,
+			OrderMode.ForceGo => 5,
+			OrderMode.ForceAttack => 6,
+			_ => 8,
 		};
-		if (hint == _mapHint)
-			return;
-		if (PanelInfo.StatusText == _mapHint)
-			PanelInfo.StatusText = hint;
-		_mapHint = hint;
 	}
 
-	public override void _Process(double delta)
+	private void RefreshMapHint()
 	{
-		// Leaving the map for the GUI clears the map hint (button hints set their own text).
-		if (_mapHint.Length > 0 && GetViewport().GuiGetHoveredControl() != null)
+		if (_mapHintLabel == null)
+			return;
+		var hit = _mouseGlobal is { } point && GetViewport().GuiGetHoveredControl() == null ? IntersectPoint(point) : null;
+		var player = Teams.GetCurrentPlayerTeam();
+		string name;
+		Team owner;
+		bool building, hq = false;
+		switch (hit)
 		{
-			if (PanelInfo.StatusText == _mapHint)
-				PanelInfo.StatusText = "";
-			_mapHint = "";
+			case Company { IsHq: true } h:
+				name = h.OwnerTeam?.PlayerName ?? h.KindName;
+				owner = h.OwnerTeam;
+				building = hq = true;
+				break;
+			case Company c:
+				name = c.IsEconomic && c.ShownEntry is { } shown && !string.IsNullOrEmpty(shown.Name) ? shown.Name : c.CompanyName;
+				owner = c.ShownOwner;
+				building = true;
+				break;
+			case Unit u when IsInstanceValid(u):
+				name = u.DisplayName;
+				owner = u.OwnerTeam;
+				building = false;
+				break;
+			default:
+				_mapHintLabel.Show("", 0, Vector2.Zero);
+				return;
 		}
+		var relation = PanelInfo.RelationColor(owner, player);
+		var id = hit is Company { IsPoliceStation: true } ? -1 : MapHint.TextId(building, hq, relation, HintOrderMode());
+		var text = id < 0 ? name : PanelInfo.CFormat(OriginalTexts.Instance.Get(5, id), name);
+		var node = (Node2D)hit;
+		_mapHintLabel.Show(text, relation, GetViewport().GetCanvasTransform() * node.GlobalPosition);
 	}
+
+	public override void _Process(double delta) => RefreshMapHint();
 
 	private GodotObject IntersectPoint(Vector2 globalPoint)
 	{
@@ -651,6 +679,8 @@ public partial class Main : Node2D
 			AddChild(canvasLayer);
 		}
 		canvasLayer.ProcessMode = ProcessModeEnum.Always;
+		_mapHintLabel = new MapHint();
+		canvasLayer.AddChild(_mapHintLabel);
 		canvasLayer.AddChild(new MessageLog());
 		canvasLayer.AddChild(new GuiMenu());
 	}
