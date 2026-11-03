@@ -7,7 +7,8 @@ namespace Capone;
 /// sub_42C503). A disguised unit is not "exposed" (vt+19Ch sub_42B3C0) for 60 game hours, unless it fired within the
 /// last 30 hours; the Hit man is hidden without the order whenever he hasn't fired for 30 hours. Units only pick
 /// exposed enemies by themselves (unit AI); the player may still order an attack. While hidden the Hit man's shot at a
-/// unit does the table damage (161–162), once exposed 30 (sub_42C890 / sub_42C960).
+/// unit does the table damage (161–162: every unit but the Terrorist, 200 HP, dies), once exposed 20–30 (sub_42C890 /
+/// sub_42C960). The shot is stamped after its damage (sub_42BD15), so the first shot from hiding counts in full.
 /// </summary>
 public partial class Unit
 {
@@ -15,8 +16,8 @@ public partial class Unit
     public const int DisguiseMinutes = 60 * GameClock.MinutesPerHour;
     /// <summary>Authority service 12h (table 0x488268): FBI, 1 500 000, 100 points.</summary>
     public const int DisguiseService = 0x12;
-    /// <summary>The exposed Hit man's damage against units (sub_42C890 / sub_42C960 return 1Eh).</summary>
-    public const int ExposedHitmanDamage = 30;
+    /// <summary>The exposed Hit man's damage against units: sub_42C890 returns 14h, sub_42C960 1Eh.</summary>
+    public const int ExposedHitmanDamageMin = 20, ExposedHitmanDamageMax = 30;
 
     /// <summary>+0D0h: game minute of the last shot (Unit::Attack sub_42BD15).</summary>
     public long LastShotMinute { get; set; }

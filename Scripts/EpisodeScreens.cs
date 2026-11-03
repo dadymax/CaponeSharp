@@ -179,6 +179,8 @@ public partial class BriefingScreen : Control
             arrow.AddThemeStyleboxOverride("hover", new StyleBoxEmpty());
             arrow.AddThemeStyleboxOverride("pressed", new StyleBoxEmpty());
             arrow.Pressed += () => Switch?.Invoke(step);
+            // The same sounds as the other screen buttons (user, playtest 2026-11-03).
+            ScreenPictures.HookScreenSounds(arrow);
             AddChild(arrow);
         }
     }

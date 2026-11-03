@@ -160,13 +160,13 @@ public partial class CanAttack : Node, IJsonConfigurable
 
     /// <summary>
     /// Unit::GetMinDamage / GetMaxDamage (0x42C890 / 0x42C960) against <paramref name="target"/>: unit damage against
-    /// units other than the Cadillac, building damage otherwise; an exposed Hit man does 30 to units.
+    /// units other than the Cadillac, building damage otherwise; an exposed Hit man does 20–30 to units (14h / 1Eh).
     /// </summary>
     public (int Min, int Max) DamageRange(Node2D target)
     {
         var againstUnit = target is Unit { UnitType: not UnitCommon.UnitType.Cadillac };
         if (againstUnit && _thisParent is Unit { UnitType: UnitCommon.UnitType.Hitman } hitman && hitman.IsExposed)
-            return (Unit.ExposedHitmanDamage, Unit.ExposedHitmanDamage);
+            return (Unit.ExposedHitmanDamageMin, Unit.ExposedHitmanDamageMax);
         return againstUnit ? (DamageMin, DamageMax) : (BuildingDamageMin, BuildingDamageMax);
     }
 
@@ -236,11 +236,13 @@ public partial class CanAttack : Node, IJsonConfigurable
             return 0;
         _aim = 0;
         _lastShot = now;
-        self?.MarkShot();
         // The shot's sound when the shooter or the target can be seen (vt+0DCh, read as visible to the local player).
         if ((_thisParent?.Visible ?? false) || target.Visible)
             Sound.Play(ShotSound(GetUnitType()));
         var done = Fire(target);
+        // sub_42BD15 stamps the last shot (+0D0h) after the bullets (sub_438873): a hidden Hit man's shot still does
+        // his table damage, and only then is he exposed.
+        self?.MarkShot();
         if (GetUnitType() == UnitCommon.UnitType.Terrorist && self != null && !self.IsDead)
             self.Die(); // sub_42BD15: HP 0 and Killed(null) — the blast takes him too
         return done;

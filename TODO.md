@@ -954,15 +954,24 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 ## Playtest (user, 2026-11-03)
 
-- [ ] 1. Briefing: the episode Up / Down arrows must click like the main-menu buttons (ButtonClick / OverButton); now silent.
+- [x] 1. Briefing: the episode Up / Down arrows must click like the main-menu buttons (ButtonClick / OverButton); now silent.
+  Done: `ScreenPictures.HookScreenSounds` on both arrows.
 - [ ] 2. A unit walking past a block corner with a neutral company is drawn under the company's sign animation; units
   must be drawn over the sign.
 - [ ] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
   (map → screen projection, sub_414A30) against the original; the user will also check the original game.
 - [ ] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
-- [ ] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
-  start. Check how its victory condition is read and evaluated.
+- [x] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
+  start. Cause: both PLAYER lines use id 1, and the bases were handed out by id, so both went to the user; the
+  computer player had nothing, was eliminated at once and the user won as the last player. The EXE sets a base up on
+  each player object (sub_4043D0); only UNIT / VCOND / BRIBEADVANCE look players up by id (first match, sub_467050).
+  Fixed in `CampaignManager.AssignBases` (per PLAYER entry); scenario check "every player with a base has its own HQ";
+  episode 6 added to the default scenario test.
 - [ ] 6. Support business #1 "Укрепление" (fortification) must shoot enemy units like a Pistol man; now it does nothing.
-- [ ] 7. A hidden (covered) Hit man must kill any unit with one shot (not cars or buildings); now he doesn't.
+- [x] 7. A hidden (covered) Hit man must kill any unit with one shot (not cars or buildings); now he doesn't.
+  Cause: the remake stamped the shot time before rolling the damage, so the Hit man was always "exposed" (30 damage).
+  sub_42BD15 fires first (sub_438873) and stamps +0D0h afterwards. Fixed; the exposed damage is 20–30 (14h / 1Eh,
+  was 30). From hiding he does his table damage 161–162: one shot kills every unit except the Terrorist (200 HP), as in
+  the EXE. "Hidden" means no shot for 30 game hours; the Disguise order doesn't change his damage. Scenario check.
 - [ ] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
   speed. Verify against the EXE (sub_431DF3, sub_427505).

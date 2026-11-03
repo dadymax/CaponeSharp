@@ -14,7 +14,7 @@ namespace Capone;
 /// </summary>
 public partial class ScenarioTest : Node
 {
-    public static readonly int[] DefaultEpisodes = { 1, 4, 8, 13, 15 };
+    public static readonly int[] DefaultEpisodes = { 1, 4, 6, 8, 13, 15 };
     public const float DefaultSpeed = 16f;
     public const int DefaultDays = 14;
 
@@ -166,6 +166,12 @@ public partial class ScenarioTest : Node
             if (unit != null && company != null)
                 Check("a player without a base can't extort", !ExtortOrder.CanExtort(unit, company), $"{unit.UnitType} vs {company}");
         }
+        if (_hour == 1)
+            foreach (var team in Teams.TeamsInGame.Values.Where(t => t.HasBase))
+                // Bases go per PLAYER entry (episode 6 gives two players id 1).
+                Check("every player with a base has its own HQ",
+                    team.HqCompany != null && team.HqCompany.OwnerTeam == team,
+                    $"{team.PlayerName} (id {team.PlayerId}): HQ {team.HqCompany?.Cell.ToString() ?? "none"}");
         if (_hour == 6)
             MakeDeserter();
         if (_hour == 8)
@@ -178,6 +184,8 @@ public partial class ScenarioTest : Node
             TestFight();
         if (_hour == 16)
             TestPolice();
+        if (_hour == 18)
+            TestHitman();
         if (_hour == _days * 24 - 7)
         {
             // Collectors (sub_428D62) bring the uncollected money of their block home once a week of company income
@@ -650,6 +658,33 @@ public partial class ScenarioTest : Node
                  + (IsInstanceValid(gangster) ? $"at {gangster.Cell}, dead {gangster.IsDead}" : "gone")
                  + $"; station {station.Cell}; cars " + string.Join(", ", Units().Where(u => u.UnitType == UnitCommon.UnitType.PoliceCar)
                      .Select(c => $"{c.Cell} moving {c.IsMoving} job {c.CurrentOrder?.Name}"))));
+    }
+
+    /// <summary>
+    /// A Hit man who hasn't fired for 30 hours does his table damage to a unit (161–162, enough for a Pistol man);
+    /// right after a shot he is exposed and does 20–30 (sub_42C890 / sub_42C960; the shot is stamped after the damage).
+    /// </summary>
+    private void TestHitman()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var mine = Units().FirstOrDefault(u => u.OwnerTeam == human);
+        var enemy = Teams.TeamsInGame.Values.FirstOrDefault(t => t != human && t.Org is { Eliminated: false });
+        if (mine == null || enemy == null)
+        {
+            Note("no Hit man check (no own unit or enemy player)");
+            return;
+        }
+        var hitman = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Hitman, human, mine.Cell);
+        var victim = CampaignManager.Instance.CreateUnitNear(UnitCommon.UnitType.Pistol, enemy, hitman.Cell);
+        hitman.LastShotMinute = (GameClock.Instance?.Minute ?? 0) - Unit.ExposedAfterShotMinutes - 1;
+        var hidden = hitman.CanAttack.DamageRange(victim);
+        hitman.MarkShot();
+        var exposed = hitman.CanAttack.DamageRange(victim);
+        Check("a hidden Hit man kills with one shot, an exposed one does 20-30",
+            hidden.Min >= victim.CanBeAttacked.MaxHP && exposed == (Unit.ExposedHitmanDamageMin, Unit.ExposedHitmanDamageMax),
+            $"hidden {hidden}, exposed {exposed}, Pistol man HP {victim.CanBeAttacked.MaxHP}");
+        hitman.Vanish();
+        victim.Vanish();
     }
 
     private void KillACollector()

@@ -101,11 +101,14 @@ public partial class CampaignManager : Node
             return;
         var bases = TileMap.GetMeta(TileMapGenerator.MetaNameBases).AsGodotArray();
         var next = 0;
-        foreach (var player in CurrentScenario.Players)
+        for (var i = 0; i < CurrentScenario.Players.Count; i++)
         {
+            var player = CurrentScenario.Players[i];
             if (!player.HasBase)
                 continue;
-            var team = Teams.GetTeamByPlayerId(player.Id);
+            // Per PLAYER entry, not by id: the EXE sets the base up on each player object (sub_4043D0), and episode 6
+            // gives both players id 1 (UNIT / VCOND / BRIBEADVANCE look ids up and take the first, sub_467050).
+            var team = Teams.GetTeam(PlayerColors[i % PlayerColors.Length]);
             if (next >= bases.Count)
             {
                 GD.PrintErr($"CampaignManager: no start point left for player {player.Id} '{player.Name}'");
