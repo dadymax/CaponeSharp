@@ -951,3 +951,18 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   TIPTEXT under "Полезный совет" (5,85); at the end (sub_41D3E0, message kinds 2 / 3) the result text under
   "Игра окончена!" (9,37), the end screen after OK; the end screen no longer draws the text. Also: without an HQ
   the view starts on the player's units. MCP-checked in episode 4 (tips → OK → defeat → OK → end screen).
+
+## Playtest (user, 2026-11-03)
+
+- [ ] 1. Briefing: the episode Up / Down arrows must click like the main-menu buttons (ButtonClick / OverButton); now silent.
+- [ ] 2. A unit walking past a block corner with a neutral company is drawn under the company's sign animation; units
+  must be drawn over the sign.
+- [ ] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
+  (map → screen projection, sub_414A30) against the original; the user will also check the original game.
+- [ ] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
+- [ ] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
+  start. Check how its victory condition is read and evaluated.
+- [ ] 6. Support business #1 "Укрепление" (fortification) must shoot enemy units like a Pistol man; now it does nothing.
+- [ ] 7. A hidden (covered) Hit man must kill any unit with one shot (not cars or buildings); now he doesn't.
+- [ ] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
+  speed. Verify against the EXE (sub_431DF3, sub_427505).
