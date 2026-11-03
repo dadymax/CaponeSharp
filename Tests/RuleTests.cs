@@ -146,6 +146,19 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void OrderModes()
+    {
+        // sub_42C1F6 actions 0 / 5 (Go / Force Go) and 1 / 6 (Attack / Force Attack) → sub_4284B0 mode.
+        Assert.Equal(2, Unit.GoMode(UnitCommon.UnitType.Pistol, false), "Go fights on the way");
+        Assert.Equal(0, Unit.GoMode(UnitCommon.UnitType.Pistol, true), "Force Go never fights");
+        Assert.Equal(0, Unit.GoMode(UnitCommon.UnitType.Terrorist, false), "the Terrorist always walks");
+        Assert.Equal(0, Unit.GoMode(UnitCommon.UnitType.Thief, false), "the Thief always walks");
+        Assert.Equal(3, Unit.AttackMode(UnitCommon.UnitType.Thompson, false), "Attack: the target, else the nearest enemy");
+        Assert.Equal(1, Unit.AttackMode(UnitCommon.UnitType.Thompson, true), "Force Attack: only the target");
+        Assert.Equal(1, Unit.AttackMode(UnitCommon.UnitType.Terrorist, false), "the Terrorist goes for his target only");
+    }
+
+    [UnitTest]
     public static void PaydayFollowsTheExe()
     {
         // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.

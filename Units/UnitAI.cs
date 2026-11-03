@@ -84,8 +84,16 @@ public partial class Unit
     {
         MoveTo(localPosition);
         _orderTarget = null;
-        MoveMode = force || UnitType is UnitCommon.UnitType.Terrorist or UnitCommon.UnitType.Thief ? 0 : 2;
+        MoveMode = GoMode(UnitType, force);
     }
+
+    /// <summary>Mode of a Go order: 0 for Force Go and for the Terrorist and Thief, else 2.</summary>
+    public static int GoMode(UnitCommon.UnitType type, bool force) =>
+        force || type is UnitCommon.UnitType.Terrorist or UnitCommon.UnitType.Thief ? 0 : 2;
+
+    /// <summary>Mode of an Attack order: 1 for Force Attack and for the Terrorist, else 3.</summary>
+    public static int AttackMode(UnitCommon.UnitType type, bool force) =>
+        force || type == UnitCommon.UnitType.Terrorist ? 1 : 3;
 
     /// <summary>Attack / Force Attack a unit or building (actions 1 / 6).</summary>
     public void AttackOrder(Node2D target, bool force)
@@ -95,7 +103,7 @@ public partial class Unit
             CanAttack.ForcedTarget = force ? target : null;
         TargetStructure = target;
         _orderTarget = target as Unit;
-        MoveMode = force || UnitType == UnitCommon.UnitType.Terrorist ? 1 : 3;
+        MoveMode = AttackMode(UnitType, force);
     }
 
     /// <summary>Order-mode rules while the order runs (sub_42AA86 switch at 0x42AF52). Returns true if handled.</summary>
