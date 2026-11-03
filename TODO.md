@@ -46,7 +46,8 @@ Still to do from this brick:
   (if ≠ 0), Collector/Thief "Money carried" y 455; others: "Owner: %s" y 437 (yellow ally, red otherwise).
   HP bar: black 233..318 × 493..502, fill from 235, 81 px at 100 %, green > 50 %, yellow > 25 %, red.
 - Done later: action buttons (`ActionBar`), recruit progress bars (blood bar, M9), the "Expenses" chart (`SharesPanel`).
-  Open: the text 5,31/5,32 meaning (enemy/ally HQ).
+  Texts 5,31 / 5,32 are both "База": another player's HQ title at y 419, red for an enemy (company vt+0E4h = 1), yellow for
+  an ally (2) — already drawn so by `PanelInfo`.
 
 Also fixed: a win now pauses the scene tree (units acted in physics frames after the clock stopped); units created in
 code (base squad) get random personal names like `Unit::Unit`.
