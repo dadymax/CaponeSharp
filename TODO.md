@@ -438,7 +438,7 @@ Still open from this part:
 - [x] Game clock (R1): game time is in **minutes**; 60-minute turns, at most one per 1000 ms → 1 game hour = 1 real second at speed 1 (`GameClock`, scheduler like World::Schedule `sub_43AF10` / `sub_43ABD0`). Unit speed = tile length × 60 / TicksPerTile per second. `GameClock.Speed` (cmd `--speed=N`, keys `-`/`=`) speeds everything up for tests.
 - [x] Attack rate comes from the EXE table (`CanAttack`: fire rate +00h, reload +2Eh); army favour from the services table 0x488268 (`Training.ServicePoints`). `ArmyFavor` in units.json is no longer used.
 - [ ] Thief walk frames and the Terrorist attack frames are not named in Chicago.tile (idle/walk used as fallback). The EXE's per-type animation tile table is not located yet.
-- [ ] UNIT flags: A = 0 clears the unit's value (vtable+0x174), B → vtable+0x1EC (stationary guard?). Stored on `Unit.EpiFlagA/B`, not used.
+- [x] UNIT flags (verified 2026-11-03): A = 0 → vt+174h(0) (sub_42FAA0) clears the unit value +0A0h, i.e. no salary (done); B → vt+1ECh (sub_42FBE0) stores unit +0F8h, read only by the AI unit tasking (sub_4618D0 via vt+1F0h): a computer player never tasks such a unit (`ComputerPlayer.TaskUnit`). A starting Cadillac's passengers get B = 1.
 - [x] VCOND 7 (sub_463BC3): a living unit of the player of the type (13 = any) within the radius of the cell;
   VCOND 8 (sub_463CD8): at least `count` companies of the business type (6 = any but legal) in the rectangle of
   original coordinates. The first condition met ends the episode (sub_43C1B2) — not all of a player's (fixed

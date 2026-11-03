@@ -158,6 +158,9 @@ public class ComputerPlayer
     /// <summary>vt+140h (sub_4618D0).</summary>
     private void TaskUnit(Unit unit)
     {
+        // vt+1F0h (sub_42FC00, unit +0F8h = the .epi UNIT flag B): such a unit is never given a task (a guard post).
+        if (unit.EpiFlagB != 0)
+            return;
         if (unit.UnitType == UnitCommon.UnitType.Thug)
         {
             ExtortNear(unit);

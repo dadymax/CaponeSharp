@@ -269,10 +269,15 @@ public partial class CampaignManager : Node
             var unit = SpawnUnit(unitScene, sUnit.UnitType.Value, sUnit);
             spawned++;
 
-            // A Cadillac starts with Thompson men inside (EXE loop at 0x467F7A).
+            // A Cadillac starts with Thompson men inside (EXE loop at 0x467F7A); they get flag B = 1 (vt+1ECh(1)),
+            // so a computer player leaves them in the car.
             if (sUnit.UnitType == UnitCommon.UnitType.Cadillac)
                 for (var i = 0; i < CadillacPassengers; i++, spawned++)
-                    unit.Board(SpawnUnit(unitScene, UnitCommon.UnitType.Thompson, sUnit, unnamed: true));
+                {
+                    var passenger = SpawnUnit(unitScene, UnitCommon.UnitType.Thompson, sUnit, unnamed: true);
+                    passenger.EpiFlagB = 1;
+                    unit.Board(passenger);
+                }
 
             GD.Print($"CampaignManager: spawned {unit.DisplayName} ({sUnit.UnitType}) for player {sUnit.PlayerId} at {sUnit.Position}");
         }
@@ -286,7 +291,7 @@ public partial class CampaignManager : Node
         unit.PersonalName = unnamed ? "" : sUnit.Name;
         unit.EpiFlagA = sUnit.FlagA;
         unit.EpiFlagB = sUnit.FlagB;
-        // Episode units with flag A = 0 cost no salary (TODO: confirm the meaning of flag A).
+        // .epi reader 0x4675E4: flag A = 0 → vt+174h(0) (sub_42FAA0: unit value / salary +0A0h = 0), a free unit.
         if (sUnit.FlagA == 0)
             unit.Salary = 0;
 
