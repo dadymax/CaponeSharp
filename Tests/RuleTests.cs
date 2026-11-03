@@ -131,6 +131,21 @@ public static class EconomyTests
     }
 
     [UnitTest]
+    public static void DisguiseTiming()
+    {
+        const int h = GameClock.MinutesPerHour;
+        long shot = -100 * h, start = 1000 * h;
+        Assert.True(!Unit.Exposed(false, shot, start, start), "just disguised: hidden");
+        Assert.True(!Unit.Exposed(false, shot, start, start + 60 * h - 1), "hidden for 60 hours");
+        Assert.True(Unit.Exposed(false, shot, start, start + 60 * h), "exposed after 60 hours");
+        Assert.True(Unit.Exposed(false, start + 5 * h, start, start + 35 * h), "a shot exposes for 30 hours (inclusive)");
+        Assert.True(!Unit.Exposed(false, start + 5 * h, start, start + 35 * h + 1), "then hidden again");
+        Assert.True(!Unit.Exposed(true, shot, -1, 0), "the Hit man hides by himself");
+        Assert.True(Unit.Exposed(true, 0, -1, 30 * h - 1), "exposed after a shot");
+        Assert.True(!Unit.Exposed(true, 0, -1, 30 * h), "for 30 hours (strictly)");
+    }
+
+    [UnitTest]
     public static void PaydayFollowsTheExe()
     {
         // sub_42A535: a day's pay = weekly salary / 7, paid while cash − pay + 200 000 ≥ 0.

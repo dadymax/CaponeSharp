@@ -29,9 +29,15 @@ public partial class Unit
     private bool ShotRecently => LastShotMinute + ExposedAfterShotMinutes >= Now;
 
     /// <summary>vt+19Ch (sub_42B3C0): may other units pick this one as a target by themselves?</summary>
-    public bool IsExposed => UnitType == UnitCommon.UnitType.Hitman
-        ? LastShotMinute + ExposedAfterShotMinutes > Now
-        : Now >= DisguiseMinute + DisguiseMinutes || ShotRecently;
+    public bool IsExposed => Exposed(UnitType == UnitCommon.UnitType.Hitman, LastShotMinute, DisguiseMinute, Now);
+
+    /// <summary>
+    /// sub_42B3C0: the Hit man is exposed only for 30 hours after a shot (strictly); anyone else once 60 hours have
+    /// passed since the last Disguise, or within 30 hours of a shot (inclusive).
+    /// </summary>
+    public static bool Exposed(bool hitman, long lastShot, long disguiseStart, long now) => hitman
+        ? lastShot + ExposedAfterShotMinutes > now
+        : now >= disguiseStart + DisguiseMinutes || lastShot + ExposedAfterShotMinutes >= now;
 
     /// <summary>vt+1D8h (sub_42EC08): disguised by the order; the panel adds " (Disguised)" (5,12).</summary>
     public bool IsDisguised => Now < DisguiseMinute + DisguiseMinutes && !ShotRecently;
