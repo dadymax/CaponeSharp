@@ -194,7 +194,8 @@ buttons in the action slots) — TODO with the unit-orders menu. MCP-tested: 22.
   the owner's HQ flag +1D2h (vt+0A0h), which sub_4043D0 clears (vt+9Ch(0)) for a player set up without a base: in
   episodes 4, 13 and 18 the user can't extort (`Organisation.MayExtort`, scenario check). Disguise, Force variants,
   Unload and enemy-unit buttons are done.
-- Open: Frenzy, attacking
+- Frenzy: order 4 (29,5 "Frency", no Russian text) is refused by the gate for every unit, so it is not in the game.
+- Open: attacking
   buildings ("Destroy %s"), the order-mode cursor and the "Extort/Attack %s" status hints (texts 5,40–62).
 
 ## Victory conditions and defeat (2026-10-27)
