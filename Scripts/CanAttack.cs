@@ -91,7 +91,22 @@ public partial class CanAttack : Node, IJsonConfigurable
     }
 
     /// <summary>The attacked map object (unit or company), or null if there is none or it was freed.</summary>
-    public Node2D TargetParent => _targetParent != null && IsInstanceValid(_targetParent) ? _targetParent : null;
+    public Node2D TargetParent
+    {
+        get
+        {
+            if (_targetParent == null || !IsInstanceValid(_targetParent))
+                return null;
+            // A killed (or arrested) unit stays on the map as a body: it is no target any more, so the attacker
+            // stops its attack picture and its next think picks another enemy in range (TODO playtest item 21).
+            if (_targetParent is Unit { IsDead: true } or Unit { IsArrested: true })
+            {
+                _targetParent = null;
+                return null;
+            }
+            return _targetParent;
+        }
+    }
 
     /// <summary>The target of a Force Attack order: it may be the player's own or an ally's unit or building.</summary>
     public Node2D ForcedTarget { get; set; }

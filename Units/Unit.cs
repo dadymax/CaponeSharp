@@ -86,6 +86,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     public Vector2I Cell => Map.LocalToMap(Position);
     public bool IsMoving => _moving || _stepCell != null;
 
+    /// <summary>Name of the animation layer now shown (idle, moveSE…, attackNW…, killed) — for tests.</summary>
+    public string AnimationName => _as2d?.Animation.ToString() ?? "";
+
     /// <summary>
     /// vt+1ACh (sub_42E385): vision radius now — unit table +2Ch while walking (activity +0BCh 1–4), +2Ah otherwise
     /// (the Sniper sees and so shoots 1 tile farther standing: 8 / 9). The walking activity is cleared only by the

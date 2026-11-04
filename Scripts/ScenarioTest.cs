@@ -703,6 +703,16 @@ public partial class ScenarioTest : Node
         var full = target.CanBeAttacked.HP;
         var hurt = false;
         shooter.AttackOrder(target, false);
+        // TODO item 21: 30 game minutes after the kill the killer has dropped the body (the corpse stays 3 hours).
+        target.Died += _ => GameClock.Instance?.ScheduleIn(30, () =>
+        {
+            if (!IsInstanceValid(shooter) || shooter.IsDead || !IsInstanceValid(target))
+                return;
+            var onBody = shooter.CanAttack.TargetParent == target
+                         || (shooter.CanAttack.TargetParent == null && shooter.AnimationName.StartsWith("attack"));
+            Check("a killer stops attacking the body", !onBody,
+                $"shooter target {shooter.CanAttack.TargetParent?.Name}, animation {shooter.AnimationName}");
+        });
         _pending.Add((_hour + 24, "a scripted fight hurts and kills", () =>
         {
             var targetGone = !IsInstanceValid(target) || target.IsDead;
