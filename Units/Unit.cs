@@ -5,8 +5,21 @@ using Godot;
 namespace Capone;
 
 /// <summary>A unit on the map: movement over an A* grid, animation, and its UnitCommon data/components.</summary>
-public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
+public partial class Unit : CharacterBody2D, ISelectable, IGameEntity, IScheduled
 {
+    /// <summary>Save id, unique in the episode (units have no natural one).</summary>
+    public string SaveId { get; set; } = SaveIds.Next("unit");
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        switch (kind)
+        {
+            case "payday": PayDay(GameClock.Instance); break;
+            case "corpse": QueueFree(); break;
+            default: GD.PushError($"Unit: unknown clock event {kind}"); break;
+        }
+    }
+
     public const string GroupName = "units";
     /// <summary>Corpses stay on the map this many game minutes.</summary>
     private const int CorpseMinutes = 3 * GameClock.MinutesPerHour;
@@ -623,7 +636,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     private void StartPayroll()
     {
         var clock = GameClock.Instance;
-        clock?.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
+        clock?.ScheduleIn(GameClock.MinutesPerDay, this, "payday");
     }
 
     private void PayDay(GameClock clock)
@@ -636,7 +649,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             Resign();
             return;
         }
-        clock.ScheduleIn(GameClock.MinutesPerDay, () => PayDay(clock));
+        clock.ScheduleIn(GameClock.MinutesPerDay, this, "payday");
     }
 
     public enum PayResult { Paid, Unpaid, Quits }
@@ -776,11 +789,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         Died?.Invoke(this);
         var clock = GameClock.Instance;
         if (clock != null)
-            clock.ScheduleIn(CorpseMinutes, () =>
-            {
-                if (IsInstanceValid(this))
-                    QueueFree();
-            });
+            clock.ScheduleIn(CorpseMinutes, this, "corpse");
         else
             QueueFree();
     }

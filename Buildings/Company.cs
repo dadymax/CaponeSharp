@@ -19,8 +19,25 @@ namespace Capone;
 /// Income (vt+188h, sub_422AF4) = catalogue income per week × damage factor × district factor (legal only) × owner's
 /// type multiplier.
 /// </summary>
-public partial class Company : StaticBody2D, ISelectable, IGameEntity
+public partial class Company : StaticBody2D, ISelectable, IGameEntity, IScheduled
 {
+    /// <summary>Save id: the map cell (one company per cell).</summary>
+    public string SaveId => $"company:{Cell.X},{Cell.Y}";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        var clock = GameClock.Instance;
+        switch (kind)
+        {
+            case "hour": HourTick(clock); break;
+            case "income": IncomeTick(clock); break;
+            case "week": WeekTick(clock); break;
+            case "conversion": FinishConversion(OriginalBusinessTable.Instance.Get((int)arg), _conversionOwner); break;
+            case "repair": RepairStep(); break;
+            default: GD.PushError($"Company: unknown clock event {kind}"); break;
+        }
+    }
+
     public const string GroupName = "companies";
     /// <summary>Income is credited this many times per week (0x1B9).</summary>
     public const int IncomeTicksPerWeek = 441;
@@ -193,9 +210,9 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if (_economyStarted || !IsEconomic)
             return;
         _economyStarted = true;
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
         ScheduleIncomeTick(clock);
-        clock.ScheduleIn(GameClock.MinutesPerWeek, () => WeekTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerWeek, this, "week");
     }
 
     // ---- timed events (sub_420ED5) -----------------------------------------------------------------------------------
@@ -210,7 +227,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
             Heal(HealPerHour);
         if (IsFortification)
             FortificationShot();
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
     }
 
     // ---- fortification ("Укрепление", catalogue rows 48 / 49, +28h = 7) ----------------------------------------------
@@ -273,7 +290,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         var weekStart = now / GameClock.MinutesPerWeek * GameClock.MinutesPerWeek;
         var tick = now % GameClock.MinutesPerWeek / slot;
         var next = weekStart + slot * (tick + 1) + GD.RandRange(0, slot - 1);
-        clock.ScheduleAt(next, () => IncomeTick(clock));
+        clock.Schedule(next, this, "income");
     }
 
     private void IncomeTick(GameClock clock)
@@ -301,7 +318,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         Percent = 100;
         if (OwnerTeam == null)
             Uncollected = 0;
-        clock.ScheduleIn(GameClock.MinutesPerWeek, () => WeekTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerWeek, this, "week");
     }
 
     // ---- income (sub_422AF4 / sub_422BC5 / sub_422E60 / sub_420E70) ------------------------------------------------
@@ -517,14 +534,18 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         BuildEnd = BuildStart + row.Value1C;
         var owner = OwnerTeam;
         GD.Print($"Company {CompanyName}: {owner.PlayerName} builds {row.Name} for {row.Price} ({row.Value1C} min)");
-        GameClock.Instance?.ScheduleIn(row.Value1C, () => FinishConversion(row, owner));
+        _conversionOwner = owner;
+        GameClock.Instance?.ScheduleIn(row.Value1C, this, "conversion", row.Index);
         return ConversionResult.Started;
     }
+
+    /// <summary>The player who started the running conversion (pays the politician at the end).</summary>
+    private Team _conversionOwner;
 
     /// <summary>Job event 3E8h: rows with flag +2Ch also need the politician (service 1Fh); then the row is set.</summary>
     private void FinishConversion(OriginalBusinessTable.Entry row, Team owner)
     {
-        if (!IsInstanceValid(this) || Building != row)
+        if (!IsInstanceValid(this) || row == null || owner == null || Building != row)
             return;
         Building = null;
         if (row.Flag2C != 0 && owner.Org?.UseItem(0x1F) != true)
@@ -595,7 +616,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         BuildEnd = clock.Minute + (MaxHp - Hp) * GameClock.MinutesPerHour / RepairHpPerStep;
         Heal(RepairHpPerStep);
         OwnerTeam.Org.Spend(RepairCostPerHp);
-        clock.ScheduleIn(GameClock.MinutesPerHour, RepairStep);
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "repair");
     }
 
     public long SellPrice => Entry == null ? 0 : (long)(Entry.Price * BusinessRules.SellFactor);

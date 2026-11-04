@@ -9,8 +9,16 @@ namespace Capone;
 /// dies or gets another order. The constructor passes mode 3 to the shared order (sub_4284B0), so the legs are walked in
 /// the Attack stance: the unit AI (ThinkUnderOrder) fights what comes in range on the way and at the ends.
 /// </summary>
-public partial class PatrolOrder : Node
+public partial class PatrolOrder : Node, IScheduled
 {
+    public string SaveId { get; } = SaveIds.Next("patrol");
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "walk" && !_finished && IsInstanceValid(this))
+            Walk();
+    }
+
     public const int WaitMinutes = GameClock.MinutesPerHour;
 
     private readonly Unit _unit;
@@ -64,11 +72,7 @@ public partial class PatrolOrder : Node
             return;
         }
         _target = _target == _b ? _a : _b;
-        GameClock.Instance?.ScheduleIn(WaitMinutes, () =>
-        {
-            if (!_finished && IsInstanceValid(this))
-                Walk();
-        });
+        GameClock.Instance?.ScheduleIn(WaitMinutes, this, "walk");
     }
 
     private void Finish()

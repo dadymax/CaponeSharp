@@ -17,8 +17,16 @@ namespace Capone;
 /// </list>
 /// Companies are visited in the block's row order (sub_429146); only those whose catalogue income is not 0.
 /// </summary>
-public partial class CollectorJob : Node
+public partial class CollectorJob : Node, IScheduled
 {
+    public string SaveId { get; } = SaveIds.Next("collector");
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "walk")
+            WalkNow();
+    }
+
     /// <summary>Wait at every stop (sub_416790).</summary>
     public const int WaitMinutes = GameClock.MinutesPerHour;
     /// <summary>Rounds start at least this far apart (week / 4).</summary>
@@ -139,7 +147,9 @@ public partial class CollectorJob : Node
         WalkAt(now + WaitMinutes);
     }
 
-    private void WalkAt(long minute) => Clock.ScheduleAt(minute, () =>
+    private void WalkAt(long minute) => Clock.Schedule(minute, this, "walk");
+
+    private void WalkNow()
     {
         if (_finished || !IsInstanceValid(this))
             return;
@@ -152,7 +162,7 @@ public partial class CollectorJob : Node
         }
         _collector.WalkTo(_target);
         _walking = true;
-    });
+    }
 
     private bool Reached(Node2D target) => MapTileMath.GetDistanceExact(_collector, target) <= ReachDistance;
 

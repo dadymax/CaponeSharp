@@ -4,8 +4,16 @@ using Godot;
 namespace Capone;
 
 /// <summary>Tracks the current scenario's victory conditions.</summary>
-public partial class VictoryManager : Node
+public partial class VictoryManager : Node, IScheduled
 {
+    public string SaveId => "victory";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "hour")
+            HourTick(GameClock.Instance);
+    }
+
     public static VictoryManager Instance { get; private set; }
 
     public List<VictoryCondition> Conditions { get; } = new();
@@ -57,7 +65,7 @@ public partial class VictoryManager : Node
     public event System.Action<int> PlayerWon;
 
     /// <summary>Checks the conditions every game hour, after the players' hourly statistics update.</summary>
-    public void Start(GameClock clock) => clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+    public void Start(GameClock clock) => clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
 
     private void HourTick(GameClock clock)
     {
@@ -86,7 +94,7 @@ public partial class VictoryManager : Node
             CampaignManager.Instance?.OnPlayerWon(winner);
             return;
         }
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
     }
 
     public void UpdateMoneyProgress(int playerId, long amount)

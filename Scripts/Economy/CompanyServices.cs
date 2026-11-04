@@ -130,8 +130,22 @@ public static class CompanyServices
 }
 
 /// <summary>The raid car's job (sub_445D72): drive to the business, raid it after 15 minutes, drive back and leave.</summary>
-public partial class PoliceRaid : Node
+public partial class PoliceRaid : Node, IScheduled
 {
+    public string SaveId { get; } = SaveIds.Next("raid");
+
+    /// <summary>15 minutes after arriving the business is closed, then the car drives back.</summary>
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind != "close")
+            return;
+        if (IsInstanceValid(_company) && _company.OwnerTeam != null)
+            _company.ReleaseToNeutral();
+        _state = 2;
+        if (IsInstanceValid(_car) && IsInstanceValid(_station))
+            _car.DriveTo(_station);
+    }
+
     public const int RaidMinutes = 15;
     private readonly Unit _car;
     private readonly Company _company;
@@ -184,14 +198,7 @@ public partial class PoliceRaid : Node
                     Sound.Play("PoliceRaid.wav");
                     Messages.Show(OriginalTexts.Instance.Get(28, 0), Messages.Normal, _company.Cell);
                 }
-                GameClock.Instance?.ScheduleIn(RaidMinutes, () =>
-                {
-                    if (IsInstanceValid(_company) && _company.OwnerTeam != null)
-                        _company.ReleaseToNeutral();
-                    _state = 2;
-                    if (IsInstanceValid(_car) && IsInstanceValid(_station))
-                        _car.DriveTo(_station);
-                });
+                GameClock.Instance?.ScheduleIn(RaidMinutes, this, "close");
                 break;
             case 2:
                 _state = 3;

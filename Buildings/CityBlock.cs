@@ -19,8 +19,16 @@ namespace Capone;
 /// pickup (vt+184h). Job finished without companies (vt+17Ch): the owner entry is removed.</item>
 /// </list>
 /// </summary>
-public class CityBlock
+public class CityBlock : IScheduled
 {
+    public string SaveId => $"block:{Number}";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "week")
+            WeekTick(GameClock.Instance);
+    }
+
     public class OwnerEntry
     {
         public Team Team;
@@ -73,12 +81,12 @@ public class CityBlock
     public bool IncomeEnabledFor(Team owner) =>
         owner == null || !Owners.TryGetValue(owner, out var entry) || entry.IncomeEnabled;
 
-    public void Start(GameClock clock) => clock.ScheduleIn(GameClock.MinutesPerWeek, () => WeekTick(clock));
+    public void Start(GameClock clock) => clock.ScheduleIn(GameClock.MinutesPerWeek, this, "week");
 
     private void WeekTick(GameClock clock)
     {
         DispatchCollectors();
-        clock.ScheduleIn(GameClock.MinutesPerWeek, () => WeekTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerWeek, this, "week");
     }
 
     /// <summary>Weekly: replace lost collectors (one week after the loss).</summary>

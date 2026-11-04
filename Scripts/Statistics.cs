@@ -12,8 +12,16 @@ namespace Capone;
 /// slot takes the running average of its samples; a slot holds <see cref="Period"/> samples. When all 31 slots are
 /// full, neighbouring pairs are averaged into 15, the last slot moves to slot 15 and the period doubles.
 /// </summary>
-public class Statistics
+public class Statistics : IScheduled
 {
+    public string SaveId => "stats";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "sample")
+            Tick(GameClock.Instance);
+    }
+
     public const int Slots = 31;
     public const int SampleMinutes = 30 * GameClock.MinutesPerHour;
     public const int SeriesCount = 3;
@@ -53,7 +61,7 @@ public class Statistics
         var stats = new Statistics(ordered, startFunds);
         Current = stats;
         if (clock != null)
-            clock.ScheduleIn(SampleMinutes, () => stats.Tick(clock));
+            clock.ScheduleIn(SampleMinutes, stats, "sample");
     }
 
     private void Tick(GameClock clock)
@@ -61,7 +69,7 @@ public class Statistics
         if (Current != this)
             return;
         Sample(Players.Select(Read).ToList());
-        clock.ScheduleIn(SampleMinutes, () => Tick(clock));
+        clock.ScheduleIn(SampleMinutes, this, "sample");
     }
 
     private static (long, long, long) Read(Team team)

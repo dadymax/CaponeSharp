@@ -72,6 +72,7 @@ public partial class Main : Node2D
 			GameClock.Instance.Reset();
 			GameClock.Instance.Paused = true;
 		}
+		SaveIds.Reset();
 		// The window class cursor is the EXE's "ArrowCur".
 		if (DisplayServer.GetName() != "headless")
 			OriginalCursors.Set(OriginalCursors.Kind.Arrow);

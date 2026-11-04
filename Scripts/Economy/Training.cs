@@ -58,6 +58,21 @@ public static class Training
 
     public static Job Current(Team team) => team != null && Jobs.TryGetValue(team, out var job) ? job : null;
 
+    /// <summary>Clock target of the training jobs: event kind = the team's colour, arg = the job's end minute.</summary>
+    private sealed class Events : IScheduled
+    {
+        public string SaveId => "training";
+
+        public void OnClockEvent(string kind, long arg)
+        {
+            var job = Jobs.Values.FirstOrDefault(j => j.Team.TeamColor.ToHtml() == kind && j.End == arg);
+            if (job != null)
+                Finish(job);
+        }
+    }
+
+    public static readonly IScheduled Scheduler = new Events();
+
     public static long Price(UnitCommon.UnitType type) => OriginalUnitTable.Instance.Get((int)type)?.Cost ?? 0;
 
     public static float ServicePoints(Recruit recruit) =>
@@ -100,7 +115,7 @@ public static class Training
         var job = new Job { Team = team, Recruit = recruit, Center = center, Start = clock.Minute, End = clock.Minute + minutes };
         Jobs[team] = job;
         GD.Print($"Training: {team.PlayerName} trains a {recruit.Type} ({minutes} min)");
-        clock.ScheduleAt(job.End, () => Finish(job));
+        clock.Schedule(job.End, Scheduler, team.TeamColor.ToHtml(), job.End);
         return true;
     }
 

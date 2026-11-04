@@ -8,8 +8,16 @@ namespace Capone;
 /// <see cref="Company.Extort"/>). On a refusal the attempt counter grows and the gangster hits the building once
 /// (unit vt+104h). The order ends when the company pays, the gangster can't reach it, dies or gets a new order.
 /// </summary>
-public partial class ExtortOrder : Node
+public partial class ExtortOrder : Node, IScheduled
 {
+    public string SaveId { get; } = SaveIds.Next("extort");
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        if (kind == "attempt" && !_finished && IsInstanceValid(this))
+            Step();
+    }
+
     public const int AttemptMinutes = GameClock.MinutesPerHour;
 
     private readonly Unit _unit;
@@ -89,11 +97,7 @@ public partial class ExtortOrder : Node
             Finish();
             return;
         }
-        GameClock.Instance.ScheduleIn(AttemptMinutes, () =>
-        {
-            if (!_finished && IsInstanceValid(this))
-                Step();
-        });
+        GameClock.Instance.ScheduleIn(AttemptMinutes, this, "attempt");
     }
 
     private void Finish()

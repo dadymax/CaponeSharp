@@ -5,6 +5,32 @@ using Godot;
 namespace Capone;
 
 /// <summary>
+/// An object that receives named clock events (save / load step 1, TODO item 20): an event is stored as data — the
+/// target's <see cref="SaveId"/>, an event kind and one number — so the pending events can be written to a save
+/// file and rebuilt. <see cref="OnClockEvent"/> runs the event.
+/// </summary>
+public interface IScheduled
+{
+    /// <summary>Stable id of the object in a save file ("company:12", "unit:7", "org:User"…).</summary>
+    string SaveId { get; }
+
+    void OnClockEvent(string kind, long arg);
+}
+
+/// <summary>Unique save ids for objects that don't have a natural one (units, jobs).</summary>
+public static class SaveIds
+{
+    private static long _next;
+
+    public static string Next(string prefix) => $"{prefix}:{++_next}";
+
+    /// <summary>New episode: ids start again (a loaded game sets the counter past its highest id).</summary>
+    public static void Reset(long next = 0) => _next = next;
+
+    public static long Current => _next;
+}
+
+/// <summary>
 /// Game clock and event scheduler, modelled on the original (see PLAN.md R1):
 /// <list type="bullet">
 /// <item>Game time is counted in <b>minutes</b> (World +166h). Objects schedule events at a game minute
@@ -66,7 +92,32 @@ public partial class GameClock : Node
     /// <summary>Scheduled events that threw (checked by the scenario test).</summary>
     public static int EventErrors { get; private set; }
 
-    private readonly PriorityQueue<Action, (long minute, long seq)> _events = new();
+    /// <summary>A pending event: a named one (target + kind + arg, saveable) or, in tests only, a closure.</summary>
+    private readonly struct Pending
+    {
+        public readonly IScheduled Target;
+        public readonly string Kind;
+        public readonly long Arg;
+        public readonly Action Action;
+
+        public Pending(IScheduled target, string kind, long arg)
+        {
+            Target = target;
+            Kind = kind;
+            Arg = arg;
+            Action = null;
+        }
+
+        public Pending(Action action)
+        {
+            Target = null;
+            Kind = null;
+            Arg = 0;
+            Action = action;
+        }
+    }
+
+    private readonly PriorityQueue<Pending, (long minute, long seq)> _events = new();
     private long _sequence;
     private long _lastTurn;
 
@@ -97,11 +148,60 @@ public partial class GameClock : Node
         _sequence = 0;
     }
 
-    /// <summary>Run <paramref name="action"/> when the clock reaches <paramref name="minute"/> (now if it already passed).</summary>
-    public void ScheduleAt(long minute, Action action) => _events.Enqueue(action, (Math.Max(minute, Minute), _sequence++));
+    /// <summary>
+    /// Run <paramref name="action"/> when the clock reaches <paramref name="minute"/>. Closures can't be saved: game
+    /// code uses <see cref="Schedule"/>; this is for tests and debug commands (<see cref="ClosureEvents"/> counts them).
+    /// </summary>
+    public void ScheduleAt(long minute, Action action) => _events.Enqueue(new Pending(action), (Math.Max(minute, Minute), _sequence++));
 
-    /// <summary>Run <paramref name="action"/> after <paramref name="minutes"/> game minutes.</summary>
+    /// <summary>Run <paramref name="action"/> after <paramref name="minutes"/> game minutes (tests / debug only).</summary>
     public void ScheduleIn(long minutes, Action action) => ScheduleAt(Minute + Math.Max(0, minutes), action);
+
+    /// <summary>Named event: <paramref name="target"/>.OnClockEvent(kind, arg) at <paramref name="minute"/> (now if it passed).</summary>
+    public void Schedule(long minute, IScheduled target, string kind, long arg = 0) =>
+        _events.Enqueue(new Pending(target, kind, arg), (Math.Max(minute, Minute), _sequence++));
+
+    /// <summary>Named event after <paramref name="minutes"/> game minutes.</summary>
+    public void ScheduleIn(long minutes, IScheduled target, string kind, long arg = 0) =>
+        Schedule(Minute + Math.Max(0, minutes), target, kind, arg);
+
+    /// <summary>Pending closure events (should be none in a game: they can't be saved).</summary>
+    public int ClosureEvents
+    {
+        get
+        {
+            var n = 0;
+            foreach (var (pending, _) in _events.UnorderedItems)
+                if (pending.Action != null)
+                    n++;
+            return n;
+        }
+    }
+
+    /// <summary>The pending named events in time order, for a save file (targets that are gone are left out).</summary>
+    public List<(long Minute, long Seq, string Target, string Kind, long Arg)> SnapshotEvents()
+    {
+        var list = new List<(long, long, string, string, long)>();
+        foreach (var (pending, when) in _events.UnorderedItems)
+            if (pending.Target != null && TargetAlive(pending.Target))
+                list.Add((when.minute, when.seq, pending.Target.SaveId, pending.Kind, pending.Arg));
+        list.Sort((a, b) => a.Item1 != b.Item1 ? a.Item1.CompareTo(b.Item1) : a.Item2.CompareTo(b.Item2));
+        return list;
+    }
+
+    /// <summary>Kinds of pending named events per target type (for the scenario test and debugging).</summary>
+    public Dictionary<string, int> EventCounts()
+    {
+        var counts = new Dictionary<string, int>();
+        foreach (var (pending, _) in _events.UnorderedItems)
+        {
+            var key = pending.Target == null ? "closure" : $"{pending.Target.GetType().Name}.{pending.Kind}";
+            counts[key] = counts.GetValueOrDefault(key) + 1;
+        }
+        return counts;
+    }
+
+    private static bool TargetAlive(IScheduled target) => target is not GodotObject o || IsInstanceValid(o);
 
     /// <summary>Real seconds (at the current speed) that <paramref name="minutes"/> game minutes take.</summary>
     public double RealSecondsFor(double minutes) => minutes / MinutesPerRealSecond / _speed;
@@ -117,10 +217,13 @@ public partial class GameClock : Node
         var now = Minute;
         while (!Paused && _events.TryPeek(out _, out var when) && when.minute <= now)
         {
-            var action = _events.Dequeue();
+            var pending = _events.Dequeue();
             try
             {
-                action();
+                if (pending.Action != null)
+                    pending.Action();
+                else if (TargetAlive(pending.Target))
+                    pending.Target.OnClockEvent(pending.Kind, pending.Arg);
             }
             catch (Exception e)
             {

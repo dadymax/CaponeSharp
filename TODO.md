@@ -1163,6 +1163,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,
   uncollected money, jobs: construction, repair, training), players' finances, favour and bribes, services and
   their timers, alliances, police and FBI jobs, fog of war, computer players' state and pending clock events.
+  Step 1 done 2026-11-04 — saveable clock events: `IScheduled` (SaveId + OnClockEvent(kind, arg)) and
+  `GameClock.Schedule / ScheduleIn(target, kind, arg)`; `SnapshotEvents()` lists the pending events as data (minute,
+  order, target id, kind, number). All 31 game call sites converted, ids: `company:x,y`, `block:n`, `org:<colour>`,
+  `ai:<colour>`, `stats`, `victory`, `training` (kind = team colour, arg = end minute), `unit:n`, `collector:n`,
+  `extort:n`, `patrol:n`, `raid:n` (`SaveIds.Next`, reset per episode). Conversion owner kept in a field. Closures
+  remain only for tests / debug commands (`ClosureEvents`); scenario check "every scheduled game event can be
+  saved", unit test `SaveableClockTests`. Next: step 2 (write the state on F5), step 3 (rebuild it on F8).
 - [x] 21. A unit keeps attacking a dead body: when unit 1 kills unit 2, unit 1 goes on playing its attack
   animation at unit 2's corpse. When the target dies, the attacker must drop it and stand (idle picture), or pick
   the next enemy in range as the original does after a kill (check the EXE: target cleared on death, then the

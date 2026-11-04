@@ -16,8 +16,24 @@ namespace Capone;
 /// <item>Per business type: income, count, market share and the income multiplier used by companies (+10Ch).</item>
 /// </list>
 /// </summary>
-public partial class Organisation
+public partial class Organisation : IScheduled
 {
+    public string SaveId => $"org:{Team.TeamColor.ToHtml()}";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        var clock = GameClock.Instance;
+        switch (kind)
+        {
+            case "hour": HourTick(clock); break;
+            case "interest": InterestTick(clock); break;
+            default: OnServiceEvent(kind, arg); break;
+        }
+    }
+
+    /// <summary>Clock events of the services part (none yet; hook for timed services).</summary>
+    partial void OnServiceEvent(string kind, long arg);
+
     /// <summary>Lowest allowed cash balance (sub_430951: cash − amount + 200 000 ≥ 0).</summary>
     public const long OverdraftLimit = 200_000;
     /// <summary>Debt interest: −cash / 10 every 1008 minutes (flt_4887A8 = 10, sub_430A58 event 102).</summary>
@@ -101,8 +117,8 @@ public partial class Organisation
     /// <summary>Starts the hourly statistics update and the debt-interest event.</summary>
     public void Start(GameClock clock)
     {
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
-        clock.ScheduleIn(InterestPeriodMinutes, () => InterestTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
+        clock.ScheduleIn(InterestPeriodMinutes, this, "interest");
     }
 
     private void HourTick(GameClock clock)
@@ -122,7 +138,7 @@ public partial class Organisation
             _fbiShown = FbiVisitActive;
             PanelInfo.StatusText = FbiVisitActive ? $"{OriginalTexts.Instance.Get(20, 2)} {(int)(FbiVisitProgress * 100)}%" : "";
         }
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => HourTick(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "hour");
     }
 
     private void InterestTick(GameClock clock)
@@ -131,7 +147,7 @@ public partial class Organisation
             return;
         if (Cash < 0)
             Spend((long)(-Cash / InterestDivisor));
-        clock.ScheduleIn(InterestPeriodMinutes, () => InterestTick(clock));
+        clock.ScheduleIn(InterestPeriodMinutes, this, "interest");
     }
 
     /// <summary>vt+70h: can the player pay <paramref name="amount"/> without going below the overdraft limit?</summary>

@@ -122,6 +122,8 @@ public partial class ScenarioTest : Node
     }
 
     private long _delivered;
+    /// <summary>Closure events the test itself may schedule (the game's own events must all be named, for saving).</summary>
+    private int _testClosures;
     private bool _aiAttackDecided;
     private int _aiAttackOrders;
 
@@ -299,6 +301,10 @@ public partial class ScenarioTest : Node
                     Check("the money objective follows the weekly net income", vc.CurrentProgress == team.Org.NetIncome,
                         $"progress {vc.CurrentProgress}, net income {team.Org.NetIncome}, target {vc.MoneyTarget}");
             }
+        // Save / load step 1: every pending event of the game is a named, saveable one.
+        if (_hour % 24 == 12 && _clock.ClosureEvents > _testClosures)
+            Check("every scheduled game event can be saved", false,
+                $"{_clock.ClosureEvents} closure events: " + string.Join(", ", _clock.EventCounts().Where(kv => kv.Key == "closure")));
         if (_hour == 6)
             MakeDeserter();
         if (_hour == 8)
@@ -761,6 +767,7 @@ public partial class ScenarioTest : Node
         var hurt = false;
         shooter.AttackOrder(target, false);
         // TODO item 21: 30 game minutes after the kill the killer has dropped the body (the corpse stays 3 hours).
+        _testClosures++;
         target.Died += _ => GameClock.Instance?.ScheduleIn(30, () =>
         {
             if (!IsInstanceValid(shooter) || shooter.IsDead || !IsInstanceValid(target))

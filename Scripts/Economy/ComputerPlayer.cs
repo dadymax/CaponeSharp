@@ -13,8 +13,24 @@ namespace Capone;
 /// The personality is a 13-value parameter table (+210h, setter vt+15Ch) filled by the constructor and by the PLAYER
 /// kind (vt+160h, sub_4626B5); see <see cref="Parameters"/>.
 /// </summary>
-public class ComputerPlayer
+public class ComputerPlayer : IScheduled
 {
+    public string SaveId => $"ai:{Team.TeamColor.ToHtml()}";
+
+    public void OnClockEvent(string kind, long arg)
+    {
+        var clock = GameClock.Instance;
+        switch (kind)
+        {
+            case "units": Repeat(clock, TaskUnits, kind); break;
+            case "recruit": Repeat(clock, RecruitAndConvert, kind); break;
+            case "strategy": Repeat(clock, Strategy, kind); break;
+            case "shares": SetShares(); break;
+            case "seen": RepeatHourly(clock); break;
+            default: GD.PushError($"ComputerPlayer: unknown clock event {kind}"); break;
+        }
+    }
+
     public const int CycleMinutes = 3 * GameClock.MinutesPerHour;
     /// <summary>flt_491180: a fighter farther than this from its own training center walks home.</summary>
     public const float HomeRadius = 10f;
@@ -98,19 +114,19 @@ public class ComputerPlayer
     /// <summary>vt+24h (sub_462480): schedules the three cycles and the share setup.</summary>
     public void Start(GameClock clock)
     {
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => Repeat(clock, TaskUnits));
-        clock.ScheduleIn(2 * GameClock.MinutesPerHour, () => Repeat(clock, RecruitAndConvert));
-        clock.ScheduleIn(3 * GameClock.MinutesPerHour, () => Repeat(clock, Strategy));
-        clock.ScheduleIn(3 * GameClock.MinutesPerHour, SetShares);
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => RepeatHourly(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "units");
+        clock.ScheduleIn(2 * GameClock.MinutesPerHour, this, "recruit");
+        clock.ScheduleIn(3 * GameClock.MinutesPerHour, this, "strategy");
+        clock.ScheduleIn(3 * GameClock.MinutesPerHour, this, "shares");
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "seen");
     }
 
-    private void Repeat(GameClock clock, Action cycle)
+    private void Repeat(GameClock clock, Action cycle, string kind)
     {
         if (Org == null || Org.Eliminated || !Teams.TeamsInGame.ContainsValue(Team))
             return;
         cycle();
-        clock.ScheduleIn(CycleMinutes, () => Repeat(clock, cycle));
+        clock.ScheduleIn(CycleMinutes, this, kind);
     }
 
     private void RepeatHourly(GameClock clock)
@@ -118,7 +134,7 @@ public class ComputerPlayer
         if (Org == null || Org.Eliminated || !Teams.TeamsInGame.ContainsValue(Team))
             return;
         UpdateSeen();
-        clock.ScheduleIn(GameClock.MinutesPerHour, () => RepeatHourly(clock));
+        clock.ScheduleIn(GameClock.MinutesPerHour, this, "seen");
     }
 
     private static SceneTree Tree => Engine.GetMainLoop() as SceneTree;
