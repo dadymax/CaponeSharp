@@ -1091,3 +1091,10 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   The tests didn't catch it (the A* scenario run used the command-line override). Fix: quote the value in game.cfg
   and the README example; accept it unquoted is impossible with ConfigFile, so also log a clear error when the file
   fails to load; add a smoke-test check that game.cfg parses.
+- [x] 16. Building selection (user playtest 2026-11-04): a click on trees selected a building, and on a tall building
+  in a high block it showed a middle-class picture. Causes: the 20 px pick radius reached a building next to the
+  clicked tree, and F / G cells (lawns, edge trees, park squares) were selectable "Empty space" with the portrait
+  "info house 1" (a G lawn next to the tall building). Fixed: F / G aren't selectable (user's rule; the EXE allows
+  it); the pick is by pixels — the frontmost tile whose picture is opaque at the click, and only a plain building
+  counts. Portraits follow the block's district (block table +8, as the EXE's sub_4025F0): slum "info slum",
+  middle "info hall", center "info hotel 2". MCP-checked: lawn → nothing, building base and upper part → selected.
