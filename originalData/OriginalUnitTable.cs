@@ -67,6 +67,7 @@ public class OriginalUnitTable
                 FiresFromCar = exe.ReadU16(va + 0x30),
             };
         }
+        GameParameters.ApplyUnits(_stats); // res://Data/unit_stats.json overrides (user-editable)
     }
 
     public Stats Get(int type) => _stats.GetValueOrDefault(type);

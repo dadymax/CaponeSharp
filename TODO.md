@@ -1134,6 +1134,11 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   steps, legalization factors, extortion chances. Defaults = today's values from the EXE; `units.json` /
   `companies2.json` already exist for some keys — extend or replace them, keep the keys in sync with the enums,
   and add a smoke-test check that the JSON loads and covers every unit type and catalogue row. Document in README.
+  Done 2026-11-04 (part 1): `Data/unit_stats.json` (the EXE unit table, all fields) and `Data/businesses.json` (the
+  catalogue, all fields) are laid over the EXE values at load (`originalData/GameParameters.cs`); `-- --export-params`
+  writes them; the smoke test checks they load; README "Unit and business parameters". Still in code (part 2):
+  remake and EXE rule constants — Hit man exposed damage, fortification shot, HQ HP, healing, surrender ratio,
+  market-share steps, legalization factors, extortion chance table, authority service table (0x488268).
 - [x] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
   computer players — the whole game clock) and shows the InfoWin.bmp window (as for the tips) while paused; Pause
   again (or the window's button) resumes. Check how the EXE pauses (key handler sub_410EC3, texts for "Pause").

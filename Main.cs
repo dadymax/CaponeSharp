@@ -76,6 +76,12 @@ public partial class Main : Node2D
 		if (DisplayServer.GetName() != "headless")
 			OriginalCursors.Set(OriginalCursors.Kind.Arrow);
 		var args = OS.GetCmdlineUserArgs();
+		if (System.Array.IndexOf(args, "--export-params") >= 0)
+		{
+			GameParameters.Export();
+			GetTree().Quit(0);
+			return;
+		}
 		if (System.Array.IndexOf(args, "--smoke-test") >= 0)
 		{
 			var failures = SmokeTest.Run();

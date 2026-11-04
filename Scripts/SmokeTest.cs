@@ -27,6 +27,21 @@ public static class SmokeTest
     private static int _failures;
     private static int _warnings;
 
+    /// <summary>res://Data/unit_stats.json and businesses.json must load without errors and cover every type and row.</summary>
+    private static void CheckParameters()
+    {
+        _ = OriginalUnitTable.Instance.Get(0);
+        _ = OriginalBusinessTable.Instance.Entries.Count;
+        foreach (var error in GameParameters.Errors)
+            Fail("parameters: " + error);
+        if (!GameParameters.UnitsFileLoaded)
+            Fail($"{GameParameters.UnitsPath} missing");
+        if (!GameParameters.BusinessesFileLoaded)
+            Fail($"{GameParameters.BusinessesPath} missing");
+        if (GameParameters.UnitsFileLoaded && GameParameters.BusinessesFileLoaded && GameParameters.Errors.Count == 0)
+            GD.Print("  unit_stats.json and businesses.json ok");
+    }
+
     /// <summary>res://game.cfg must parse; a syntax error makes Godot drop the whole file (TODO playtest item 15).</summary>
     private static void CheckGameConfig()
     {
@@ -45,6 +60,7 @@ public static class SmokeTest
         _warnings = 0;
         GD.Print("=== Smoke test: original data ===");
         CheckGameConfig();
+        CheckParameters();
         CheckExe();
         CheckUnits();
         CheckBusinessesAndTexts();
@@ -84,7 +100,7 @@ public static class SmokeTest
             var name = OriginalUnitTable.GetName((int)type, OriginalData.TextLanguage);
             GD.Print($"  {(int)type,2} {type,-10} {name,-10} cost {stats.Cost,6} hp {stats.MaxHP,3} dmg {stats.DamageMin}-{stats.DamageMax}/{stats.BuildingDamageMin}-{stats.BuildingDamageMax} hit {stats.HitChance}% range {stats.AttackRange} ticks {stats.TicksPerTile} vision {stats.Vision}/{stats.VisionMax}");
             if (KnownCosts.TryGetValue(type, out var cost) && stats.Cost != cost)
-                Fail($"{type}: EXE cost {stats.Cost}, expected {cost}");
+                Warn($"{type}: cost {stats.Cost}, the original {cost} (changed in {GameParameters.UnitsPath}?)");
             if (string.IsNullOrEmpty(name) && type != UnitCommon.UnitType.PoliceCar)
                 Warn($"{type}: no name in the EXE");
         }

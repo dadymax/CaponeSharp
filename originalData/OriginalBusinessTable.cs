@@ -63,6 +63,7 @@ public class OriginalBusinessTable
                 Flag2C = exe.ReadI32(va + 0x2C),
             });
         }
+        GameParameters.ApplyBusinesses(Entries); // res://Data/businesses.json overrides (user-editable)
     }
 
     public Entry Get(int index) => index >= 0 && index < Entries.Count ? Entries[index] : null;
