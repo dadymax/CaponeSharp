@@ -213,3 +213,28 @@ public static class PathSearchTests
         MoveMap.Occupancy = (_, _) => (0, false, false);
     }
 }
+
+/// <summary>Edge scrolling (EXE sub_413A04 / 0x40D3F4, CameraController).</summary>
+public static class EdgeScrollTests
+{
+    [UnitTest]
+    public static void EdgesAreTwoPixels()
+    {
+        var screen = new Vector2(800, 600);
+        Assert.Equal(new Vector2I(-1, 0), CameraController.EdgeDirection(new Vector2(1, 300), screen), "x 1: left");
+        Assert.Equal(new Vector2I(0, 0), CameraController.EdgeDirection(new Vector2(2, 300), screen), "x 2: none");
+        Assert.Equal(new Vector2I(1, 0), CameraController.EdgeDirection(new Vector2(798, 300), screen), "x 798: right");
+        Assert.Equal(new Vector2I(0, 1), CameraController.EdgeDirection(new Vector2(400, 598), screen), "y 598: down");
+        Assert.Equal(new Vector2I(-1, -1), CameraController.EdgeDirection(new Vector2(-30, -5), screen), "over a black bar: corner");
+    }
+
+    [UnitTest]
+    public static void StepGrowsTo50AndResets()
+    {
+        var step = CameraController.EdgeStepFirst;
+        for (var i = 0; i < 10; i++)
+            step = CameraController.NextStep(step, 0.05);
+        Assert.Equal(50, step, "grows by 10 up to 50");
+        Assert.Equal(10, CameraController.NextStep(step, 0.4), "after a 350 ms break: 10");
+    }
+}
