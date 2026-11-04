@@ -9,7 +9,8 @@ namespace Capone;
 /// L Shotgun, K Hit man, C Cadillac, I Thief (the pressed one of a unit in training cancels it). Unit orders: G Go
 /// (slot 0), A Attack (1), E Extort (2), D Disguise (4), O Patrol (5). H centres the view on the player's HQ. R repairs
 /// the selected own company (its slot 5). Ctrl + digit stores the selected own units (not collectors) as a group; the
-/// digit selects it again, and once selected moves the view to it. Pause (remake, user request): freezes the game.
+/// digit selects it again, and once selected moves the view to it; Shift + digit selects and moves the view at once.
+/// Ctrl + G / A / I open the money, alliances and statistics windows. Pause (remake, user request): freezes the game.
 /// </summary>
 public partial class Hotkeys : Node
 {
@@ -35,12 +36,25 @@ public partial class Hotkeys : Node
         {
             var n = code - Key.Key0;
             var main = Main.Instance;
-            if (main != null && (key.CtrlPressed ? main.StoreGroup((int)n) : main.RecallGroup((int)n)))
+            if (main != null && (key.CtrlPressed ? main.StoreGroup((int)n) : main.RecallGroup((int)n, key.ShiftPressed)))
                 GetViewport().SetInputAsHandled();
             return;
         }
         if (key.CtrlPressed)
+        {
+            // sub_410EC3 with Ctrl (GetKeyState 11h): G money window (sub_4629A6), A alliances (sub_45B796),
+            // I statistics (sub_45FD50); M opens the multiplayer message window (MessSend, sub_45D146) — not ported.
+            var window = code switch
+            {
+                Key.G => Main.Instance?.ShowMoneyWindow() != null,
+                Key.A => Main.Instance?.ShowAllianceWindow() != null,
+                Key.I => Main.Instance?.ShowRankWindow() != null,
+                _ => false,
+            };
+            if (window)
+                GetViewport().SetInputAsHandled();
             return;
+        }
         var handled = code switch
         {
             _ when RecruitSlots.TryGetValue(code, out var slot) => RecruitPanel.Instance?.Press(slot) == true,

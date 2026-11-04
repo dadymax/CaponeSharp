@@ -36,6 +36,7 @@ public static class AuthorityItems
                     var va = TableVa + (uint)(i * 12);
                     _items.Add(new Item { Index = i, Authority = exe.ReadI16(va), Price = exe.ReadI32(va + 4), Points = exe.ReadF32(va + 8) });
                 }
+            GameRules.ApplyServices(_items); // res://Data/rules.json "Services" (user-editable)
         }
         return index >= 0 && index < _items.Count ? _items[index] : null;
     }

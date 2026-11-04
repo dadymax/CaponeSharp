@@ -37,7 +37,28 @@ public static class GameRules
     public static (long Income, int Chance)[] ExtortChance { get; private set; } =
         { (0, 100), (25_000, 90), (100_000, 15), (1_000_000, 0), (int.MaxValue, 0) };
 
+    /// <summary>"Services" overrides: index → (price, points); applied to the EXE table by <see cref="ApplyServices"/>.</summary>
+    private static readonly Dictionary<int, (long? Price, float? Points)> ServiceOverrides = new();
+
     public static List<string> Errors { get; } = new();
+
+    /// <summary>Lays the "Services" entries of rules.json over the EXE's authority service table.</summary>
+    public static void ApplyServices(List<AuthorityItems.Item> items)
+    {
+        foreach (var (index, (price, points)) in ServiceOverrides)
+        {
+            var item = items.FirstOrDefault(i => i.Index == index);
+            if (item == null)
+            {
+                Errors.Add($"{Path}: Services: unknown service {index}");
+                continue;
+            }
+            if (price is { } p)
+                item.Price = p;
+            if (points is { } q)
+                item.Points = q;
+        }
+    }
     public static bool FileLoaded { get; private set; }
 
     static GameRules() => Load();
@@ -89,6 +110,11 @@ public static class GameRules
                         ExtortChance = value.AsArray().Select(n => (n![0]!.GetValue<long>(), n[1]!.GetValue<int>()))
                             .OrderBy(p => p.Item1).ToArray();
                         break;
+                    case "Services":
+                        foreach (var n in value.AsArray())
+                            ServiceOverrides[n!["Index"]!.GetValue<int>()] =
+                                (n["Price"]?.GetValue<long>(), n["Points"] is { } pts ? (float)pts.GetValue<double>() : null);
+                        break;
                     default: Errors.Add($"{Path}: unknown key {key}"); break;
                 }
             }
@@ -119,6 +145,7 @@ public static class GameRules
             [nameof(MarketShareSteps)] = "[market share %, income multiplier]: the last step at or below the share applies",
             [nameof(LegalizationFactors)] = "income multiplier of a business type by its legalization level 0..3",
             [nameof(ExtortChance)] = "[weekly income, chance %]: extortion base chance, straight lines in between",
+            ["Services"] = "authority services (EXE 0x488268): Authority 1 army, 2 FBI, 3 politician, 4 police (not editable); a service is available once that much money was bribed to the authority, and using it costs the favour Points",
         },
         [nameof(HqMaxHp)] = HqMaxHp,
         [nameof(CompanyHealPerHour)] = CompanyHealPerHour,
@@ -132,5 +159,8 @@ public static class GameRules
         [nameof(MarketShareSteps)] = new JsonArray(MarketShareSteps.Select(p => (JsonNode)new JsonArray(p.Share, p.Factor)).ToArray()),
         [nameof(LegalizationFactors)] = new JsonArray(LegalizationFactors.Select(f => (JsonNode)f).ToArray()),
         [nameof(ExtortChance)] = new JsonArray(ExtortChance.Select(p => (JsonNode)new JsonArray(p.Income, p.Chance)).ToArray()),
+        ["Services"] = new JsonArray(Enumerable.Range(0, AuthorityItems.Count).Select(AuthorityItems.Get).Where(i => i != null)
+            .Select(i => (JsonNode)new JsonObject { ["Index"] = i.Index, ["Authority"] = i.Authority, ["Price"] = i.Price, ["Points"] = i.Points })
+            .ToArray()),
     };
 }

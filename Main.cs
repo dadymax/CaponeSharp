@@ -529,7 +529,8 @@ public partial class Main : Node2D
 	}
 
 	/// <summary>Digit: selects the living units of group <paramref name="n"/>.</summary>
-	public bool RecallGroup(int n)
+	/// <param name="viewToo">Shift held: the view also goes to the group at once (sub_410EC3 0x411B16).</param>
+	public bool RecallGroup(int n, bool viewToo = false)
 	{
 		var units = _groups[n]?.Where(u => IsInstanceValid(u) && IsCommandable(u)).ToList();
 		if (units == null || units.Count == 0)
@@ -543,6 +544,8 @@ public partial class Main : Node2D
 		ClearSelection();
 		foreach (var u in units)
 			Select(u);
+		if (viewToo)
+			Minimap.CenterView(units[0].GlobalPosition);
 		GuiGameback.UpdateSelectionIcon(units[0]);
 		UnitVoice.Play(units[0], UnitVoice.Kind.Select);
 		return true;

@@ -12,7 +12,8 @@
     "ExposedHitmanDamageMax": "Hit man damage right after a shot, highest",
     "MarketShareSteps": "[market share %, income multiplier]: the last step at or below the share applies",
     "LegalizationFactors": "income multiplier of a business type by its legalization level 0..3",
-    "ExtortChance": "[weekly income, chance %]: extortion base chance, straight lines in between"
+    "ExtortChance": "[weekly income, chance %]: extortion base chance, straight lines in between",
+    "Services": "authority services (EXE 0x488268): Authority 1 army, 2 FBI, 3 politician, 4 police (not editable); a service is available once that much money was bribed to the authority, and using it costs the favour Points"
   },
   "HqMaxHp": 1300,
   "CompanyHealPerHour": 5,
@@ -96,5 +97,331 @@
       2147483647,
       0
     ]
+  ],
+  "Services": [
+    {
+      "Index": 0,
+      "Authority": 1,
+      "Price": 10000,
+      "Points": 1
+    },
+    {
+      "Index": 1,
+      "Authority": 1,
+      "Price": 70000,
+      "Points": 6
+    },
+    {
+      "Index": 2,
+      "Authority": 1,
+      "Price": 200000,
+      "Points": 20
+    },
+    {
+      "Index": 3,
+      "Authority": 1,
+      "Price": 500000,
+      "Points": 30
+    },
+    {
+      "Index": 4,
+      "Authority": 1,
+      "Price": 1100000,
+      "Points": 30
+    },
+    {
+      "Index": 5,
+      "Authority": 1,
+      "Price": 2000000,
+      "Points": 40
+    },
+    {
+      "Index": 6,
+      "Authority": 1,
+      "Price": 4000000,
+      "Points": 40
+    },
+    {
+      "Index": 7,
+      "Authority": 2,
+      "Price": 300000,
+      "Points": 0
+    },
+    {
+      "Index": 8,
+      "Authority": 2,
+      "Price": 70000,
+      "Points": 0
+    },
+    {
+      "Index": 9,
+      "Authority": 2,
+      "Price": 100000,
+      "Points": 0
+    },
+    {
+      "Index": 10,
+      "Authority": 2,
+      "Price": 200000,
+      "Points": 0
+    },
+    {
+      "Index": 11,
+      "Authority": 2,
+      "Price": 10000,
+      "Points": 0
+    },
+    {
+      "Index": 12,
+      "Authority": 2,
+      "Price": 400000,
+      "Points": 0
+    },
+    {
+      "Index": 13,
+      "Authority": 2,
+      "Price": 500000,
+      "Points": 0
+    },
+    {
+      "Index": 14,
+      "Authority": 2,
+      "Price": 500000,
+      "Points": 100
+    },
+    {
+      "Index": 15,
+      "Authority": 2,
+      "Price": 1000000,
+      "Points": 0
+    },
+    {
+      "Index": 16,
+      "Authority": 2,
+      "Price": 1100000,
+      "Points": 20
+    },
+    {
+      "Index": 17,
+      "Authority": 2,
+      "Price": 2000000,
+      "Points": 100
+    },
+    {
+      "Index": 18,
+      "Authority": 2,
+      "Price": 1500000,
+      "Points": 100
+    },
+    {
+      "Index": 19,
+      "Authority": 3,
+      "Price": 10000,
+      "Points": 1
+    },
+    {
+      "Index": 20,
+      "Authority": 3,
+      "Price": 140000,
+      "Points": 36
+    },
+    {
+      "Index": 21,
+      "Authority": 3,
+      "Price": 300000,
+      "Points": 60
+    },
+    {
+      "Index": 22,
+      "Authority": 3,
+      "Price": 500000,
+      "Points": 20
+    },
+    {
+      "Index": 23,
+      "Authority": 3,
+      "Price": 700000,
+      "Points": 20
+    },
+    {
+      "Index": 24,
+      "Authority": 3,
+      "Price": 1000000,
+      "Points": 60
+    },
+    {
+      "Index": 25,
+      "Authority": 3,
+      "Price": 1100000,
+      "Points": 60
+    },
+    {
+      "Index": 26,
+      "Authority": 3,
+      "Price": 1500000,
+      "Points": 60
+    },
+    {
+      "Index": 27,
+      "Authority": 3,
+      "Price": 2000000,
+      "Points": 200
+    },
+    {
+      "Index": 28,
+      "Authority": 3,
+      "Price": 2500000,
+      "Points": 60
+    },
+    {
+      "Index": 29,
+      "Authority": 3,
+      "Price": 3000000,
+      "Points": 80
+    },
+    {
+      "Index": 30,
+      "Authority": 3,
+      "Price": 4500000,
+      "Points": 400
+    },
+    {
+      "Index": 31,
+      "Authority": 3,
+      "Price": 5000000,
+      "Points": 100
+    },
+    {
+      "Index": 32,
+      "Authority": 3,
+      "Price": 5000000,
+      "Points": 1000
+    },
+    {
+      "Index": 33,
+      "Authority": 3,
+      "Price": 6000000,
+      "Points": 600
+    },
+    {
+      "Index": 34,
+      "Authority": 3,
+      "Price": 8000000,
+      "Points": 1600
+    },
+    {
+      "Index": 35,
+      "Authority": 4,
+      "Price": 10000,
+      "Points": 1
+    },
+    {
+      "Index": 36,
+      "Authority": 4,
+      "Price": 10000,
+      "Points": 1
+    },
+    {
+      "Index": 37,
+      "Authority": 4,
+      "Price": 70000,
+      "Points": 6
+    },
+    {
+      "Index": 38,
+      "Authority": 4,
+      "Price": 70000,
+      "Points": 18
+    },
+    {
+      "Index": 39,
+      "Authority": 4,
+      "Price": 75000,
+      "Points": 1
+    },
+    {
+      "Index": 40,
+      "Authority": 4,
+      "Price": 200000,
+      "Points": 20
+    },
+    {
+      "Index": 41,
+      "Authority": 4,
+      "Price": 200000,
+      "Points": 1
+    },
+    {
+      "Index": 42,
+      "Authority": 4,
+      "Price": 500000,
+      "Points": 30
+    },
+    {
+      "Index": 43,
+      "Authority": 4,
+      "Price": 500000,
+      "Points": 30
+    },
+    {
+      "Index": 44,
+      "Authority": 4,
+      "Price": 500000,
+      "Points": 30
+    },
+    {
+      "Index": 45,
+      "Authority": 4,
+      "Price": 500000,
+      "Points": 100
+    },
+    {
+      "Index": 46,
+      "Authority": 4,
+      "Price": 1100000,
+      "Points": 30
+    },
+    {
+      "Index": 47,
+      "Authority": 4,
+      "Price": 1100000,
+      "Points": 40
+    },
+    {
+      "Index": 48,
+      "Authority": 4,
+      "Price": 2000000,
+      "Points": 40
+    },
+    {
+      "Index": 49,
+      "Authority": 4,
+      "Price": 2000000,
+      "Points": 40
+    },
+    {
+      "Index": 50,
+      "Authority": 4,
+      "Price": 3000000,
+      "Points": 100
+    },
+    {
+      "Index": 51,
+      "Authority": 4,
+      "Price": 4000000,
+      "Points": 100
+    },
+    {
+      "Index": 52,
+      "Authority": 4,
+      "Price": 4000000,
+      "Points": 60
+    },
+    {
+      "Index": 53,
+      "Authority": 4,
+      "Price": 5000000,
+      "Points": 160
+    }
   ]
 }

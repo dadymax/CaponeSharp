@@ -204,8 +204,9 @@ Terminate); police stations and own objects show the name. The Russian texts hav
   episodes 4, 13 and 18 the user can't extort (`Organisation.MayExtort`, scenario check). Disguise, Force variants,
   Unload and enemy-unit buttons are done.
 - Frenzy: order 4 (29,5 "Frency", no Russian text) is refused by the gate for every unit, so it is not in the game.
-- Done: the order-mode cursor and the map hover hints (texts 5,40–62). Open: order 4 "Destroy %s" (attacking
-  buildings) is not reachable from the menu either (gate) — only the hint texts exist.
+- Done: the order-mode cursor and the map hover hints (texts 5,40–62). Order 4 "Destroy %s" (attacking buildings):
+  checked 2026-11-04 — the gate sub_42CCE5 refuses it for every unit, so the original never reaches it; only its
+  hint texts exist. Not ported (closed).
 
 ## Victory conditions and defeat (2026-10-27)
 
@@ -538,8 +539,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   - Sniper: done. Current vision (unit vt+1ACh `sub_42E385`) is unit table +2Ch while walking (activity +0BCh 1–4) and +2Ah
     otherwise; the Sniper has 8 / 9 (Thief, Godfather 7 / 8, the rest equal). A shot (vt+118h `sub_42B750`) needs the target
     inside the current vision square and within the table range (Sniper 9.0), so standing gives +1 sight and +1 reach
-    (`Unit.CurrentVision`, `Unit.Sees`, `CanAttack.TargetInRange`). Open: line of sight in the vision grid; activities 12+
-    shrink vision to +2Ah × (27 − activity) / 15; `SniperAbility`'s farther-is-stronger damage is a GDScript-era guess.
+    (`Unit.CurrentVision`, `Unit.Sees`, `CanAttack.TargetInRange`). Line of sight: done (`Vision`). Activities 12–27
+    are the death sequence (vision shrinks while a unit dies) — not ported, a dead unit sees nothing anyway.
+    `SniperAbility` (distance-scaled damage) was GDScript-only; the C# damage is min + random(max − min) from the unit
+    table (sub_438873) plus the Hit man rule (sub_42C890 / sub_42C960), no distance factor (checked 2026-11-04).
   - Disguise and the Hit man: done (`Units/UnitDisguise.cs`, replaces the GDScript-era `HitmanStealth`). Unit +0D0h =
     last shot (Unit::Attack sub_42BD15), +0D4h = disguise start (constructor: 0 / −3601). Order 0Ah "Disguise"
     (29,10, slot 4, icon tile 0xD85 from 0x4844EC, immediate): any own unit but a Collector or one in a car, when the
@@ -814,8 +817,10 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   cursors; H puts the view on the own HQ (sub_409FE7). Done (`Hotkeys`, physical keys so a Russian layout works).
   R repairs the selected own idle company (its slot 5, company vt+0BCh). Digits: Ctrl + n stores the selected own
   units but collectors as group n (+948h + 20 × n); n selects the group, and when it is already selected moves the
-  view to it (sub_409FE7). MCP-checked (Ctrl+1, deselect, 1). Open: what Ctrl changes for M / I / G / A, and Shift
-  with a digit (GetKeyState 10h).
+  view to it (sub_409FE7). MCP-checked (Ctrl+1, deselect, 1). Ctrl + letter (checked 2026-11-04, GetKeyState 11h):
+  G money window (sub_4629A6), A alliances (sub_45B796), I statistics (sub_45FD50) — done, MCP-checked; M the
+  multiplayer message window (MessSend, sub_45D146 / sub_45D330) — parked with multiplayer. Shift + digit
+  (GetKeyState 10h, 0x411B16): selects the group and moves the view to it at once — done (`Main.RecallGroup`).
 
 ## To fix (found while commenting the EXE listing, 2026-10-26)
 
@@ -1141,7 +1146,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   market-share steps, legalization factors, extortion chance table, authority service table (0x488268).
   Part 2 done 2026-11-04: `Data/rules.json` (`originalData/GameRules.cs`): HQ HP, company healing, surrender ratio,
   fortification range / damage / hit chance, exposed Hit man damage, market-share steps, legalization factors,
-  extortion chance table. Left in code: the authority service table (prices / points per service) and timings.
+  extortion chance table. Authority services (price / points per service, 0x488268): rules.json "Services"
+  (2026-11-04). Left in code: timings (durations of services, jobs and events).
 - [x] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
   computer players — the whole game clock) and shows the InfoWin.bmp window (as for the tips) while paused; Pause
   again (or the window's button) resumes. Check how the EXE pauses (key handler sub_410EC3, texts for "Pause").
@@ -1163,3 +1169,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   attacker drops to its idle picture and its next think picks the next enemy in range. Before, only the idle think
   dropped dead targets; a unit with an order running (extortion…) skips that think and kept attacking the body
   until it was removed 3 hours later. Scenario check "a killer stops attacking the body" (30 minutes after the kill).
+- [ ] 22. Scenario flake (seen once, 2026-11-04): episode 4 "collectors bring money to the HQ: delivered 0; owners
+  Большой Джим" after 14 days; four reruns passed. Suspects: the user's starting squad (snipers, Shotgun and Pistol
+  men near Big Jim's area) kills his collectors on the way home (their money goes to the killer, not to an HQ), or
+  Big Jim's businesses are lost early. Make the failure report collector deaths and the owner's company count, then
+  decide whether the check should count money taken from killed collectors too.
