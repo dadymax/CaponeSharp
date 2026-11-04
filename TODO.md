@@ -476,7 +476,7 @@ Still open from this part:
   - action labels ("Attack/Extort/Destroy %s", "Upgrade to … biz", "Repair ($%ld)", "Sell for $%ld", "Recruit … ($%s and %1.0f Army favour points)")
   - messages ("Cops raid your business !", "$%s stolen from %s.", "… has been legalized.")
   - tips and help screens
-- [ ] **Don't commit extracted game text or images.** Extract at startup or into a git-ignored `generated/` folder (same rule as `original_game/`).
+- [x] **Don't commit extracted game text or images.** (Checked 2026-11-04: nothing extracted is tracked; texts, pictures, sounds and cursors are read from the original files at run time.) Extract at startup or into a git-ignored `generated/` folder (same rule as `original_game/`).
 
 ## 3. Screens and UI from PICS (P1)
 
@@ -484,12 +484,12 @@ Still open from this part:
 - [x] Mission briefing `ScenDisp.bmp`/`ScenDiBu.bmp` showing SCENARIONAME, STORYTEXT, OBJECTIVETEXT, TIPTEXT from the .epi.
 - [x] End screens (done; `GameRank.bmp` and `AllyWin.bmp` belong to other windows): `GameWin.bmp`/`GameWinA`/`GameWinB` (SUCCESSTEXT), `GAMEOVER.bmp`/`GameOvAn`/`GameOvBu` (FAILURETEXT), `GameRank.bmp`, `AllyWin.bmp`.
 - [ ] In-game windows for the menu stubs (tips → InfoWin, statistics → GameRank and money → MoneyWin done 2026-11-02; `MoneyWin.bmp` is the transfer to other players, not the bribe sliders): `HelpWin.bmp` (unknown use), `MessSend.bmp` (messages, multiplayer chat). `AllyWin.bmp` (alliances) done 2026-11-02.
-- [ ] Bottom panel, as specified in `projectinfo/gui.md`:
+- [x] Bottom panel, as specified in `projectinfo/gui.md` (all done: `PanelInfo`, `RecruitPanel`, blood bar, `ActionBar`, `SharesPanel`, `Minimap`):
   - finances block
   - Recruit panel (`Recruit.bmp`)
   - progress bar (`Blood.bmp`)
   - **action buttons from Chicago.tile**: go/kill/guard/stay/buy/upgrade/extort rows 102–123 and per-unit go/attack buttons 2709–2830. This answers "which buttons, which icons".
-- [ ] Portraits `Faces.bmp`, business signs `Signs.bmp`/`Signs2.bmp`, Cadillac `Car.bmp`, `Park.bmp`, `hq.bmp`, `open.bmp`, Godfather `godf.bmp`/`godfkl.bmp`, credits `CREDIT.bmp`/`CREDITBU.bmp`.
+- [x] Portraits `Faces.bmp`, business signs `Signs.bmp`/`Signs2.bmp`, Cadillac `Car.bmp`, `Park.bmp`, `hq.bmp`, `open.bmp`, Godfather `godf.bmp`/`godfkl.bmp`, credits `CREDIT.bmp`/`CREDITBU.bmp`. (2026-11-04: all but the credits are bitmaps of the Chicago.tile list and drawn through its tiles; the EXE loads none of them by name. Credits = the main menu's "Developers" screen (fnDrawCredits), parked until the user asks.)
 - [x] **Mouse cursors** `ArrowCur`, `GotoCur`, `AttackCu`, `ProtectCu` live in the EXE's PE resources (loaded in `fnLegalCrimeMainWindowMain`, 0x419F10). Extract them with a small PE resource reader and use them via `Input.SetCustomMouseCursor`.
   Done 2026-10-31 (`OriginalCursors`, `OriginalExe.ReadResource`): the four cursor groups are read from the EXE's PE
   resources at run time (32 × 32 monochrome; hotspots 1,1 / Attack 10,10). sub_41E970(n): 0 arrow (always, the
@@ -502,7 +502,7 @@ Still open from this part:
 - [x] Unit voices per type (`UnitVoice`); death sounds for the local player's units (sub_42B880, `Unit.DieSound`): `<Unit>Arrive / Click / ClickEnemy / Die / Idle1-5 / Order / OrderHurry / Resign` for Thug, Pistol, Shotgun, Thompson, Sniper, Bombman, Hitman, Thief, Godfather.
 - [x] Weapons: shot sounds by type (table 0x484554, `CanAttack.ShotSound`); `Crash` for destroyed HQs, demolished companies and Cadillacs.
 - [x] Business (selection sounds sub_422C80 / sub_416660, `Company.SelectSound`; collector cry below half HP): `Bootlegging/Entertainment/Gambling/TroubleShooting/CollectionCenter/TraningCenter/HQ/Business`. Capture outcome: `BusinessPay1-6` / `BusinessRefuse1-5` — done in `Company.Extort` (`Sound` class). Collector hits: `CollectorHit1-3`.
-- [ ] Police/FBI: `PoliceArrest1-3`, `PoliceRaid`, `POLICE_S`, `FBIInforms`. Cars: `NewCar`, `CarGo`, `CarClick`. UI: `ButtonClick`, `OverButton`, `Click`, `select`, `Message1-8`, `OutOfFunds`, `Permit`, `Welcome`, `NewGame`, `WinEffect`, `LoseEffect`.
+- [x] Police/FBI: `PoliceArrest1-3`, `PoliceRaid`, `POLICE_S`, `FBIInforms`. Cars: `NewCar`, `CarGo`, `CarClick`. UI: `ButtonClick`, `OverButton`, `Click`, `select`, `Message1-8`, `OutOfFunds`, `Permit`, `Welcome`, `NewGame`, `WinEffect`, `LoseEffect`. (2026-11-04: all wired except the multiplayer ones — `Message1-8` are taunts sent in a network game (event sub_447930 / sub_447962, ids 0Bh–10h, 0Ah, 16h, only with a session, main window +0E0h), `NewGame` / `NewGamer`; `Permit` (id 41h) has no caller.)
 
 - [x] Message log over the map (sub_40C2C2 / sub_40FFD0 / sub_41D3E0, `MessageLog`, done 2026-10-29): messages of the
   last 15 s at (25, 13 + 16n), panel font 3; kind 4 green with Message.wav, others yellow; episode results (kinds
