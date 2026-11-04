@@ -1,0 +1,100 @@
+{
+  "_comment": "Game rule numbers (original values from Capone.EXE). Edit and restart; a missing key keeps the original. Regenerate with -- --export-params.",
+  "_fields": {
+    "HqMaxHp": "hit points of a headquarters building",
+    "CompanyHealPerHour": "hit points an unowned or legal company heals per game hour",
+    "SurrenderHpRatio": "a company gives in to extortion below this share of its hit points",
+    "FortificationRange": "sight and shooting range of the fortification business",
+    "FortificationDamageMin": "fortification damage, lowest",
+    "FortificationDamageMax": "fortification damage, highest",
+    "FortificationHitChance": "fortification chance to hit, percent",
+    "ExposedHitmanDamageMin": "Hit man damage right after a shot (not hidden), lowest",
+    "ExposedHitmanDamageMax": "Hit man damage right after a shot, highest",
+    "MarketShareSteps": "[market share %, income multiplier]: the last step at or below the share applies",
+    "LegalizationFactors": "income multiplier of a business type by its legalization level 0..3",
+    "ExtortChance": "[weekly income, chance %]: extortion base chance, straight lines in between"
+  },
+  "HqMaxHp": 1300,
+  "CompanyHealPerHour": 5,
+  "SurrenderHpRatio": 0.15,
+  "FortificationRange": 4,
+  "FortificationDamageMin": 10,
+  "FortificationDamageMax": 15,
+  "FortificationHitChance": 90,
+  "ExposedHitmanDamageMin": 20,
+  "ExposedHitmanDamageMax": 30,
+  "MarketShareSteps": [
+    [
+      0,
+      1
+    ],
+    [
+      10,
+      1.11
+    ],
+    [
+      20,
+      1.15
+    ],
+    [
+      30,
+      1.33
+    ],
+    [
+      40,
+      1.37
+    ],
+    [
+      50,
+      1.56
+    ],
+    [
+      60,
+      1.61
+    ],
+    [
+      70,
+      1.64
+    ],
+    [
+      80,
+      1.85
+    ],
+    [
+      90,
+      1.91
+    ],
+    [
+      100,
+      2.25
+    ]
+  ],
+  "LegalizationFactors": [
+    1,
+    0.75,
+    0.5,
+    0.25
+  ],
+  "ExtortChance": [
+    [
+      0,
+      100
+    ],
+    [
+      25000,
+      90
+    ],
+    [
+      100000,
+      15
+    ],
+    [
+      1000000,
+      0
+    ],
+    [
+      2147483647,
+      0
+    ]
+  ]
+}

@@ -30,14 +30,10 @@ public partial class Organisation
     public const int TypeCount = 5;
 
     /// <summary>Market-share bonus: (share %, multiplier) steps of unk_4881F4 (sub_430BE8 takes the last step ≤ share).</summary>
-    private static readonly (int Share, float Factor)[] ShareCurve =
-    {
-        (0, 1.0f), (10, 1.11f), (20, 1.15f), (30, 1.33f), (40, 1.37f), (50, 1.56f),
-        (60, 1.61f), (70, 1.64f), (80, 1.85f), (90, 1.91f), (100, 2.25f),
-    };
+    private static (int Share, float Factor)[] ShareCurve => GameRules.MarketShareSteps;
 
     /// <summary>Legalization level 0..3 of a business type → income multiplier (flt_485B7C).</summary>
-    public static readonly float[] LegalizationFactor = { 1.0f, 0.75f, 0.5f, 0.25f };
+    public static float[] LegalizationFactor => GameRules.LegalizationFactors;
 
     public Team Team { get; }
     /// <summary>Chosen primary training center (HQ +0CEh, set by company command 12 via vt+90h), or null.</summary>

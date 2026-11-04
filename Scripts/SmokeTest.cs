@@ -32,8 +32,10 @@ public static class SmokeTest
     {
         _ = OriginalUnitTable.Instance.Get(0);
         _ = OriginalBusinessTable.Instance.Entries.Count;
-        foreach (var error in GameParameters.Errors)
+        foreach (var error in GameParameters.Errors.Concat(GameRules.Errors))
             Fail("parameters: " + error);
+        if (!GameRules.FileLoaded)
+            Fail($"{GameRules.Path} missing");
         if (!GameParameters.UnitsFileLoaded)
             Fail($"{GameParameters.UnitsPath} missing");
         if (!GameParameters.BusinessesFileLoaded)

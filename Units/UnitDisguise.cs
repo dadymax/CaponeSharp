@@ -17,7 +17,8 @@ public partial class Unit
     /// <summary>Authority service 12h (table 0x488268): FBI, 1 500 000, 100 points.</summary>
     public const int DisguiseService = 0x12;
     /// <summary>The exposed Hit man's damage against units: sub_42C890 returns 14h, sub_42C960 1Eh.</summary>
-    public const int ExposedHitmanDamageMin = 20, ExposedHitmanDamageMax = 30;
+    public static int ExposedHitmanDamageMin => GameRules.ExposedHitmanDamageMin;
+    public static int ExposedHitmanDamageMax => GameRules.ExposedHitmanDamageMax;
 
     /// <summary>+0D0h: game minute of the last shot (Unit::Attack sub_42BD15).</summary>
     public long LastShotMinute { get; set; }

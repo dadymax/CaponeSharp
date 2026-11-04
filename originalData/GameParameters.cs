@@ -251,6 +251,7 @@ public static class GameParameters
             },
             ["Rows"] = rows,
         });
+        Write(GameRules.Path, GameRules.ToJson());
     }
 
     private static void Write(string path, JsonNode node)

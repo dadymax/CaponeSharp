@@ -109,7 +109,9 @@ The playtests show that some animations need hand tuning. Three places control t
 training time, sight) and `Data/businesses.json` (the business catalogue: name, type, grade, price, weekly income,
 hit points, build time, district, support kind) hold the original game's values. Edit them and restart the game; a
 missing file, unit, row or field keeps the original value. Each file starts with a `_fields` list explaining the
-fields. To get fresh files with the original values back, delete them and run
+fields. `Data/rules.json` holds rule numbers: headquarters hit points, company healing, the extortion chance table,
+the market-share income steps, legalization factors, the fortification's shot and the Hit man's damage after a shot.
+To get fresh files with the original values back, delete them and run
 `godot --headless --path . -- --export-params`. The smoke test reports files that don't load or contain unknown
 fields, and warns when unit costs differ from the original.
 

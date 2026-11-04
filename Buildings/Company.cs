@@ -24,9 +24,9 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     public const string GroupName = "companies";
     /// <summary>Income is credited this many times per week (0x1B9).</summary>
     public const int IncomeTicksPerWeek = 441;
-    public const int HealPerHour = 5;
+    public static int HealPerHour => GameRules.CompanyHealPerHour;
     /// <summary>A company gives in to extortion below this share of its HP (dbl_4803A0).</summary>
-    public const float SurrenderHpRatio = 0.15f;
+    public static float SurrenderHpRatio => GameRules.SurrenderHpRatio;
 
     public bool Selectable { get; set; } = true;
     private Selection _selection;
@@ -125,7 +125,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     }
 
     /// <summary>HQ building (class 9, vtable off_477644) vt+F8h, sub_416750: 514h hit points.</summary>
-    public const int HqMaxHp = 1300;
+    public static int HqMaxHp => GameRules.HqMaxHp;
 
     /// <summary>
     /// HQ building vt+FCh (sub_415F20): "Your headquarter has been destroyed." (17,37) for the local owner, else
@@ -219,9 +219,11 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     public bool IsFortification => IsEconomic && Entry?.Value28 == 7;
 
     /// <summary>Company vt+0E8h (sub_4234C0): sight radius 4.</summary>
-    public const int FortificationRange = 4;
+    public static int FortificationRange => GameRules.FortificationRange;
     /// <summary>Weapon of kind 7 (0x47FD90…, company vt+108h–114h): 1 bullet, 10–15 damage to anything, 90 % hit.</summary>
-    public const int FortificationDamageMin = 10, FortificationDamageMax = 15, FortificationHitChance = 90;
+    public static int FortificationDamageMin => GameRules.FortificationDamageMin;
+    public static int FortificationDamageMax => GameRules.FortificationDamageMax;
+    public static int FortificationHitChance => GameRules.FortificationHitChance;
 
     /// <summary>
     /// Company::Think (vt+5Ch sub_423500, called by the hourly event): a fortification builds its sight grid (radius 4,
@@ -362,8 +364,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
     // ---- extortion (sub_422FB4, base chance sub_423330, pressure sub_4232C1, cops sub_422F50) ---------------------
 
     /// <summary>Base chance by income: (income, chance %) points, linear in between (table at 0x47FCAC).</summary>
-    private static readonly (long Income, int Chance)[] ExtortChanceTable =
-        { (0, 100), (25_000, 90), (100_000, 15), (1_000_000, 0), (int.MaxValue, 0) };
+    private static (long Income, int Chance)[] ExtortChanceTable => GameRules.ExtortChance;
 
     /// <summary>
     /// One extortion attempt by <paramref name="unit"/> (the unit's order calls this every game hour while it stands

@@ -1127,7 +1127,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   `ComputerPlayer` keeps a seen set, updated every game hour with the fog's rules (sight grids of own and allied units,
   own and allied buildings see 4 cells); `TryBrownout` only considers seen businesses. Scenario checks: every AI
   brownout hits a business that player has seen; computer players record what they see.
-- [ ] 18. Move unit and business parameters out of the code into JSON files the user can edit; the game must read
+- [x] 18. Move unit and business parameters out of the code into JSON files the user can edit; the game must read
   them from there. Units: everything in the EXE unit table (cost, HP, damage, building damage, hit chance, range,
   speed, vision, reload, …) plus remake constants (Hit man disguise damage, fortification shot, etc.). Businesses:
   the catalogue (price, income, HP, build time, grade, district rules), support-business effects, market-share
@@ -1139,6 +1139,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   writes them; the smoke test checks they load; README "Unit and business parameters". Still in code (part 2):
   remake and EXE rule constants — Hit man exposed damage, fortification shot, HQ HP, healing, surrender ratio,
   market-share steps, legalization factors, extortion chance table, authority service table (0x488268).
+  Part 2 done 2026-11-04: `Data/rules.json` (`originalData/GameRules.cs`): HQ HP, company healing, surrender ratio,
+  fortification range / damage / hit chance, exposed Hit man damage, market-share steps, legalization factors,
+  extortion chance table. Left in code: the authority service table (prices / points per service) and timings.
 - [x] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
   computer players — the whole game clock) and shows the InfoWin.bmp window (as for the tips) while paused; Pause
   again (or the window's button) resumes. Check how the EXE pauses (key handler sub_410EC3, texts for "Pause").
