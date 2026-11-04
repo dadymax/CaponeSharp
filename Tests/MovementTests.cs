@@ -238,3 +238,26 @@ public static class EdgeScrollTests
         Assert.Equal(10, CameraController.NextStep(step, 0.4), "after a 350 ms break: 10");
     }
 }
+
+/// <summary>Firing frames of slow shooters' attack strips (Unit.OnShotFired).</summary>
+public static class ShotFrameTests
+{
+    [UnitTest]
+    public static void SniperFiresInTheLastTwoFrames()
+    {
+        foreach (var name in new[] { "Own Snipper attack SE", "Own snipper attack NE", "Own snipper attack NW", "Own snipper attack SW" })
+        {
+            var tile = OriginalData.Instance.Tiles.ResolveTile(name);
+            Assert.True(tile != null, name);
+            Assert.Equal(10, OriginalUnitSprites.ShotStart(tile.Pairs), $"{name}: 10 aiming frames, then 2 firing");
+        }
+    }
+
+    [UnitTest]
+    public static void ShotgunStripFiresAllThrough()
+    {
+        var tile = OriginalData.Instance.Tiles.ResolveTile("Own Shotgun man shoot SE");
+        Assert.True(tile != null, "shotgun strip");
+        Assert.Equal(0, OriginalUnitSprites.ShotStart(tile.Pairs), "3 different frames: the whole strip is the shot");
+    }
+}

@@ -1210,3 +1210,11 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (≈1000 px/s at full speed). The mouse is confined to the window during an episode and let go while paused or
   outside episodes. Unit tests `EdgeScrollTests`; MCP-checked (left edge scrolls, stops in the middle, pause frees
   the mouse).
+- [x] 25. Sniper attack animation in step with his shots (user, 2026-11-04). The attack strip looped at 5 fps (12
+  frames: 10 × the aiming picture, then 2 firing frames, "Own Snipper attack SE/NE/NW/SW"), so the flash showed
+  every 2.4 s while he fires every ~4 s (fire rate 0.24 → aims 4 game hours). Done: slow shooters (fire rate < 1 or
+  reload > 1 hour: the Sniper, and the Shotgun man who fires first and then reloads 5 hours) hold the first attack
+  frame between shots and play the firing frames once on each real shot (`Unit.OnShotFired` from CanAttack's shot;
+  firing frames from `OriginalUnitSprites.ShotStart`: the Sniper's from frame 10, the Shotgun's 3-frame strip all
+  through); a killing shot finishes its frames before the standing picture. Unit tests `ShotFrameTests`;
+  MCP-checked with a frozen enemy Thug far from other units: aim held ~3 s, frames 10–11 with the kill, then idle.

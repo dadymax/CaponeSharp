@@ -251,6 +251,7 @@ public partial class CanAttack : Node, IJsonConfigurable
             return 0;
         _aim = 0;
         _lastShot = now;
+        (_thisParent as Unit)?.OnShotFired(target); // slow shooters show their firing frames now
         // The shot's sound when the shooter or the target can be seen (vt+0DCh, read as visible to the local player).
         if ((_thisParent?.Visible ?? false) || target.Visible)
             Sound.Play(ShotSound(GetUnitType()));

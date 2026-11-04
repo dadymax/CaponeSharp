@@ -423,11 +423,69 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     private string MoveLayer(MapTileMath.Directions direction) =>
         OriginalUnitSprites.GetAnimLayerName(CarriesBag ? OriginalUnitSprites.SlType.attack : OriginalUnitSprites.SlType.move, direction);
 
+    /// <summary>
+    /// Slow shooters (fire rate below 1 — the Sniper aims round(1 / 0.24) = 4 hours — or reloading over an hour — the
+    /// Shotgun man, 300 minutes): their attack strip is not looped (it would fire on screen far more often than they
+    /// do). They hold the aiming picture (frame 0) and play the firing frames once when a shot is really fired
+    /// (<see cref="OnShotFired"/>, from CanAttack's shot).
+    /// </summary>
+    private bool SyncsShots => _unitInstance?.Stats is { } s && (s.FireRate < 1f || s.ReloadMinutes > GameClock.MinutesPerHour);
+
+    /// <summary>Real-time msec until which the firing frames play; -1 when not firing.</summary>
+    private double _shotUntil = -1;
+
+    private void ShowAim(MapTileMath.Directions direction)
+    {
+        var layer = OriginalUnitSprites.GetAnimLayerName(OriginalUnitSprites.SlType.attack, direction);
+        if (_shotUntil >= 0 && _as2d.Animation == layer)
+            return; // the shot is playing toward the same side
+        _shotUntil = -1;
+        _oldDirection = direction;
+        _animStopped = false;
+        _animMove = false;
+        _animAttack = true;
+        _animBag = CarriesBag;
+        if (_as2d.Animation != layer)
+            _as2d.Animation = layer;
+        if (_as2d.IsPlaying())
+            _as2d.Stop();
+        if (_as2d.Frame != 0)
+            _as2d.Frame = 0;
+    }
+
+    /// <summary>A shot was fired at <paramref name="target"/>: slow shooters play their firing frames once.</summary>
+    public void OnShotFired(Node2D target)
+    {
+        if (IsDead || !SyncsShots || _as2d?.SpriteFrames == null || target == null)
+            return;
+        var direction = MapTileMath.GetDirection(target.Position - Position);
+        var layer = (StringName)OriginalUnitSprites.GetAnimLayerName(OriginalUnitSprites.SlType.attack, direction);
+        var frames = _as2d.SpriteFrames;
+        if (!frames.HasAnimation(layer) || frames.GetFrameCount(layer) == 0)
+            return;
+        var start = frames.HasMeta(OriginalUnitSprites.ShotStartMeta(layer)) ? frames.GetMeta(OriginalUnitSprites.ShotStartMeta(layer)).AsInt32() : 0;
+        var count = frames.GetFrameCount(layer);
+        var fps = Mathf.Max(0.1, frames.GetAnimationSpeed(layer));
+        _oldDirection = direction;
+        _animStopped = false;
+        _animMove = false;
+        _animAttack = true;
+        _as2d.Play(layer);
+        _as2d.Frame = Mathf.Clamp(start, 0, count - 1);
+        _shotUntil = Time.GetTicksMsec() + (count - start) / fps * 1000.0 / Mathf.Max(0.01, Engine.TimeScale);
+    }
+
     public void AnimationMoveOrAttack(Vector2 directionAsVector, bool move = true)
     {
         if (IsDead)
             return;
         var direction = MapTileMath.GetDirection(directionAsVector);
+        if (!move && SyncsShots)
+        {
+            ShowAim(direction);
+            return;
+        }
+        _shotUntil = -1;
         if (!_animStopped && direction == _oldDirection && _animBag == CarriesBag
             && ((move && _animMove) || (!move && _animAttack)))
             return;
@@ -504,6 +562,16 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     {
         if (IsDead || IsArrested)
             return;
+        if (_shotUntil >= 0 && Time.GetTicksMsec() >= _shotUntil)
+        {
+            // The firing frames are done: back to the aiming picture.
+            _shotUntil = -1;
+            if (_animAttack && !_animStopped)
+            {
+                _as2d.Stop();
+                _as2d.Frame = 0;
+            }
+        }
         if (_attackPoseUntil >= 0 && (GameClock.Instance?.Minute ?? 0) >= _attackPoseUntil)
         {
             _attackPoseUntil = -1;
@@ -515,7 +583,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         CanAttack.DecreaseAttackTimer(delta);
         if (CanAttack.TargetInRange() && CanAttack.TargetParent != null)
             AnimationMoveOrAttack(CanAttack.TargetParent.Position - Position, false);
-        else if (_attackPoseUntil < 0)
+        else if (_attackPoseUntil < 0 && _shotUntil < 0) // a killing shot still shows its firing frames
             AnimationStop(false);
     }
 

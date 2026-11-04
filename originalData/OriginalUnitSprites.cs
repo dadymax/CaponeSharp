@@ -48,8 +48,27 @@ public class OriginalUnitSprites
                 yield return reference;
     }
 
+    /// <summary>SpriteFrames meta key: index of the first firing frame of an attack layer.</summary>
+    public static StringName ShotStartMeta(StringName layer) => "shot_start_" + layer;
+
+    /// <summary>
+    /// First firing frame of an attack strip: the Sniper's strips repeat the aiming picture for 10 frames and fire in
+    /// the last 2 (Chicago.tile "Own Snipper attack SE": 10 × (0,604), then (40,604), (80,604)); a strip without a
+    /// repeated first picture fires all through (0).
+    /// </summary>
+    public static int ShotStart(IReadOnlyList<Vector2I> pairs)
+    {
+        if (pairs.Count < 2 || pairs[1] != pairs[0])
+            return 0;
+        for (var i = 1; i < pairs.Count; i++)
+            if (pairs[i] != pairs[0])
+                return i;
+        return 0;
+    }
+
     public void FillSpriteFrames(SpriteFrames sf)
     {
+        var shotStarts = new Dictionary<StringName, int>();
         var loaded = new Dictionary<StringName, List<Texture2D>>();
         foreach (var layer in SpriteLayers)
         {
@@ -62,6 +81,8 @@ public class OriginalUnitSprites
                     GD.PrintErr("OriginalUnitSprites: no tile for: ", reference);
                 continue;
             }
+            if (layer.ToString().StartsWith("attack"))
+                shotStarts[layer] = ShotStart(tile.Pairs);
             var frames = new List<Texture2D>();
             foreach (var image in OriginalData.Instance.GetImageForTile(tile))
                 frames.Add(ImageTexture.CreateFromImage(image));
@@ -82,6 +103,7 @@ public class OriginalUnitSprites
                 continue;
             foreach (var texture in frames)
                 sf.AddFrame(layer, texture);
+            sf.SetMeta(ShotStartMeta(layer), shotStarts.GetValueOrDefault(layer));
         }
     }
 
