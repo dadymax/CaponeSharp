@@ -392,6 +392,22 @@ public static class EconomyTests
         Assert.Near(2.25, Organisation.MarketFactor(150), "past 100 %");
     }
 
+    /// <summary>
+    /// User's screenshots of the original (2026-11-04): an own "Винная лавка" (bootlegging) shows Доход $159 840 at
+    /// 11 % market share and $324 000 at 100 % — the catalogue income × the share step (1.11 / 2.25).
+    /// </summary>
+    [UnitTest]
+    public static void WineShopIncomeMatchesTheOriginal()
+    {
+        var shops = OriginalData.Instance.Businesses.Entries.Where(e => e.Name == "Винная лавка").ToList();
+        Assert.True(shops.Count > 0, "catalogue has Винная лавка");
+        var shop = shops.FirstOrDefault(e => e.Income == 144_000);
+        Assert.True(shop != null, $"a Винная лавка row earns 144 000 a week (rows: {string.Join("; ", shops)})");
+        Assert.Equal(OriginalBusinessTable.BusinessType.Bootlegging, shop.Type, "type");
+        Assert.Equal(159_840L, (long)(shop.Income * Organisation.MarketFactor(11)), "11 % share");
+        Assert.Equal(324_000L, (long)(shop.Income * Organisation.MarketFactor(100)), "100 % share");
+    }
+
     [UnitTest]
     public static void LegalizationLowersIncome()
     {

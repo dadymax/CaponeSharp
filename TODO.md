@@ -1030,13 +1030,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (sub_40C2C2), whether units can attack it, and whether a plain building takes a whole footprint or one cell.
   Plan: a light selectable object (or a hit test on the skipped B/C cells and the D/G/F building cells in
   `TileMapGenerator`) that shows the selection marker and an empty panel; no orders, no sound.
-- [ ] 10. Market-share income bonus: check the remake's numbers against the original. User's screenshots of the same
+- [x] 10. Market-share income bonus: check the remake's numbers against the original. User's screenshots of the same
   own business in the original (Винная лавка, type Бутлегерство):
   - market share 11 %: Доход $159 840, Не собрано $15 928;
   - market share 100 %: Доход $324 000, Не собрано $47 710.
   Income ratio 324 000 / 159 840 ≈ 2.03. The remake's bonus steps from ×1 to ×2.25 (market share = own income of the
   type / max(all players' income of it, 5 000 000)). To do: find the row's base income and the multiplier at 11 % and
   100 % in the EXE, reproduce both numbers in a unit test, and check that the panel shows the same Доход.
+  Done 2026-11-04: both match already. The row earns 144 000 a week; 144 000 × 1.11 (10–19 % step) = 159 840 and
+  × 2.25 (100 %) = 324 000. Test `WineShopIncomeMatchesTheOriginal`; the panel's Доход is `Company.Income()` (with the
+  bonus). Не собрано depends on time since the last collection, not checked.
 - [x] 11. Maps with water and bridges: blocks are placed very wrong in the remake. Example: episode 7, map
   RiverRunsTroughIt. User's screenshots of the original show how it should look:
   - a straight river (diagonal on screen) with embankment blocks along both banks (sand edge, a row of trees);
