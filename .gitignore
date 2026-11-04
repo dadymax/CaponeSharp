@@ -59,3 +59,5 @@ original_game/
 Capone.EXE.lst
 # Standalone Godot editor, if placed next to the project
 godot/
+# Local start script (user's own, not part of the repo)
+start_episode1.bat
