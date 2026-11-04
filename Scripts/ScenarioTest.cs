@@ -172,6 +172,15 @@ public partial class ScenarioTest : Node
                 Check("every player with a base has its own HQ",
                     team.HqCompany != null && team.HqCompany.OwnerTeam == team,
                     $"{team.PlayerName} (id {team.PlayerId}): HQ {team.HqCompany?.Cell.ToString() ?? "none"}");
+        if (_hour == 3 && VictoryManager.Instance is { } victory)
+            foreach (var vc in victory.Conditions.Where(c => c.Type == VictoryCondition.ConditionType.Money && !c.IsCompleted))
+            {
+                // VCOND 1 (sub_463610) follows the player's weekly net income every game hour.
+                var team = Teams.GetTeamByPlayerId(vc.TargetPlayer);
+                if (team?.Org != null)
+                    Check("the money objective follows the weekly net income", vc.CurrentProgress == team.Org.NetIncome,
+                        $"progress {vc.CurrentProgress}, net income {team.Org.NetIncome}, target {vc.MoneyTarget}");
+            }
         if (_hour == 6)
             MakeDeserter();
         if (_hour == 8)

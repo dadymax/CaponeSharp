@@ -453,7 +453,7 @@ Everything below is read from the original files at runtime; `--smoke-test` chec
 - [x] Bases go to players with `hasBase` in PLAYER order (start points shuffled for RANDOM 1); every base starts with a Thug and a Pistol man (base setup `sub_404098`). FUNDS goes to every player.
 
 Still open from this part:
-- [ ] Unit types 6 and 11 are identified by sprites only (police car / "Police Batman"); 10–12 share identical filler stats (cost 150000, no damage) — real Thief/Godfather/police behaviour is code, not table data.
+- [x] Unit types: 6 is the police car (class 0Ch, its own vtable, empty Think), 11 the Thief (recruit action 8 → 0Bh, Thief picture tables), 12 the Godfather; 10 is unused. 10–12 share filler stats (cost 150000, no damage): their behaviour is code (Thief steal sub_42FC60, police car job), not table data.
 - [x] Unit table fields (checked 2026-11-02 by every direct read of 0x484030..0x484060): +00h fire rate, +26h attack kind, +28h stray chance, +2Eh reload minutes, +30h fires from a car, +24h training minutes (sub_427505) are all used. +10h/+12h are 0 in every row (padding). +1Ch is never read directly; it equals +20h except the police car (400 000 / 375 000) and the Collector (15 000 / 5 000) — probably a list price for the menu; +20h is the unit value / weekly salary (Unit::Unit sub_42A150 copies it to +0A0h).
 - [x] Game clock (R1): game time is in **minutes**; 60-minute turns, at most one per 1000 ms → 1 game hour = 1 real second at speed 1 (`GameClock`, scheduler like World::Schedule `sub_43AF10` / `sub_43ABD0`). Unit speed = tile length × 60 / TicksPerTile per second. `GameClock.Speed` (cmd `--speed=N`, keys `-`/`=`) speeds everything up for tests.
 - [x] Attack rate comes from the EXE table (`CanAttack`: fire rate +00h, reload +2Eh); army favour from the services table 0x488268 (`Training.ServicePoints`). `ArmyFavor` in units.json is no longer used.
@@ -617,7 +617,7 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   Found and fixed with it: the game clock stayed paused after the end screen reloaded the scene (`GameClock.Reset`);
   a hit with no (or a freed) attacker left an object at 0 HP alive (`CanBeAttacked` now always raises HPisZERO);
   a player eliminated by bankruptcy kept the HQ building (now removed, `Company.RemoveHq`).
-- [ ] Scenario checks still to add: VCOND progress, the computer player converting and attacking. Done 2026-11-03: a scripted fight (Thompson man vs an enemy Pistol man at
+- [ ] Scenario checks still to add: the computer player converting and attacking. Done 2026-11-04: the money objective (VCOND 1) follows the weekly net income. Done 2026-11-03: a scripted fight (Thompson man vs an enemy Pistol man at
   the company farthest from the player's units; shots must land and someone must die within a day); collectors bring money
   to the HQ (`CollectorJob.Delivered`); the police arrest and jail a gangster called in by a station. That check found a
   bug: a road-only police car sent back to its station (and the raid car on its way home) circled the pavement ring
