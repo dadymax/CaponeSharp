@@ -1035,8 +1035,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   district 0C1Eh / 0C1Dh / 0C1Bh (sub_4025F0). F and G cells are "Empty space" (vtables off_47CDB0 / off_47D3A4):
   no name, portrait 0C1Fh. Selecting plays no sound; the panel shows the name, the portrait, a full HP bar and empty
   order slots (vt+10h sub_402795). One shared node moves to the clicked cell (≈3 500 such cells per map). Hover
-  label: the name "Здание" in nobody's colour (no order-mode texts; those are for class 0 / 9). Not done: attacking
-  them (unknown whether the EXE allows it).
+  label: the name "Здание" in nobody's colour (no order-mode texts; those are for class 0 / 9). Units can't attack
+  them (user, from the original, 2026-11-04) — the remake never targets them, so nothing to change.
 - [x] 10. Market-share income bonus: check the remake's numbers against the original. User's screenshots of the same
   own business in the original (Винная лавка, type Бутлегерство):
   - market share 11 %: Доход $159 840, Не собрано $15 928;
