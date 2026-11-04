@@ -1130,9 +1130,13 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   steps, legalization factors, extortion chances. Defaults = today's values from the EXE; `units.json` /
   `companies2.json` already exist for some keys — extend or replace them, keep the keys in sync with the enums,
   and add a smoke-test check that the JSON loads and covers every unit type and catalogue row. Document in README.
-- [ ] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
+- [x] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
   computer players — the whole game clock) and shows the InfoWin.bmp window (as for the tips) while paused; Pause
   again (or the window's button) resumes. Check how the EXE pauses (key handler sub_410EC3, texts for "Pause").
+  Done 2026-11-04: the EXE has no pause key or text (no "pause" string; sub_410EC3 has no such case), so the
+  remake's own: `Hotkeys` Pause → `Main.TogglePause` sets the scene tree paused (units, the game clock and all its
+  events stop) and opens the info window "Пауза"; OK, Enter, Escape or Pause close it and resume. MCP-checked: the
+  clock stops while paused and runs again after.
 - [ ] 20. Quick save / load: F5 saves, F8 loads, one save slot, no menu; an InfoWin.bmp window says "GAME SAVED" /
   "GAME LOADED". The save holds the whole game state: episode, map and its random business placement, every unit
   (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,

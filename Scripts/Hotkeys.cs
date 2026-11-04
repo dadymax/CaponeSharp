@@ -9,7 +9,7 @@ namespace Capone;
 /// L Shotgun, K Hit man, C Cadillac, I Thief (the pressed one of a unit in training cancels it). Unit orders: G Go
 /// (slot 0), A Attack (1), E Extort (2), D Disguise (4), O Patrol (5). H centres the view on the player's HQ. R repairs
 /// the selected own company (its slot 5). Ctrl + digit stores the selected own units (not collectors) as a group; the
-/// digit selects it again, and once selected moves the view to it.
+/// digit selects it again, and once selected moves the view to it. Pause (remake, user request): freezes the game.
 /// </summary>
 public partial class Hotkeys : Node
 {
@@ -46,6 +46,7 @@ public partial class Hotkeys : Node
             _ when RecruitSlots.TryGetValue(code, out var slot) => RecruitPanel.Instance?.Press(slot) == true,
             _ when OrderSlots.TryGetValue(code, out var slot) => ActionBar.Instance?.Press(slot) == true,
             Key.H => CenterOnHq(),
+            Key.Pause => Main.Instance?.TogglePause() == true,
             // R: an own idle company's slot 5 — Repair (company vt+0BCh with the button's action).
             Key.R => GuiGameback.Instance?.SelectedNode is Company { } c && c.OwnerTeam?.IsCurrentPlayerColor == true
                      && ActionBar.Instance?.Press(5) == true,

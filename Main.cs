@@ -272,6 +272,36 @@ public partial class Main : Node2D
 			ShowInfoWindow(OriginalTexts.Instance.Get(5, 85), scenario.TipText, null);
 	}
 
+	private InfoWindow _pauseWindow;
+
+	/// <summary>
+	/// Pause key (user request, TODO item 19; the original has no pause): the whole game tree stops — units, the game
+	/// clock and its events (income, training, construction, police, computer players) — and the info window says so.
+	/// Its OK button, Enter, Escape or Pause again resume. Returns false when there is no running episode.
+	/// </summary>
+	public bool TogglePause()
+	{
+		if (_pauseWindow != null && IsInstanceValid(_pauseWindow))
+		{
+			_pauseWindow.Close();
+			return true;
+		}
+		if (Map == null || GetTree().Paused)
+			return false;
+		var russian = OriginalData.TextLanguage == OriginalExe.Language.Russian;
+		GetTree().Paused = true;
+		_pauseWindow = ShowInfoWindow(russian ? "Пауза" : "Pause",
+			russian ? "Игра приостановлена.\n\nНажмите Pause или OK, чтобы продолжить." : "The game is paused.\n\nPress Pause or OK to go on.",
+			() =>
+			{
+				_pauseWindow = null;
+				GetTree().Paused = false;
+			});
+		return true;
+	}
+
+	public bool IsPausedByPlayer => _pauseWindow != null && IsInstanceValid(_pauseWindow);
+
 	/// <summary>The info window (InfoWindow, sub_447CB0) over the game, on the GUI layer.</summary>
 	public InfoWindow ShowInfoWindow(string title, string text, System.Action closed) =>
 		ShowInfoWindow(new InfoWindow(title, text), closed);
