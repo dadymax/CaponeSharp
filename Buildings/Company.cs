@@ -260,7 +260,7 @@ public partial class Company : StaticBody2D, ISelectable, IGameEntity
         if ((int)(GD.Randi() % 100) > FortificationHitChance)
             return;
         var damage = FortificationDamageMin + (int)(GD.Randi() % (FortificationDamageMax - FortificationDamageMin));
-        target.CanBeAttacked?.ReceiveDamage(damage, null);
+        target.CanBeAttacked?.ReceiveDamage(damage, null, this);
     }
 
     private void ScheduleIncomeTick(GameClock clock)

@@ -988,7 +988,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   lives, is exposed and is an enemy of the owner (relation 1) or ownerless (an unowned one: only ownerless units);
   one bullet at once (vt+104h = sub_438873, no aim / reload): weapon 0x47FD90 = a Pistol man's — rate 1.0, damage
   10–15 (the same against buildings), hit 90 %; shot sound id 5 when either side is in sight. `Company.FortificationShot`,
-  scenario check. Open: the kill credit (money carried by a killed collector) — passed as no attacker here.
+  scenario check. A unit it kills credits its owner (money carried goes to the owner, `ReceiveDamage(…, shooter)`).
 - [x] 7. A hidden (covered) Hit man must kill any unit with one shot (not cars or buildings); now he doesn't.
   Cause: the remake stamped the shot time before rolling the damage, so the Hit man was always "exposed" (30 damage).
   sub_42BD15 fires first (sub_438873) and stamps +0D0h afterwards. Fixed; the exposed damage is 20–30 (14h / 1Eh,

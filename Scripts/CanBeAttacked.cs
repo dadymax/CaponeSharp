@@ -39,7 +39,8 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
     /// <summary>Hit within the last game hour (company / unit vt+11Ch, minimap blink vt+0D4h).</summary>
     public bool RecentlyHit => LastHitMinute >= 0 && (GameClock.Instance?.Minute ?? 0) - LastHitMinute < GameClock.MinutesPerHour;
 
-    public void ReceiveDamage(int damage, CanAttack attacker)
+    /// <param name="shooter">The shooting object when it has no <see cref="CanAttack"/> (a fortification), for the kill credit.</param>
+    public void ReceiveDamage(int damage, CanAttack attacker, IGameEntity shooter = null)
     {
         LastHitMinute = GameClock.Instance?.Minute ?? 0;
         // Both sides count as fighting for the next game hour (unit vt+11Ch).
@@ -61,7 +62,7 @@ public partial class CanBeAttacked : Node2D, IJsonConfigurable
         {
             // Destroyed even when the attacker is unknown or already gone (a bomb, a test hit).
             var known = attacker != null && IsInstanceValid(attacker);
-            var attackerEntity = known ? attacker.GetParent()?.GetParent() as IGameEntity : null;
+            var attackerEntity = known ? attacker.GetParent()?.GetParent() as IGameEntity : shooter;
             LastAttacker = attackerEntity as Unit;
             EmitSignal(SignalName.HPisZERO, attackerEntity?.TeamColor ?? Teams.NeutralTeamColor);
             if (known)
