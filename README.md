@@ -1,156 +1,219 @@
-# Capone Reborn — C# version (sharptry)
+# Capone Reborn
 
-C# port of the GDScript project in `../godottry/GodotCapone` (Godot 4.7, GL Compatibility, 800×600).
+A remake of **Capone** (1997), a real-time strategy game about gangs in Prohibition-era Chicago, made with Godot 4
+and C#. Capone is the Russian edition of *Legal Crime* by Byte Enchanters.
+
+The remake plays on the files of the original game, which you need to own. Maps, pictures, sounds, texts and the
+21-episode campaign are read from your copy when the game starts. Nothing from the original is stored in this
+repository. The rules come from reverse-engineering `Capone.EXE`, so gangsters, businesses, money, police and
+computer players work the way they did in 1997. The few changes for modern play are optional, each with its own
+setting in `game.cfg`.
+
+## The game
+
+You run a gang in a 1920s city. Your gangsters lean on shops and bars until they pay for protection, and
+collectors carry the money back to your headquarters. You turn the companies you control into speakeasies,
+gambling dens and bootlegging operations. Part of the income goes to bribes, and bribes buy favours from the
+police, the FBI, the politicians and the army: raids on rival businesses, blackouts of their blocks, lawyers,
+informers, permits to hire heavier gunmen. The rival bosses play the same game, and sooner or later it comes to
+Tommy guns. Each episode has its own map, rivals and goal: an income to reach, businesses to own, a boss to kill,
+or being the last gang standing.
+
+## Status
+
+Playable and in active development. All 21 campaign episodes load and play, and they are being play-tested against
+the original.
+
+Working:
+
+- main menu, mission briefings, win and defeat screens, campaign progress
+- maps built from the original city blocks, fog of war, minimap, the original cursors, sounds and voices
+- every gangster type with its original stats and pictures: Thug, Pistol man, Thompson man, Terrorist, Sniper,
+  Shotgun man, Hit man (hidden while he holds his fire), Thief, Cadillac (carries four gangsters), collectors and
+  the Godfather
+- the original orders: go, attack, force go, force attack, extort, disguise, patrol
+- extortion, income and market share, collectors, business conversion, selling, repair, training centres
+- bribes, favour points and the authorities' services: police raids, demolition, blackouts, FBI visits and
+  informers, lawyers, legalisation
+- police arrests, and gangsters who desert when they aren't paid
+- computer players with the original's strategies
+- victory conditions, elimination, last player standing
+- the money transfer, alliances and statistics windows
+- quick save and load
+
+Not done:
+
+- the network game, and the main menu's Settings and Developers screens
+- the intro and ending videos (the original refers to them but doesn't include them)
+
+[TODO.md](TODO.md) lists the open items and the reverse-engineering findings. [PLAN.md](PLAN.md) is the route the
+work followed.
 
 ## Requirements
 
-- **Godot 4.7.2 .NET edition** ("mono" build). The Steam build in `Q:\SteamLibrary\...\Godot Engine` is the plain build and **cannot run C#**.
-- .NET SDK 8 or newer (installed: 8, 9, 10).
-- `originalData/original.cfg` must point to the original game folder. It is ignored by git: copy `originalData/original.cfg.example` to `original.cfg` and set the path. The original files are never copied.
+- **The original game**: a Capone folder with `Capone.EXE`, `Chicago.tile`, `Maps/`, `PICS/`, `Sound/` and
+  `episode/`. The remake is built against the Russian release; the English *Legal Crime* hasn't been tried.
+- **Godot 4.7.2, .NET edition**. The standard edition can't run C#.
+- **.NET SDK 8** or newer.
 
-Build without the editor: `dotnet build CaponeSharp.csproj`
-Run headless: `<Godot .NET exe> --headless --path . --quit-after 300`
-Start a given episode: `<Godot .NET exe> --path . -- --episode=4` (default 1)
-Check all original data (EXE tables, 29 maps, 21 episodes, sprites): `<Godot .NET exe> --headless --path . -- --smoke-test` (exit code 0 = ok)
+The remake is developed and tested on Windows. Godot and .NET also run on Linux and macOS, but the game hasn't
+been tried there.
 
-## Original data only
+## Getting started
 
-The goal is a 1:1 recreation that runs on the original game files, so the repository contains no game content.
-Everything is read at runtime from the folder in `original.cfg`:
+1. Clone the repository.
+2. Copy `originalData/original.cfg.example` to `originalData/original.cfg` and set the path of your Capone folder,
+   with forward slashes:
+
+   ```ini
+   [directory]
+   originalGameDirectory="C:/Games/Capone"
+   ```
+
+   The game only reads that folder, it never writes to it. `original.cfg` is ignored by git.
+3. Build:
+
+   ```sh
+   dotnet build CaponeSharp.csproj
+   ```
+
+4. Run:
+
+   ```sh
+   godot --path .
+   ```
+
+   Here and below, `godot` is the Godot .NET executable (on Windows `Godot_v4.7.2-stable_mono_win64_console.exe`).
+   You can also open the folder in the Godot editor and press F5.
+
+Options go after `--`, for example `godot --path . -- --episode=4 --skip-briefing`:
+
+| Option | Effect |
+|---|---|
+| `--episode=N` | start episode N (1–21) |
+| `--skip-briefing` | go straight into the episode, without the menu and the briefing |
+| `--speed=N` | run the game N times faster |
+| `--pathfinding=astar` | use the A* path search for this run (see [Settings](#settings-and-differences-from-the-original)) |
+
+## Playing
+
+Episode 1 teaches the basics. Select a gangster and right-click a company showing the "Открыто" (open) sign to
+extort it, then watch your income grow as collectors bring the money home. The chart on the right splits the
+income between savings and bribes. The authorities' services show up on the bottom panel once you have bribed
+enough and earned their favour points.
+
+| Input | Action |
+|---|---|
+| Left click | select a gangster, a building or a headquarters |
+| Left drag | select several gangsters |
+| Right click | order: go there, attack what you clicked, or go to a business |
+| Arrow keys, or the mouse at a window edge | scroll the map |
+| Mouse wheel | zoom |
+| `+` / `-` | game speed ×2 / ÷2 (at normal speed a game hour takes one second) |
+| `Pause` | pause the game |
+| `F5` / `F8` | quick save / quick load |
+| `H` | show your headquarters |
+| `G` `A` `E` `D` `O` | orders: Go, Attack, Extort, Disguise, Patrol |
+| `T` `P` `M` `B` `S` `L` `K` `C` `I` | hire a Thug, Pistol man, Thompson man, Terrorist, Sniper, Shotgun man, Hit man, Cadillac, Thief |
+| `R` | repair the selected business |
+| `Ctrl`+digit | store the selected gangsters as a group |
+| digit, `Shift`+digit | select a group (press again to show it); select it and show it at once |
+| `Ctrl+G`, `Ctrl+A`, `Ctrl+I` | the money, alliances and statistics windows |
+
+The bottom panel has buttons for every order; while you hold Shift, Go and Attack become Force go and Force
+attack. The letter and digit keys follow key positions, so they work with a Russian keyboard layout too.
+
+The game starts at the first episode you haven't won. Progress is kept in `campaign.cfg` in Godot's user data
+folder (on Windows `%APPDATA%\Godot\app_userdata\CaponeSharp\`); delete it to start the campaign again. F5 saves
+the running episode to `quicksave.json` in the same folder (one slot), and F8 loads it from anywhere in the game.
+
+## Settings and differences from the original
+
+`game.cfg` holds the remake's options and is read when the game starts. Text values need quotes.
+
+| Setting | Default | Original game | What it does |
+|---|---|---|---|
+| `[map] company_chance` | `0.9` | `0.75` | chance that a building plot in a block holds a company |
+| `[map] min_one_company_in_rich_blocks` | `true` | no such rule | every middle-class and city-centre block gets at least one company |
+| `[movement] pathfinding` | `"original"` | `"original"` | `"astar"` plans the whole route around buildings; the original steps toward the target and walks around obstacles; speeds and walking rules are the same |
+| `[movement] cars_on_forecourts` | `false` | `true` | whether Cadillacs and police cars may drive on the paved forecourts of some tall buildings |
+| `[ai] brownouts` | `true` | `false` | computer players black out the block where their main enemy earns the most |
+| `[ai] politician_share` | `20` | — | percent of a computer player's profit moved to politician bribes, which pay for brownouts |
+| `[ai] brownout_days` | `7` | — | at most one brownout per computer player in this many game days |
+| `[animation]` | | | unit animation speeds; see [docs/TUNING.md](docs/TUNING.md) |
+
+About the brownouts: the original's code gives computer players no authority services, but players of the
+original remember being blacked out by them. With `brownouts=true` a computer player pays for a brownout like you
+do, and can only black out businesses it has seen.
+
+Also new in the remake:
+
+- The window can be resized or maximised. The 800×600 picture scales to fit, with black bars at the sides.
+- During an episode the mouse stays inside the window, so scrolling at the window edges works in a window too.
+- `Pause` pauses the game; the original has no pause key.
+- Quick save and load with `F5` / `F8`.
+
+The numbers behind units, businesses and rules (costs, hit points, damage, range, speed, prices, incomes, the
+extortion chances, the authorities' prices) are in `Data/unit_stats.json`, `Data/businesses.json` and
+`Data/rules.json`. They hold the original values, and you can edit them; see [docs/TUNING.md](docs/TUNING.md).
+
+## How the original was studied
+
+The rules were read from a disassembly of `Capone.EXE`. Code comments name the EXE function or table each rule
+comes from (for example `sub_414A30` for the map projection, or the unit table at `0x484030`), so any behaviour can
+be checked against the original. [TODO.md](TODO.md) collects the findings. Where the EXE couldn't settle a
+question, behaviour was matched by playing the original side by side, and the code says so.
+
+What is read from the original folder at run time:
 
 | Data | Source | Reader |
 |---|---|---|
-| Executable tables and texts | `Capone.EXE` (by virtual address, see `disassembled/Capone.EXE.lst`) | `OriginalExe` |
-| City-block layouts (38) | EXE table 0x47C830 | `OriginalBlocks` |
-| Unit stats and names (13 types) | EXE table 0x484030, name tables 0x494EEC / 0x4952F4 | `OriginalUnitTable` |
-| Tiles, sprites, portraits | `Chicago.tile` + `PICS/*.bmp` (XOR 0xCD) | `OriginalTiles`, `OriginalBmps` |
-| Maps | `Maps/*.map` (VER01/VER02) | `OriginalMaps` |
-| Campaign | `episode/ep1..ep21.epi` (CP1251) | `EpiParser`, `CampaignManager` |
+| Executable tables and texts (English, Spanish, Russian) | `Capone.EXE`, by virtual address | `OriginalExe`, `OriginalTexts` |
+| City-block layouts (38) | EXE table `0x47C830` | `OriginalBlocks` |
+| Unit stats and names (13 types) | EXE table `0x484030`, name tables `0x494EEC` / `0x4952F4` | `OriginalUnitTable` |
+| Company and business catalogue (161 rows) | EXE table `0x47DDC0` | `OriginalBusinessTable` |
+| Mouse cursors | EXE resources | `OriginalCursors` |
+| Tiles, sprites, portraits | `Chicago.tile` and `PICS/*.bmp` (XOR 0xCD) | `OriginalTiles`, `OriginalBmps` |
+| Maps (29) | `Maps/*.map` (VER01 / VER02) | `OriginalMaps` |
+| Campaign (21 episodes) | `episode/ep1..ep21.epi` (CP1251) | `EpiParser`, `CampaignManager` |
+| Sounds and voices | `Sound/*.wav`, by the EXE's sound table `0x478700` | `Sound`, `UnitVoice` |
 
-`units.json` / `companies*.json` only hold what isn't located in the EXE yet (sprite names as Chicago.tile references, army favour, attack rate, company incomes).
-Unit type numbers are the original ones (`UnitCommon.UnitType`: 0 Thug … 12 Godfather), the same numbers .epi UNIT lines use.
+`Units/units.json` and `Buildings/companies.json` only map unit and business types to their pictures in
+`Chicago.tile`. Unit type numbers are the original ones (`UnitCommon.UnitType`: 0 Thug … 12 Godfather), the same
+numbers the episode files use.
 
-## Layout (GDScript → C#)
+## Checks
 
-| GDScript | C# |
+Run these in the project folder after building. Each prints a summary and exits with code 0 when everything passes.
+
+| Command | What it checks |
 |---|---|
-| `node_2d.gd` | `Main.cs` |
-| `camera_2d.gd` | `CameraController.cs` |
-| `MapWorks/createTileMap.gd`, `maptilemath.gd` | `MapWorks/TileMapGenerator.cs`, `MapTileMath.cs` |
-| `originalData/*.gd` | `originalData/Original*.cs` |
-| `Buildings/company.gd`, `companyCommon.gd`, `companyEconomics.gd`, `companyResistance.gd` | `Buildings/Company.cs`, `CompanyCommon.cs`, `CompanyEconomics.cs`, `CompanyResistance.cs` |
-| `Units/unit.gd`, `unitCommon.gd`, abilities, `collectorAI.gd` | `Units/Unit.cs`, `UnitCommon.cs`, `*Ability.cs`, `HitmanStealth.cs`, `CollectorAI.cs` |
-| `Scripts/can_attack.gd`, `can_be_attacked.gd`, `canHoldMoney.gd` | `Scripts/CanAttack.cs`, `CanBeAttacked.cs`, `CanHoldMoney.cs` |
-| `Scripts/teams.gd` | `Scripts/Teams.cs` (`Teams` + `Team`) |
-| scenario / campaign / epi / victory scripts | `Scripts/Scenario.cs`, `Campaign.cs`, `CampaignManager.cs`, `EpiParser.cs`, `VictoryCondition.cs`, `VictoryManager.cs` |
-| GUI scripts | `Scripts/GuiGameback.cs`, `GuiMenu.cs`, `SelectionIcon.cs`, `CenterButtons.cs` |
-| script embedded in `Nodes/Selection.tscn` | `Nodes/Selection.cs` |
-| — | `Scripts/GameInterfaces.cs`: `ISelectable`, `IGameEntity`, `IJsonConfigurable`, `JsonUtil` |
+| `godot --headless --path . -- --smoke-test` | the original data: EXE tables, all 29 maps, all 21 episodes, sprite names, `Data/*.json` |
+| `godot --headless --path . -- --unit-test[=Name]` | the rules taken from the EXE (`Tests/`); `=Vision` runs only the tests whose name contains "Vision" |
+| `godot --headless --fixed-fps 60 --path . -- --scenario-test[=1,4,8] [--days=N]` | plays episodes fast (about 20 seconds) and checks the game every game hour: the money ledger, owners, hit points, collectors, police, fights, computer players, victory |
+| `godot --headless --fixed-fps 60 --path . -- --save-load-test[=7] [--hours=N]` | plays an episode, saves, loads, compares the whole game state before and after, then plays on |
 
-All C# types live in namespace `Capone` and use PascalCase. JSON keys (`units.json`, `companies*.json`) are unchanged; each component maps them explicitly in `ApplyJsonValue` instead of GDScript's dynamic `set()`.
+The scenario test doesn't touch your campaign progress. The save/load test overwrites your quick save.
+`Scripts/DebugCommands.cs` has test hooks for driving the running game from outside (used with the Godot MCP
+tools).
 
-Kept as is: `Scripts/mcp_interaction_server.gd` (the autoload used by the godot MCP tools; GDScript runs fine inside a C# project), data files, scenes.
-Not ported: `Buildings/buildingTypes.gd` + `BuildingTypes.cfg` (marked deprecated), `Nodes/animation_player.gd` (empty, unused), `export_presets.cfg`, the duplicate `mcp_interaction_server.gd` in the project root.
+## Project layout
 
-## Behaviour changes vs the GDScript version
+| Folder | Contents |
+|---|---|
+| `Main.cs`, `CameraController.cs` | episode start, map clicks, camera |
+| `MapWorks/` | map building, projection, movement and path search |
+| `Units/` | gangsters and cars, their orders and jobs |
+| `Buildings/` | companies, businesses, headquarters, city blocks |
+| `Scripts/` | game clock, combat, police, victory, windows and panels, test runners |
+| `Scripts/Economy/` | players' money and services, training, computer players |
+| `Scripts/Save/` | quick save and load |
+| `originalData/` | readers for the original files and the EXE |
+| `Data/` | editable unit, business and rule numbers |
+| `Tests/` | unit tests |
+| `docs/` | [tuning guide](docs/TUNING.md), [notes on the port from the GDScript prototype](docs/PORTING.md) |
 
-These were bugs in the GDScript code that C#'s static typing either exposed or made trivial to fix:
+## Legal
 
-- **EpiParser**: PLAYER/VCOND/ALLIANCE/UNIT no longer read the keyword as their first value; tabs are separators; names with spaces are joined and quotes stripped.
-- **VCOND numbers** (1–8 from .epi) are mapped to the right `ConditionType`; GDScript cast them straight into an enum with a different order.
-- **units.json loading** no longer stops at `CollectorWithMoney` (which has no record), so the Cadillac now loads.
-- `"Neutral": "Enemy"` sprite aliases now copy the Enemy animation set.
-- `attackDamage` values written as strings (`"5"`) are parsed; GDScript silently kept the default 1.
-- `Cost`, `ArmyFavor`, `visionRadius` are stored on `UnitCommon`; capture resistance now uses the attacker's cost (GDScript always got 0).
-- Company income actually accrues: GDScript's `CompanyEconomics` proxy was always null.
-- After a company is captured its new health component is connected to `OnHPisZero`.
-- Every unit/company gets its own `SpriteFrames` (and unit collision shape); the scene sub-resources were shared, so animations overwrote each other.
-- Abilities find the `Unit` (three parents up); GDScript pointed them at `UnitCommon`. `ThompsonAbility` now has its attacker reference.
-- Units and companies join the groups `units` / `companies`, which Raid area damage and the collector AI query.
-- Collector AI walks to companies/HQ, collects from player companies and pays into the player's account (GDScript referenced non-existent members).
-- Selection: all previously selected objects are deselected; rectangle selection uses global coordinates and the rectangle centre (TODO.md "group select not working").
-- Sniper: the invented ×2 distance damage multiplier is gone; the sniper does the EXE's flat 200–250 damage.
-- Combat uses the EXE table: damage ranges against units and against buildings, hit chance instead of evasion, fractional attack range.
-- BMP transparency keys are replaced on the raw RGBA buffer (much faster than per-pixel calls).
-- Companies dropped by the 3-in-4 random roll are freed instead of leaking.
-
-## Tuning unit animations
-
-The playtests show that some animations need hand tuning. Three places control them:
-
-1. **Which pictures** — `Units/units.json`, `Sprites` of each unit type. For each owner (`Player`, `Enemy`,
-   `Teammate`; `"Neutral": "Enemy"` copies another owner) there is an array of 11 layers, in this order:
-   `idle`, `move SE`, `move NE`, `move NW`, `move SW`, `attack SE`, `attack NE`, `attack NW`, `attack SW`,
-   `killed`, `killed2`. Each entry names a Chicago.tile record:
-   - `"Own Thompson man attack SE"` — the record with that comment (case does not matter);
-   - `"Own Thompson man idle@2"` — the third record with that comment (Chicago.tile repeats some names);
-   - `"#2621"` — a record by index (here the same "Own Thompson man attack SE") (counting from the first line after the tile count, as the EXE does);
-   - `""` — none: a move layer falls back to idle, an attack layer to idle / move, `killed2` to `killed`.
-
-   The frames of a layer are the coordinate pairs of that record in Chicago.tile. The EXE's own choice per unit
-   type, owner and activity is the picture method sub_42D8D0 (see `TODO.md`: e.g. the Thief walks with the Thug's
-   pictures and attacks with the Hit man's, the Terrorist's attack uses his walk pictures). `-- --smoke-test`
-   reports names that don't resolve. To list the record names:
-   `python -c "L=open('Chicago.tile',encoding='cp1251').read().splitlines(); n=int(L[0]); t=L[n+2:n+2+int(L[n+1])]; [print(i, r.split(';',1)[1].strip()) for i,r in enumerate(t) if ';' in r]"`
-   (run in `godottry/original_game`).
-2. **How fast** — `game.cfg`, section `[animation]`: `idle_fps`, `move_fps`, `attack_fps`, `killed_fps` for every
-   unit, and `<Type>.<kind>_fps` for one type (`Thompson.attack_fps=8`). Default 5 frames per second.
-   `attack_hold_minutes` sets how long a unit keeps its attack picture between an order's hits (extortion);
-   one game hour is one real second.
-3. **Where** — the picture's offset from the unit's cell is the `Animation` node position in `Units/Unit.tscn`
-   (0, −14). The facing (SE / NE / NW / SW) comes from the move or target direction on screen
-   (`MapTileMath.GetDirection`). Death pictures play once and hold the last frame.
-
-`game.cfg` and `units.json` are read when the game starts; restart it after a change.
-
-## Unit and business parameters
-
-`Data/unit_stats.json` (every unit type: cost, hit points, damage, hit chance, range, rate of fire, reload, speed,
-training time, sight) and `Data/businesses.json` (the business catalogue: name, type, grade, price, weekly income,
-hit points, build time, district, support kind) hold the original game's values. Edit them and restart the game; a
-missing file, unit, row or field keeps the original value. Each file starts with a `_fields` list explaining the
-fields. `Data/rules.json` holds rule numbers: headquarters hit points, company healing, the extortion chance table,
-the market-share income steps, legalization factors, the fortification's shot, the Hit man's damage after a shot, and
-the authorities' services (the bribe money each needs and the favour points it costs).
-To get fresh files with the original values back, delete them and run
-`godot --headless --path . -- --export-params`. The smoke test reports files that don't load or contain unknown
-fields, and warns when unit costs differ from the original.
-
-## Computer players' brownouts
-
-The original's computer players never use the authorities' services in its code, but in play they were seen cutting
-the power of the human's blocks. The remake adds that as an option in `game.cfg`:
-
-```ini
-[ai]
-brownouts=true        ; false = as in the original's code
-politician_share=20   ; % of a computer player's profit moved from savings to politician bribes
-brownout_days=7       ; at most one brownout per computer player per this many game days
-```
-
-A computer player then blacks out the block where its main enemy (you, unless allied) earns the most, paying for it
-like you would (politician favour points and bribe money). Like you, it can only target businesses it has seen with
-its own or its allies' units and buildings.
-
-## Quick save and load
-
-F5 saves the running episode, F8 loads it (one slot, `user://quicksave.json`; on Windows
-`%APPDATA%\Godotpp_userdata\CaponeSharp\quicksave.json`). The save holds the whole game: the map's business
-layout, every unit with its order, every company and business with its jobs, the players' money, favour and services,
-the computer players, training, victory progress, statistics, the fog of war and the pending timed events. To check
-the round trip: `godot --headless --fixed-fps 60 --path . -- --save-load-test=7 [--hours=200]`.
-
-## Path search
-
-By default units find their way like the 1997 game: step by step toward the target, with a detour when blocked
-(`MapWorks/MoveMap.cs`, from the EXE). `game.cfg` can switch to a planned route instead:
-
-```ini
-[movement]
-pathfinding="astar"   ; or "original" (the default); text values need quotes
-```
-
-`astar` (`MapWorks/PathSearch.cs`) plans the cheapest whole path around buildings each step, with the same walking
-rules (cars stay on roads, units may share cells, a building target is reached by standing next to it) and the same
-speeds. With no path at all the unit falls back to the original walk. For a test run without editing the file, pass
-`-- --pathfinding=astar` (e.g. with `--scenario-test`).
+Capone Reborn is a fan project. It isn't affiliated with or endorsed by Byte Enchanters or the publishers of Capone
+and *Legal Crime*. This repository contains no files from the original game; to play, you need your own copy.

@@ -1008,7 +1008,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   `GetDirection` on fixed screen vectors (SE/NE/NW/SW are screen directions); re-check `MapTests` (HQ on B cells, start
   points "one row off"), the minimap, fog, vision and MoveMap tests, and the scenario test.
 - [x] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
-  Done: README "Tuning unit animations" (pictures in units.json, speed and attack hold in game.cfg [animation], offset
+  Done: docs/TUNING.md "Tuning unit animations" (pictures in units.json, speed and attack hold in game.cfg [animation], offset
   and facing); new game.cfg keys `<kind>_fps`, `<Type>.<kind>_fps`, `attack_hold_minutes`.
 - [x] 5. Episode 6 "Цена дружбы" (objective: capture at least one company in a high-class block) is won at once on
   start. Cause: both PLAYER lines use id 1, and the bases were handed out by id, so both went to the user; the
@@ -1101,7 +1101,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   `MapWorks/PathSearch.cs` (A*, 4 steps, `MoveMap.WalkableNow`, step costs from the original's cell scores, ≤ 20 000
   cells per search), used by `Unit.NextMoveDirection` every step; no path → the original walk. Tests
   `PathSearchTests` (wall, building target, car off pavement, no path, costs); the scenario test passes with
-  `astar` (about 13 % slower run). README "Path search".
+  `astar` (about 13 % slower run). README "Settings and differences from the original".
 - [x] 15. Console error on starting an episode (user, 2026-11-04):
   `ERROR: ConfigFile parse error at res://game.cfg:21: Unexpected identifier 'original'.` (from `GameConfig.Load`).
   Cause: item 14 added `pathfinding=original` unquoted; Godot's ConfigFile values are Variant literals, so a string
@@ -1141,7 +1141,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   and add a smoke-test check that the JSON loads and covers every unit type and catalogue row. Document in README.
   Done 2026-11-04 (part 1): `Data/unit_stats.json` (the EXE unit table, all fields) and `Data/businesses.json` (the
   catalogue, all fields) are laid over the EXE values at load (`originalData/GameParameters.cs`); `-- --export-params`
-  writes them; the smoke test checks they load; README "Unit and business parameters". Still in code (part 2):
+  writes them; the smoke test checks they load; docs/TUNING.md "Unit and business parameters". Still in code (part 2):
   remake and EXE rule constants — Hit man exposed damage, fortification shot, HQ HP, healing, surrender ratio,
   market-share steps, legalization factors, extortion chance table, authority service table (0x488268).
   Part 2 done 2026-11-04: `Data/rules.json` (`originalData/GameRules.cs`): HQ HP, company healing, surrender ratio,
