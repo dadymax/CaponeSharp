@@ -1155,6 +1155,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   remake's own: `Hotkeys` Pause → `Main.TogglePause` sets the scene tree paused (units, the game clock and all its
   events stop) and opens the info window "Пауза"; OK, Enter, Escape or Pause close it and resume. MCP-checked: the
   clock stops while paused and runs again after.
+  Fix 2026-11-04 (user: "pause not work at all"): `Hotkeys` matched keys by physical code only, and the real Pause
+  key has no usable physical code on Windows (the MCP test event had both). Pause is now matched by key code
+  (`Hotkeys.IsPauseKey`, also used by the window to resume); re-checked with a key-code-only event.
 - [ ] 20. Quick save / load: F5 saves, F8 loads, one save slot, no menu; an InfoWin.bmp window says "GAME SAVED" /
   "GAME LOADED". The save holds the whole game state: episode, map and its random business placement, every unit
   (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,

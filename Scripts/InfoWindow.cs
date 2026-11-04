@@ -84,7 +84,7 @@ public partial class InfoWindow : Control
     {
         if (@event is not InputEventKey { Pressed: true } key)
             return;
-        if (key.Keycode is Key.Enter or Key.KpEnter or Key.Space or Key.Pause)
+        if (key.Keycode is Key.Enter or Key.KpEnter or Key.Space || Hotkeys.IsPauseKey(key))
             Close(true);
         else if (key.Keycode == Key.Escape)
             Close(_mode == 1);

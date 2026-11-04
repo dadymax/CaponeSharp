@@ -30,6 +30,14 @@ public partial class Hotkeys : Node
             return;
         if (Main.InputBlocked)
             return;
+        // Pause: by key code — the real Pause key has no usable physical code on Windows (user: "pause not
+        // work at all"; a synthetic test event had both codes and passed).
+        if (IsPauseKey(key))
+        {
+            if (Main.Instance?.TogglePause() == true)
+                GetViewport().SetInputAsHandled();
+            return;
+        }
         // Physical keys: the same places on a Russian layout.
         var code = key.PhysicalKeycode;
         if (code is >= Key.Key0 and <= Key.Key9)
@@ -60,7 +68,6 @@ public partial class Hotkeys : Node
             _ when RecruitSlots.TryGetValue(code, out var slot) => RecruitPanel.Instance?.Press(slot) == true,
             _ when OrderSlots.TryGetValue(code, out var slot) => ActionBar.Instance?.Press(slot) == true,
             Key.H => CenterOnHq(),
-            Key.Pause => Main.Instance?.TogglePause() == true,
             // R: an own idle company's slot 5 — Repair (company vt+0BCh with the button's action).
             Key.R => GuiGameback.Instance?.SelectedNode is Company { } c && c.OwnerTeam?.IsCurrentPlayerColor == true
                      && ActionBar.Instance?.Press(5) == true,
@@ -69,6 +76,9 @@ public partial class Hotkeys : Node
         if (handled)
             GetViewport().SetInputAsHandled();
     }
+
+    public static bool IsPauseKey(InputEventKey key) =>
+        key.Keycode == Key.Pause || key.PhysicalKeycode == Key.Pause;
 
     /// <summary>H: the view goes to the player's HQ (sub_409FE7).</summary>
     private static bool CenterOnHq()
