@@ -652,6 +652,16 @@ public partial class Main : Node2D
 				owner = u.OwnerTeam;
 				building = false;
 				break;
+			case null when _mouseGlobal is { } at && GetViewport().GuiGetHoveredControl() == null
+			               && PlainBuilding.At(Map, at) is { } plain:
+			{
+				// A building cell without a company (PlainBuilding, class 1): just its name, nobody's colour — the
+				// order-mode texts 5,40-54 are only for companies and HQs (class 0 / 9).
+				var relationNone = PanelInfo.RelationColor(null, player);
+				_mapHintLabel.Show(OriginalTexts.Instance.Get(21, 0), relationNone,
+					GetViewport().GetCanvasTransform() * Map.ToGlobal(Map.MapToLocal(plain.Cell)));
+				return;
+			}
 			default:
 				_mapHintLabel.Show("", 0, Vector2.Zero);
 				return;
