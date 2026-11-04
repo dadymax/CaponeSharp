@@ -597,7 +597,7 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
 
 ## 6. AI players (P3)
 
-- [x] AI kinds from PLAYER: done, see "Computer players" above. Open: AI elimination cleanup, alliances between AIs, AI use of HQ services (lawyers, informers).
+- [x] AI kinds from PLAYER: done, see "Computer players" above. Elimination: its cycles stop (`ComputerPlayer.Repeat`), its assets are released. Alliances between computer players come from ALLIANCE lines and are respected by its targeting (`IsAlly`); it never changes them. Parked until the user asks: AI use of HQ services (lawyers, informers).
 - (old note) AI kinds 2/3/4/6 from PLAYER. Find the AI update loop, starting from the code that reads `PLAYER`'s kind field (`sub_404390` calls in `sub_4670A5`). Until then: a simple scripted AI (capture nearby neutrals, recruit when rich, attack HQ).
   Known so far: `sub_404390` = Player::Player (0x80 bytes, vtable off_47613C, class id 7), called with `isComputer = (kind != 0)`, the name and the PLAYER numbers. The other class-7 vtables (off_475E3C … off_4763C8, 27 slots each) are probably the player subclasses — start there to find how kinds 2/3/4/6 differ.
 
