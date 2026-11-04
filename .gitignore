@@ -4,7 +4,6 @@
 *.import
 *.uid
 export.cfg
-export_presets.cfg
 export_credentials.cfg
 *.translation
 # Exported builds

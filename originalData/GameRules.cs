@@ -13,7 +13,7 @@ namespace Capone;
 /// </summary>
 public static class GameRules
 {
-    public const string Path = "res://Data/rules.json";
+    public static string Path => GameFiles.PathOf("Data/rules.json");
 
     // Defaults: the original values (see the classes that use them for the EXE addresses).
     public static int HqMaxHp { get; private set; } = 1300;

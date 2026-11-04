@@ -16,6 +16,10 @@ var _key_map: Dictionary
 var _held_keys: Dictionary = {}
 
 func _ready() -> void:
+	# Exported games (the release build for players) open no test port.
+	if OS.has_feature("template"):
+		queue_free()
+		return
 	# Ensure MCP server keeps processing even when game is paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_init_key_map()

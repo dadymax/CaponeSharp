@@ -3,12 +3,12 @@ using Godot;
 namespace Capone;
 
 /// <summary>
-/// Tunable rules that differ from (or aren't found in) the EXE, read from res://game.cfg. Missing keys keep the
+/// Tunable rules that differ from (or aren't found in) the EXE, read from game.cfg (<see cref="GameFiles"/>). Missing keys keep the
 /// defaults below.
 /// </summary>
 public static class GameConfig
 {
-    public const string Path = "res://game.cfg";
+    public static string Path => GameFiles.PathOf("game.cfg");
 
     /// <summary>
     /// Chance that a B (grade 1) or C (grade 2) block cell becomes a business; the rest are plain buildings. The EXE

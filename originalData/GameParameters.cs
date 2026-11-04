@@ -15,8 +15,8 @@ namespace Capone;
 /// </summary>
 public static class GameParameters
 {
-    public const string UnitsPath = "res://Data/unit_stats.json";
-    public const string BusinessesPath = "res://Data/businesses.json";
+    public static string UnitsPath => GameFiles.PathOf("Data/unit_stats.json");
+    public static string BusinessesPath => GameFiles.PathOf("Data/businesses.json");
 
     /// <summary>Problems found while reading the files (the smoke test reports them).</summary>
     public static List<string> Errors { get; } = new();

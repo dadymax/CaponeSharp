@@ -9,6 +9,11 @@ repository. The rules come from reverse-engineering `Capone.EXE`, so gangsters, 
 computer players work the way they did in 1997. The few changes for modern play are optional, each with its own
 setting in `game.cfg`.
 
+Most of the code was written by Claude, Anthropic's AI model; see [How it was made](#how-it-was-made).
+
+Current version: **1.0.0** ([CHANGELOG.md](CHANGELOG.md)). Windows builds are on the
+[Releases](../../releases) page.
+
 ## The game
 
 You run a gang in a 1920s city. Your gangsters lean on shops and bars until they pay for protection, and
@@ -62,8 +67,9 @@ been tried there.
 ## Getting started
 
 1. Clone the repository.
-2. Copy `originalData/original.cfg.example` to `originalData/original.cfg` and set the path of your Capone folder,
-   with forward slashes:
+2. Tell the game where your Capone folder is. On the first start it asks for the folder and saves it to
+   `originalData/original.cfg`. You can also copy `originalData/original.cfg.example` to that name and set the
+   path yourself, with forward slashes:
 
    ```ini
    [directory]
@@ -182,6 +188,13 @@ What is read from the original folder at run time:
 `Chicago.tile`. Unit type numbers are the original ones (`UnitCommon.UnitType`: 0 Thug … 12 Godfather), the same
 numbers the episode files use.
 
+## How it was made
+
+Most of the code was written by [Claude](https://www.anthropic.com/claude), Anthropic's AI model, working in
+Claude Code. That covers the C# game code, the reading of the original's rules from the disassembled `Capone.EXE`,
+and the automated checks. The project's author set the goals, play-tested every change against the original game
+and reported what looked or played differently. Commits made with Claude carry a `Co-Authored-By: Claude` line.
+
 ## Checks
 
 Run these in the project folder after building. Each prints a summary and exits with code 0 when everything passes.
@@ -197,11 +210,73 @@ The scenario test doesn't touch your campaign progress. The save/load test overw
 `Scripts/DebugCommands.cs` has test hooks for driving the running game from outside (used with the Godot MCP
 tools).
 
+## Building a release
+
+The release is a Windows package that players unzip and run. They don't need Godot or .NET installed, because the
+.NET runtime is in the package.
+
+1. **Install the tools**: Godot 4.7.2 .NET edition and the .NET SDK 8 or newer (see [Requirements](#requirements)).
+2. **Install the export templates** once. Either:
+   - in the Godot editor: Editor > Manage Export Templates > Download and Install; or
+   - offline: download `Godot_v4.7.2-stable_mono_export_templates.tpz` from the
+     [Godot 4.7.2 release](https://github.com/godotengine/godot/releases/tag/4.7.2-stable), then Editor > Manage
+     Export Templates > Install from File. The `.tpz` is a zip: unpacking its `templates/` folder into
+     `%APPDATA%\Godot\export_templates\4.7.2.stable.mono\` works too, and the Windows files (`windows_*` and
+     `version.txt`) are enough.
+3. **Set the version** in `project.godot` (`application/config/version`, see [Versions](#versions)) and add the
+   release to [CHANGELOG.md](CHANGELOG.md).
+4. **Run the [checks](#checks).**
+5. **Build**:
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools\build-release.ps1 -Godot <path to the Godot .NET editor>
+   ```
+
+   The script exports the game with the `Windows Desktop` preset in `export_presets.cfg`, adds the files below, and
+   writes `builds/CaponeReborn-<version>/` and `builds/CaponeReborn-<version>-win64.zip`. Exporting from the
+   editor's Project > Export window gives the game alone, without the editable files, readme and licences, so use
+   the script.
+6. **Try the package**: unzip it somewhere else, run `CaponeReborn.exe`, pick the Capone folder, play a little.
+
+The package holds:
+
+- the game: `CaponeReborn.exe`, `CaponeReborn.console.exe` (the same game, with a console window showing its
+  messages), `CaponeReborn.pck` and the `data_CaponeSharp_windows_x86_64` folder
+- the files players may edit, next to the executable: `game.cfg` and `Data/*.json`. An exported game reads these
+  from its own folder, not from inside the pack (`Scripts/GameFiles.cs`)
+- `README.txt` for players, in English and Russian (from `tools/release/`), and `THIRD_PARTY_LICENSES.txt`, the
+  Godot engine's licence notices
+
+It holds no original game files and no `original.cfg`. On the first start the game asks the player for their
+Capone folder and saves it to `original.cfg` next to the executable (or to the user data folder when the game's
+folder can't be written). A game placed in the Capone folder itself finds the files without asking. Exported games
+don't open the test port of the Godot MCP tools.
+
+### Versions
+
+Versions follow [semantic versioning](https://semver.org): `MAJOR.MINOR.PATCH`. Raise PATCH for fixes, MINOR for
+new features, and MAJOR for changes that break saves or settings. The only place to change it is
+`application/config/version` in `project.godot`. The window title, the log's first line, the executable's file
+properties, the package names and the players' readme all take it from there. Each release is a git tag `vX.Y.Z` on
+the commit it was built from.
+
+### Publishing on GitHub
+
+After the build, tag the commit and push it, then create the release with the zip attached:
+
+```sh
+git tag -a v1.0.0 -m "Capone Reborn 1.0.0"
+git push origin main v1.0.0
+gh release create v1.0.0 builds/CaponeReborn-1.0.0-win64.zip --title "Capone Reborn 1.0.0" --notes "See CHANGELOG.md"
+```
+
+Or, on GitHub: Releases > Draft a new release, pick the tag, paste the version's CHANGELOG entry and attach the zip.
+
 ## Project layout
 
 | Folder | Contents |
 |---|---|
-| `Main.cs`, `CameraController.cs` | episode start, map clicks, camera |
+| `boot.tscn`, `Main.cs`, `CameraController.cs` | start (asks for the Capone folder when it isn't set), episode start, map clicks, camera |
 | `MapWorks/` | map building, projection, movement and path search |
 | `Units/` | gangsters and cars, their orders and jobs |
 | `Buildings/` | companies, businesses, headquarters, city blocks |
@@ -211,6 +286,7 @@ tools).
 | `originalData/` | readers for the original files and the EXE |
 | `Data/` | editable unit, business and rule numbers |
 | `Tests/` | unit tests |
+| `tools/` | release build script, the players' readme, the licence notice writer |
 | `docs/` | [tuning guide](docs/TUNING.md), [notes on the port from the GDScript prototype](docs/PORTING.md) |
 
 ## Legal

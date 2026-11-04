@@ -1,6 +1,7 @@
 # Tuning units and businesses
 
-Everything here is read when the game starts: restart it after a change.
+Everything here is read when the game starts: restart it after a change. In a release build `game.cfg` and the
+`Data` folder are next to `CaponeReborn.exe`.
 
 ## Unit and business parameters
 

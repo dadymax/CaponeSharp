@@ -1260,3 +1260,22 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   "Attack %s"): the unit targets the building, walks next to it and hits it; defenders met on the way are fought
   first. A right click on another player's HQ attacks it (remake: the original's right click extorts companies).
   Scenario check "units attack an enemy HQ" (episodes 4, 8, 15: HQ hit points drop).
+
+## User requests (2026-11-05)
+
+- [x] 29. Redistributable build (user: "build redistributable version of game"). Done 2026-11-05:
+  `tools/build-release.ps1` exports the `Windows Desktop` preset (`export_presets.cfg`, now tracked) to
+  `builds/CaponeReborn-<version>/` + `builds/CaponeReborn-<version>-win64.zip` (Godot 4.7.2 .NET export templates
+  needed; the .NET runtime ships inside). Version 1.0.0 (user: "add some versioning, tag current state"): project
+  setting `application/config/version`, shown in the window title (`Boot.Version`) and the exe's file version; release
+  tags `vX.Y.Z`; CHANGELOG.md. Notes: Godot's .NET export needs a solution file (`CaponeSharp.sln`, configurations
+  Debug / ExportDebug / ExportRelease); the zip is written entry by entry with forward slashes (Windows PowerShell 5.1's
+  Compress-Archive and ZipFile.CreateFromDirectory store backslashes). Tested on the unzipped package: smoke, unit and
+  scenario checks pass; game.cfg next to the exe is read; without a folder a headless run exits 2 and a windowed run
+  shows the folder dialog, saves original.cfg next to the exe and opens the main menu (window title "Capone Reborn 1.0.0"). An exported game (feature "template") reads `game.cfg` and `Data/*.json` next to its
+  executable (`GameFiles`; the pack leaves `Data/*` out), and original.cfg from there or user://. A new first scene
+  `boot.tscn` (`Boot`) asks for the Capone folder with a folder dialog when none is set (also in the editor, which saves
+  to originalData/original.cfg), checks it holds Capone.EXE and Chicago.tile, and then loads node_2d.tscn; headless
+  without a folder exits with code 2. The MCP interaction server stays off in exported games. The package gets a
+  bilingual README.txt (`tools/release/`) and THIRD_PARTY_LICENSES.txt (`tools/licenses.gd`, Godot's
+  `Engine.get_license_text / get_copyright_info / get_license_info` plus a .NET runtime note).
