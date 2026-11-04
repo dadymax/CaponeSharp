@@ -130,8 +130,12 @@ public partial class ScenarioTest : Node
 
     private readonly List<(Team By, Team Enemy, Company Target, bool PowerCut)> _aiBrownouts = new();
 
-    private void OnBrownout(Team by, Team enemy, Company target) =>
+    private void OnBrownout(Team by, Team enemy, Company target)
+    {
         _aiBrownouts.Add((by, enemy, target, target.Block is { IsActive: false }));
+        Check("a computer player only blacks out businesses it has seen", by.Ai?.HasSeen(target) == true,
+            $"{by.PlayerName} → {target}");
+    }
 
     /// <summary>
     /// Remake rule (game.cfg [ai] brownouts): a hostile computer player with politician favour cuts the power of the
@@ -154,10 +158,16 @@ public partial class ScenarioTest : Node
                  + $"{Companies().Count(c => c.OwnerTeam == human && c.IsEconomic)})");
             return;
         }
+        Check("computer players record the businesses their units and buildings see", ais.All(a => a.Ai?.SeenCount > 0),
+            string.Join(", ", ais.Select(a => $"{a.PlayerName} {a.Ai?.SeenCount}")));
+        var best = ComputerPlayer.BrownoutTarget(human, Companies());
         foreach (var ai in ais)
         {
             ai.Org.AuthorityMoney[3] += 3_000_000;
             ai.Org.Favour[3] += 200;
+            // Scouted (TODO item 17): it may only black out what it has seen.
+            foreach (var c in Companies().Where(c => c.Block == best.Block && c.OwnerTeam == human))
+                ai.Ai?.MarkSeen(c);
         }
         var before = _aiBrownouts.Count;
         _pending.Add((_hour + 7, "a hostile computer player blacks out the human's best block", () =>

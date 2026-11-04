@@ -1117,12 +1117,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 
 ## User requests (2026-11-04) — not started
 
-- [ ] 17. Brownouts only on businesses already seen. The player's brownout button (and raids / demolition) works only
+- [x] 17. Brownouts only on businesses already seen. The player's brownout button (and raids / demolition) works only
   on a business the player has seen; a computer player must follow the same rule: it may black out (or otherwise
   harm) only businesses it has seen while scouting with its own or its allies' units. Needs a per-player "seen"
   record of companies (the human's fog of war already keeps one for the local player: `FogOfWar` last-seen state)
   extended to computer players, and `ComputerPlayer.BrownoutTarget` limited to seen companies. Check what the EXE
   does for the player's menu (a company in the fog shows its last seen state) and keep the same rule.
+  Done 2026-11-04: the human already can't target unseen businesses (never-seen companies stay hidden in the fog).
+  `ComputerPlayer` keeps a seen set, updated every game hour with the fog's rules (sight grids of own and allied units,
+  own and allied buildings see 4 cells); `TryBrownout` only considers seen businesses. Scenario checks: every AI
+  brownout hits a business that player has seen; computer players record what they see.
 - [ ] 18. Move unit and business parameters out of the code into JSON files the user can edit; the game must read
   them from there. Units: everything in the EXE unit table (cost, HP, damage, building damage, hit chance, range,
   speed, vision, reload, …) plus remake constants (Hit man disguise damage, fortification shot, etc.). Businesses:

@@ -102,6 +102,7 @@ public class ComputerPlayer
         clock.ScheduleIn(2 * GameClock.MinutesPerHour, () => Repeat(clock, RecruitAndConvert));
         clock.ScheduleIn(3 * GameClock.MinutesPerHour, () => Repeat(clock, Strategy));
         clock.ScheduleIn(3 * GameClock.MinutesPerHour, SetShares);
+        clock.ScheduleIn(GameClock.MinutesPerHour, () => RepeatHourly(clock));
     }
 
     private void Repeat(GameClock clock, Action cycle)
@@ -112,7 +113,58 @@ public class ComputerPlayer
         clock.ScheduleIn(CycleMinutes, () => Repeat(clock, cycle));
     }
 
+    private void RepeatHourly(GameClock clock)
+    {
+        if (Org == null || Org.Eliminated || !Teams.TeamsInGame.ContainsValue(Team))
+            return;
+        UpdateSeen();
+        clock.ScheduleIn(GameClock.MinutesPerHour, () => RepeatHourly(clock));
+    }
+
     private static SceneTree Tree => Engine.GetMainLoop() as SceneTree;
+
+    #region Businesses seen (TODO item 17)
+
+    /// <summary>
+    /// Companies this computer player has seen (user's rule, TODO item 17): like the human, who can only order things
+    /// against businesses seen through the fog of war, it may harm only businesses its own or its allies' units and
+    /// buildings have seen. Updated every game hour with the fog's sight rules (<see cref="Vision"/>, buildings see
+    /// <see cref="FogOfWar.BuildingSight"/> cells).
+    /// </summary>
+    private readonly HashSet<Company> _seen = new();
+
+    private readonly Dictionary<Company, (Vector2I Cell, bool[] Grid)> _buildingGrids = new();
+
+    public bool HasSeen(Company company) => _seen.Contains(company);
+
+    public int SeenCount => _seen.Count;
+
+    /// <summary>Test hook.</summary>
+    public void MarkSeen(Company company) => _seen.Add(company);
+
+    private void UpdateSeen()
+    {
+        var companies = AllCompanies().Where(c => c.IsEconomic && !_seen.Contains(c)).ToList();
+        if (companies.Count == 0)
+            return;
+        var grids = new List<(bool[] Grid, Vector2I Center, int R)>();
+        foreach (var unit in AllUnits().Where(u => FogOfWar.IsFriendly(Team, u.OwnerTeam) && !u.InsideBuilding))
+        {
+            var grid = unit.SightGrid(out var center, out var r);
+            grids.Add((grid, center, r));
+        }
+        foreach (var own in AllCompanies().Where(c => FogOfWar.IsFriendly(Team, c.OwnerTeam)))
+        {
+            if (!_buildingGrids.TryGetValue(own, out var cached) || cached.Cell != own.Cell)
+                _buildingGrids[own] = cached = (own.Cell, Vision.Build(own.Cell, FogOfWar.BuildingSight));
+            grids.Add((cached.Grid, own.Cell, FogOfWar.BuildingSight));
+        }
+        foreach (var company in companies)
+            if (grids.Any(g => Vision.Visible(g.Grid, g.Center, g.R, company.Cell)))
+                _seen.Add(company);
+    }
+
+    #endregion
 
     private static IEnumerable<Unit> AllUnits() =>
         Tree?.GetNodesInGroup(Unit.GroupName).OfType<Unit>().Where(u => GodotObject.IsInstanceValid(u) && !u.IsDead)
@@ -168,7 +220,7 @@ public class ComputerPlayer
         var enemy = MainEnemy();
         if (enemy == null)
             return;
-        var target = BrownoutTarget(enemy, AllCompanies());
+        var target = BrownoutTarget(enemy, AllCompanies().Where(HasSeen));
         if (target == null || !CompanyServices.Brownout(Team, target))
             return;
         _lastBrownout = now;
@@ -185,7 +237,10 @@ public class ComputerPlayer
         return rivals.Contains(human) ? human : rivals.OrderByDescending(t => t.Org.NetIncome).FirstOrDefault();
     }
 
-    /// <summary>A company in the block where <paramref name="enemy"/> earns most, among blocks that still have power.</summary>
+    /// <summary>
+    /// A company in the block where <paramref name="enemy"/> earns most, among blocks that still have power; only
+    /// <paramref name="companies"/> count (the caller passes the businesses it has seen).
+    /// </summary>
     public static Company BrownoutTarget(Team enemy, IEnumerable<Company> companies) =>
         companies
             .Where(c => c.OwnerTeam == enemy && c.IsEconomic && c.Block is { IsActive: true })

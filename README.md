@@ -116,7 +116,8 @@ brownout_days=7       ; at most one brownout per computer player per this many g
 ```
 
 A computer player then blacks out the block where its main enemy (you, unless allied) earns the most, paying for it
-like you would (politician favour points and bribe money).
+like you would (politician favour points and bribe money). Like you, it can only target businesses it has seen with
+its own or its allies' units and buildings.
 
 ## Path search
 

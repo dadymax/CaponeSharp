@@ -138,7 +138,7 @@ public partial class FogOfWar : Node
         _fogTiles?.Refresh(_visible, enabled);
     }
 
-    private static bool IsFriendly(Team player, Team owner) =>
+    public static bool IsFriendly(Team player, Team owner) =>
         owner != null && player.GetTargetRelation(owner.TeamColor) is Teams.TeamRelation.Self or Teams.TeamRelation.Friend;
 
     private void Add(bool[] grid, Vector2I center, int r)
