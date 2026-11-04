@@ -1177,3 +1177,17 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Done 2026-11-04: `Unit.MoneyTakenFromKilled` event; the check now also passes when collectors were robbed of the
   money they collected (the collection worked), and its failure text lists deliveries, robbed collectors and each
   owner's company count.
+- [ ] 23. Resizable / maximized game window (user playtest 2026-11-04, screenshots of a maximized 2548×1428 window):
+  everything is laid out for 800×600 and breaks when the window is bigger:
+  - main menu: the 800×600 picture stays in the top-left corner; the rest is grey, and the in-game bottom panel
+    (normally below y 600, off screen) shows at the bottom of the window behind the menu;
+  - in an episode: the map fills only part of the window (grey beyond the map edge is fine, but the camera limits
+    and minimap frame assume 800×600); the tip window sits at its 800×600 place; the bottom panel's pieces are
+    stretched across the width while its texts, portrait, buttons and finance block stay at 800×600 positions
+    (e.g. Деньги / Доходы drawn twice: once in the right block, once next to the portrait).
+  Options: (a) keep the original look — project stretch mode canvas_items (or viewport) with aspect "keep", so the
+  800×600 game scales up with black bars; simplest and faithful; (b) a real resizable layout — screens centred,
+  the panel anchored to the bottom at 800 px wide (or scaled), the map view using the extra space, camera limits
+  and minimap frame from the viewport size. Ask the user which; (a) first is cheap. Check the menus, briefing, end
+  screens, info / alliance / money / rank windows, the panel, minimap clicks, map clicks (canvas transform) and
+  the MCP click coordinates afterwards.
