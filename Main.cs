@@ -459,6 +459,8 @@ public partial class Main : Node2D
 				unit.AttackOrder((Node2D)hit, false);
 			else if (hit is Unit && hit != unit)
 				unit.GoTo(((Node2D)hit).Position, false); // no weapon (Thief, Godfather): just go there
+			else if (hit is Company { IsHq: true } hq && hq.OwnerTeam != unit.OwnerTeam && unit.HasWeapon)
+				unit.AttackOrder(hq, false); // an HQ can't be extorted: a right click attacks it (remake)
 			else if (hit is Company)
 				unit.TargetStructure = (Node2D)hit;
 			else
@@ -501,6 +503,9 @@ public partial class Main : Node2D
 					break;
 				case OrderMode.Attack or OrderMode.ForceAttack when hit is Unit target && target != unit:
 					unit.AttackOrder(target, order == OrderMode.ForceAttack);
+					break;
+				case OrderMode.Attack or OrderMode.ForceAttack when hit is Company building && !building.IsPoliceStation:
+					unit.AttackOrder(building, order == OrderMode.ForceAttack); // hint 5,42 "Attack %s"
 					break;
 				case OrderMode.Patrol:
 					unit.SetOrder(new PatrolOrder(unit, unit.Cell, Map.LocalToMap(local)));

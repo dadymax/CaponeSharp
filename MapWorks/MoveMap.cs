@@ -28,6 +28,7 @@ public static class MoveMap
     private static HashSet<Vector2I> _used = new();
     private static HashSet<Vector2I> _roads = new();
     private static HashSet<Vector2I> _sand = new();
+    private static HashSet<Vector2I> _groundI = new();
 
     /// <summary>World +6 (sub_414CD0): how far the detour search looks.</summary>
     public static int SearchRange { get; private set; } = 100;
@@ -46,6 +47,7 @@ public static class MoveMap
         _blocked = Cells(map, TileMapGenerator.TileNonWalkable);
         _roads = Cells(map, TileMapGenerator.MetaRoad);
         _sand = Cells(map, TileMapGenerator.MetaSand);
+        _groundI = map.HasMeta(TileMapGenerator.MetaGroundI) ? Cells(map, TileMapGenerator.MetaGroundI) : new HashSet<Vector2I>();
         var rect = map.GetUsedRect();
         SearchRange = Math.Max(rect.Size.X, rect.Size.Y);
     }
@@ -58,6 +60,7 @@ public static class MoveMap
         _blocked = new HashSet<Vector2I>(blocked);
         _sand = new HashSet<Vector2I>(sand);
         _roads = new HashSet<Vector2I>(roads);
+        _groundI = new HashSet<Vector2I>();
         SearchRange = range;
     }
 
@@ -90,9 +93,17 @@ public static class MoveMap
     /// <summary>Tile vt+158h = 1: road or pavement (class 2 ground).</summary>
     public static bool IsRoadOrPavement(Vector2I cell) => _roads.Contains(cell) || _sand.Contains(cell);
 
-    /// <summary>The ground alone: may a unit (a car or not) stand on the cell?</summary>
+    /// <summary>
+    /// The ground alone: may a unit (a car or not) stand on the cell? Cars never on pavement (sub_432E80); on I ground
+    /// (forecourts, sub_420C80: walkable for all in the EXE) not either while game.cfg [movement] cars_on_forecourts
+    /// is false (remake rule, user 2026-11-04: they look like pavement).
+    /// </summary>
     public static bool Walkable(Vector2I cell, bool car) =>
-        _used.Contains(cell) && !_blocked.Contains(cell) && !(car && _sand.Contains(cell));
+        _used.Contains(cell) && !_blocked.Contains(cell)
+        && !(car && (_sand.Contains(cell) || (!GameConfig.CarsOnForecourts && _groundI.Contains(cell))));
+
+    /// <summary>Unit-test hook: letter I cells.</summary>
+    internal static void SetGroundIForTest(IEnumerable<Vector2I> cells) => _groundI = new HashSet<Vector2I>(cells);
 
     /// <summary>
     /// Tile vt+15Ch (sub_427BE3): the ground, and on road / pavement (sub_432E13) no unit fighting there — other

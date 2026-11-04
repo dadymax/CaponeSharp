@@ -15,6 +15,8 @@ public static class TileMapGenerator
     public static readonly StringName MetaRoad = "roadCells";
     /// <summary>Pavement cells (letter S, tile off_47D230 "sand": no Cadillac, class 2).</summary>
     public static readonly StringName MetaSand = "sandCells";
+    /// <summary>Letter I cells (class 3 ground, Ground::MakeI): forecourts next to some tall buildings.</summary>
+    public static readonly StringName MetaGroundI = "groundICells";
     public static readonly StringName MetaNameBases = "Bases";
 
     private const string CompanyScenePath = "res://Buildings/Company.tscn";
@@ -61,6 +63,7 @@ public static class TileMapGenerator
         var opaque = new Godot.Collections.Array<Vector2I>();
         var roads = new Godot.Collections.Array<Vector2I>();
         var sand = new Godot.Collections.Array<Vector2I>();
+        var groundI = new Godot.Collections.Array<Vector2I>();
         // Medium standalone buildings (letter B): original map cell -> map cell.
         var mediumBuildings = new Dictionary<Vector2I, Vector2I>();
         // Block letter of every original cell (the EXE's letter grid, filled by sub_420806).
@@ -177,6 +180,7 @@ public static class TileMapGenerator
                             break;
                         case 'I':
                             td.SetCustomData(TileNonWalkable, false);
+                            groundI.Add(actual);
                             break;
                         case 'B':
                         case 'C':
@@ -248,6 +252,7 @@ public static class TileMapGenerator
         tileMap.SetMeta(MetaOpaque, opaque);
         tileMap.SetMeta(MetaRoad, roads);
         tileMap.SetMeta(MetaSand, sand);
+        tileMap.SetMeta(MetaGroundI, groundI);
         tileMap.SetMeta(MetaNameBases, bases);
         tileMap.SetMeta(PlainBuilding.MetaCells, plainCells);
         return tileMap;

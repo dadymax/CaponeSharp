@@ -1218,3 +1218,18 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   firing frames from `OriginalUnitSprites.ShotStart`: the Sniper's from frame 10, the Shotgun's 3-frame strip all
   through); a killing shot finishes its frames before the standing picture. Unit tests `ShotFrameTests`;
   MCP-checked with a frozen enemy Thug far from other units: aim held ~3 s, frames 10–11 with the kill, then idle.
+- [x] 26. Cadillac on a cobbled forecourt (user playtest 2026-11-04). It was a letter I cell (class 3 ground, the 3-cell
+  forecourts next to tall buildings in blocks 20–25 and 32), not pavement: the EXE lets every unit, cars too, onto I
+  (tile vt+15Ch sub_420C80 returns 1; pavement sub_432E80 refuses Cadillacs and the police car). User's rule: cars
+  keep off I — `MoveMap.Walkable` with game.cfg `[movement] cars_on_forecourts=false` (true = the original). Unit test
+  `ForecourtTests`; the scenario check "cars keep off the pavement" now uses the same rule.
+- [x] 27. Episode 7: the computer player never builds businesses (user playtest). Checked: Майк Робинс is PLAYER kind 2;
+  the EXE's kind 2 (sub_4626B5, 0x46285C) sets parameter 0 to 0, and the strategy cycle sets "convert" only when
+  parameter 0 (+210h) isn't 0 (0x4622AC). So in the original he never converts either (he still extorts companies).
+  No change; ask the user if the original's playtest showed otherwise.
+- [x] 28. The player's units couldn't attack an enemy HQ, so episodes like 7 couldn't be won (user playtest).
+  Causes: the Attack button only took units, and a right click on an HQ (which can't be extorted) only walked there.
+  Fixed: `Unit.AttackBuilding` (Attack / Force Attack on a building, as the EXE's mode-1 move job; hint 5,42
+  "Attack %s"): the unit targets the building, walks next to it and hits it; defenders met on the way are fought
+  first. A right click on another player's HQ attacks it (remake: the original's right click extorts companies).
+  Scenario check "units attack an enemy HQ" (episodes 4, 8, 15: HQ hit points drop).

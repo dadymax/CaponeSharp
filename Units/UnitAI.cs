@@ -101,8 +101,34 @@ public partial class Unit
         // Force Attack may name an own or allied target (the order's mode 1 ignores relations).
         if (CanAttack != null)
             CanAttack.ForcedTarget = force ? target : null;
+        if (target is Company building)
+        {
+            AttackBuilding(building, force);
+            return;
+        }
         TargetStructure = target;
         _orderTarget = target as Unit;
+        MoveMode = AttackMode(UnitType, force);
+    }
+
+    /// <summary>
+    /// Attack order on a building (sub_42C1F6 mode 1 → move job sub_4284B0 in attack mode; hint text 5,42 "Attack
+    /// %s"): walk next to it and hit it (buildings are hit from <see cref="CanAttack.BuildingAttackRange"/> cells).
+    /// As in attack mode 3, enemy units met on the way are fought first, and the order ends when the unit opens fire
+    /// on them. This is how an enemy HQ is destroyed (playtest 2026-11-04: units couldn't attack it).
+    /// </summary>
+    private void AttackBuilding(Company building, bool force)
+    {
+        if (CanAttack == null || !HasWeapon || building.CanBeAttacked == null)
+        {
+            WalkTo(building);
+            return;
+        }
+        CancelOrder();
+        _targetStructure = building;
+        _orderTarget = null;
+        CanAttack.Target = building.CanBeAttacked;
+        WalkTo(building);
         MoveMode = AttackMode(UnitType, force);
     }
 

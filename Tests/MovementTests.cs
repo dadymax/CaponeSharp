@@ -261,3 +261,29 @@ public static class ShotFrameTests
         Assert.Equal(0, OriginalUnitSprites.ShotStart(tile.Pairs), "3 different frames: the whole strip is the shot");
     }
 }
+
+/// <summary>Cars and the I-ground forecourts (remake rule, game.cfg [movement] cars_on_forecourts).</summary>
+public static class ForecourtTests
+{
+    [UnitTest]
+    public static void CarsKeepOffForecourtsUnlessAllowed()
+    {
+        var cells = new List<Vector2I> { new(0, 0), new(1, 0) };
+        MoveMap.InitForTest(cells, new Vector2I[0], new Vector2I[0], new[] { new Vector2I(0, 0) });
+        MoveMap.SetGroundIForTest(new[] { new Vector2I(1, 0) });
+        var saved = GameConfig.CarsOnForecourts;
+        try
+        {
+            GameConfig.CarsOnForecourts = false;
+            Assert.False(MoveMap.Walkable(new Vector2I(1, 0), car: true), "a car may not enter a forecourt");
+            Assert.True(MoveMap.Walkable(new Vector2I(1, 0), car: false), "people may");
+            GameConfig.CarsOnForecourts = true;
+            Assert.True(MoveMap.Walkable(new Vector2I(1, 0), car: true), "as in the original when allowed");
+        }
+        finally
+        {
+            GameConfig.CarsOnForecourts = saved;
+            MoveMap.SetGroundIForTest(new Vector2I[0]);
+        }
+    }
+}

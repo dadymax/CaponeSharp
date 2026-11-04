@@ -63,6 +63,12 @@ public static class GameConfig
     /// </summary>
     public static PathfindingMode Pathfinding { get; set; } = PathfindingMode.Original;
 
+    /// <summary>
+    /// "[movement] cars_on_forecourts": may Cadillacs and police cars drive on the I-ground forecourts next to some
+    /// tall buildings? The EXE allows it (sub_420C80); default false — remake rule, they look like pavement.
+    /// </summary>
+    public static bool CarsOnForecourts { get; set; }
+
     static GameConfig() => Load();
 
     public static void Load()
@@ -96,6 +102,7 @@ public static class GameConfig
                     AnimationFpsByKey[key] = Mathf.Max(0.1f, (float)cfg.GetValue("animation", key).AsDouble());
         AttackHoldMinutes = Mathf.Max(0, (int)cfg.GetValue("animation", "attack_hold_minutes", AttackHoldMinutes));
         Pathfinding = ParsePathfinding(cfg.GetValue("movement", "pathfinding", "original").AsString());
+        CarsOnForecourts = cfg.GetValue("movement", "cars_on_forecourts", CarsOnForecourts).AsBool();
         AiBrownouts = cfg.GetValue("ai", "brownouts", AiBrownouts).AsBool();
         AiPoliticianShare = Mathf.Clamp((int)cfg.GetValue("ai", "politician_share", AiPoliticianShare), 0, 100);
         AiBrownoutDays = Mathf.Max(0, (int)cfg.GetValue("ai", "brownout_days", AiBrownoutDays));

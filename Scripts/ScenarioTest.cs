@@ -129,6 +129,36 @@ public partial class ScenarioTest : Node
 
     private void OnAttackOrdered(Team team, Company center) => _aiAttackOrders++;
 
+    /// <summary>
+    /// Playtest 2026-11-04: the player's units couldn't attack an enemy HQ. Units of the local player placed near an
+    /// enemy HQ and given the Attack order on it must hurt it (or destroy it) within a game day.
+    /// </summary>
+    private void TestAttackHq()
+    {
+        var human = Teams.GetCurrentPlayerTeam();
+        var hq = Teams.TeamsInGame.Values.Where(t => t != human && t.HqCompany != null && t.Org is { Eliminated: false })
+            .Select(t => t.HqCompany).FirstOrDefault(IsInstanceValid);
+        var attackers = Units().Where(u => u.OwnerTeam == human && u.HasWeapon && !u.IsCar && u.Vehicle == null).Take(4).ToList();
+        if (hq == null || attackers.Count == 0)
+        {
+            Note("no HQ attack check (no enemy HQ or no armed unit)");
+            return;
+        }
+        foreach (var u in attackers)
+        {
+            u.PlaceAt(u.Map.MapToLocal(CampaignManager.Instance.FreeCellNear(hq.Cell)));
+            u.AttackOrder(hq, false);
+        }
+        var before = hq.Hp;
+        var deadline = _hour + 24;
+        _pending.Add((deadline, "units attack an enemy HQ", () =>
+                !IsInstanceValid(hq) || !hq.IsHq || hq.Hp < before || attackers.All(a => !IsInstanceValid(a) || a.IsDead)
+                // Attack mode fights the defenders first (the order ends when they open fire on them).
+                || (_hour >= deadline && attackers.Any(a => IsInstanceValid(a) && !a.IsDead && a.CanAttack?.TargetParent is Unit)),
+            () => $"HQ HP {(IsInstanceValid(hq) ? hq.Hp : 0)} of {before}; attackers "
+                  + string.Join(", ", attackers.Where(IsInstanceValid).Select(a => $"{a.UnitType} at {a.Cell} target {a.CanAttack?.TargetParent?.Name}"))));
+    }
+
     private readonly List<(Team By, Team Enemy, Company Target, bool PowerCut)> _aiBrownouts = new();
 
     private void OnBrownout(Team by, Team enemy, Company target)
@@ -285,6 +315,8 @@ public partial class ScenarioTest : Node
             TestHitman();
         if (_hour == 20)
             TestFortification();
+        if (_hour == 26)
+            TestAttackHq();
         if (_hour == _days * 24 - 20) // late: by then the human owns businesses
             TestAiBrownout();
         if (_hour == _days * 24 - 7 && _aiAttackDecided)
@@ -409,7 +441,7 @@ public partial class ScenarioTest : Node
                 if (!_firstCell.TryGetValue(u, out var start))
                     _firstCell[u] = start = u.Cell;
                 if (u.Cell != start)
-                    Check("cars keep off the pavement", !MoveMap.IsPavement(u.Cell), $"{u.UnitType} of {u.OwnerTeam?.PlayerName ?? "police"} at {u.Cell}");
+                    Check("cars keep off the pavement (and forecourts unless allowed)", MoveMap.Walkable(u.Cell, car: true), $"{u.UnitType} of {u.OwnerTeam?.PlayerName ?? "police"} at {u.Cell}");
             }
         }
 
