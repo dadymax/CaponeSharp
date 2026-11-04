@@ -713,6 +713,13 @@ public partial class ScenarioTest : Node
             Note("fortification check: unit not created");
             return;
         }
+        // On a cell the fortification can see (sight radius 4, buildings block the view).
+        var grid = Vision.Build(company.Cell, Company.FortificationRange);
+        var spot = Enumerable.Range(-3, 7).SelectMany(dx => Enumerable.Range(-3, 7).Select(dy => company.Cell + new Vector2I(dx, dy)))
+            .Where(c => MoveMap.Walkable(c, false) && Vision.Visible(grid, company.Cell, Company.FortificationRange, c))
+            .OrderBy(c => (c - company.Cell).LengthSquared()).Cast<Vector2I?>().FirstOrDefault();
+        if (spot is { } cell)
+            target.PlaceAt(target.Map.MapToLocal(cell));
         var full = target.CanBeAttacked.HP;
         _pending.Add((_hour + 6, "a fortification shoots enemy units", () =>
             !IsInstanceValid(target) || target.IsDead || target.CanBeAttacked.HP < full,

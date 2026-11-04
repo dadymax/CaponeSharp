@@ -84,7 +84,7 @@ The playtests show that some animations need hand tuning. Three places control t
    `killed`, `killed2`. Each entry names a Chicago.tile record:
    - `"Own Thompson man attack SE"` — the record with that comment (case does not matter);
    - `"Own Thompson man idle@2"` — the third record with that comment (Chicago.tile repeats some names);
-   - `"#2678"` — a record by index (counting from the first line after the tile count, as the EXE does);
+   - `"#2621"` — a record by index (here the same "Own Thompson man attack SE") (counting from the first line after the tile count, as the EXE does);
    - `""` — none: a move layer falls back to idle, an attack layer to idle / move, `killed2` to `killed`.
 
    The frames of a layer are the coordinate pairs of that record in Chicago.tile. The EXE's own choice per unit
