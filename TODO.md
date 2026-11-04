@@ -1052,3 +1052,14 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
 - [ ] 13. Scenario test flake seen once (2026-11-04, with the map-mirroring change): episode 15 Cadillac checks
   ("boards, rides along and gets out", "destroyed Cadillac hurts its passengers") failed with the car still moving;
   three reruns passed. Check whether the car's route on the now unmirrored map can be too long for the time allowed.
+- [ ] 14. Optional advanced path search (user request 2026-11-04). Add a `game.cfg` flag, e.g. `[movement]
+  pathfinding=original|astar` (default `original`), and support both in code:
+  - `original`: today's `MoveMap` — the EXE's greedy step-by-step walk (sub_4279E7 / 427EF5 / 427CC0 / 428244: cell
+    scores, ties to the start–end line, detour rays when stuck);
+  - `astar`: A* over the same walkability rules (R / S / I cells, no Cadillac on pavement, road-only cars, buildings
+    blocked, entering the target company's cell), with the same step costs per cell kind and occupied cells costing
+    more rather than blocking; recompute when the next cell becomes blocked or the goal moves (Chase).
+  Units keep stepping tile by tile at their table speed either way; only the choice of the next cell changes. Also
+  check the callers that rely on MoveMap results (`NearestRoad`, Police, collectors, AI tasks, DriveTo) and add unit
+  tests for both modes (reaches the goal around a block, no path → stops like Stuck), plus a scenario run with
+  `astar`. Document the flag in README with the other game.cfg settings.
