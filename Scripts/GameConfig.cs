@@ -40,6 +40,18 @@ public static class GameConfig
         return 5f;
     }
 
+    /// <summary>"[ai] brownouts": computer players order brownouts on their main enemy (remake rule; off = the original).</summary>
+    public static bool AiBrownouts { get; set; } = true;
+
+    /// <summary>
+    /// "[ai] politician_share": percent of a computer player's profit moved from savings to politician bribes, so it can
+    /// afford brownouts (not in the original, whose computer players never bribe politicians nor use services).
+    /// </summary>
+    public static int AiPoliticianShare { get; private set; } = 20;
+
+    /// <summary>"[ai] brownout_days": a computer player orders at most one brownout per this many game days; 0 = never.</summary>
+    public static int AiBrownoutDays { get; private set; } = 7;
+
     /// <summary>Result of loading game.cfg (the smoke test checks it is Ok).</summary>
     public static Error LoadError { get; private set; } = Error.Ok;
 
@@ -84,5 +96,8 @@ public static class GameConfig
                     AnimationFpsByKey[key] = Mathf.Max(0.1f, (float)cfg.GetValue("animation", key).AsDouble());
         AttackHoldMinutes = Mathf.Max(0, (int)cfg.GetValue("animation", "attack_hold_minutes", AttackHoldMinutes));
         Pathfinding = ParsePathfinding(cfg.GetValue("movement", "pathfinding", "original").AsString());
+        AiBrownouts = cfg.GetValue("ai", "brownouts", AiBrownouts).AsBool();
+        AiPoliticianShare = Mathf.Clamp((int)cfg.GetValue("ai", "politician_share", AiPoliticianShare), 0, 100);
+        AiBrownoutDays = Mathf.Max(0, (int)cfg.GetValue("ai", "brownout_days", AiBrownoutDays));
     }
 }

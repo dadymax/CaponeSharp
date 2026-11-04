@@ -360,8 +360,19 @@ is the target), HQ object methods vt+FCh…11Ch (sub_4325C7…sub_432A61).
 - MCP-tested in episode 15: beer legalized; investigation + rumour on Дион О'Брайен (his type factors 0.6); a snitch
   planted and bought (switched sides, 200 000 paid). Not tested: the FBI visit on the local player (the AI doesn't
   buy services). Open: the original's FBI-visit progress box.
-- [ ] FUTURE — do not start until the user explicitly asks: computer players using HQ services (FBI visit, rumours,
-  investigations, snitches, legalization). The AI code read so far (sub_461510 family) never calls them.
+- [x] Computer players using HQ services (started on the user's request 2026-11-04). EXE check: the AI code
+  (sub_461510 family) buys no service; its only service checks are recruit permits (sub_461BD7: services 6 / 3 / 2 / 0
+  → Thompson / Hit man / Shotgun / Pistol man), and event 450h only sets its bribe shares (sub_4623E4 → share job
+  sub_4287F0), never to politicians. No other code orders a brownout (block command sub_420150 is reached only from
+  the company menu, action 9). The user saw computer players in the original keep cutting the power of the human's
+  blocks, so this is a remake rule, chosen by the user: brownouts only, at most once a game week per computer player.
+  Done: `ComputerPlayer.TryBrownout` (strategy cycle): the main enemy (the human unless allied, else the richest
+  hostile player), its best-earning powered block, bought with `CompanyServices.Brownout` (politician services
+  1Ch / 19h / 15h, real bribe money and favour). Part of the AI's savings share goes to politicians so it can pay.
+  game.cfg `[ai]`: `brownouts` (true / false = the original), `politician_share` (default 20 %), `brownout_days`
+  (default 7). Scenario check "a hostile computer player blacks out the human's best block" (favour given).
+  Note: the cheapest brownout needs 300 000 bribed to politicians and 60 points, so with 20 % of its profit a
+  computer player needs a few weeks of income before its first one.
 
 ## Elimination and last player standing (2026-10-27)
 

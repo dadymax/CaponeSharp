@@ -103,6 +103,21 @@ The playtests show that some animations need hand tuning. Three places control t
 
 `game.cfg` and `units.json` are read when the game starts; restart it after a change.
 
+## Computer players' brownouts
+
+The original's computer players never use the authorities' services in its code, but in play they were seen cutting
+the power of the human's blocks. The remake adds that as an option in `game.cfg`:
+
+```ini
+[ai]
+brownouts=true        ; false = as in the original's code
+politician_share=20   ; % of a computer player's profit moved from savings to politician bribes
+brownout_days=7       ; at most one brownout per computer player per this many game days
+```
+
+A computer player then blacks out the block where its main enemy (you, unless allied) earns the most, paying for it
+like you would (politician favour points and bribe money).
+
 ## Path search
 
 By default units find their way like the 1997 game: step by step toward the target, with a detour when blocked

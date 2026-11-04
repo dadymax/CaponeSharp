@@ -133,7 +133,66 @@ public class ComputerPlayer
             return;
         for (var i = 0; i < Organisation.TypeCount; i++)
             Org.Shares[i] = Parameters[5 + i];
+        // Remake rule (user, 2026-11-04): part of the savings goes to politicians so that brownouts can be bought.
+        if (!GameConfig.AiBrownouts)
+            return;
+        var moved = Math.Min(Org.Shares[0], GameConfig.AiPoliticianShare);
+        Org.Shares[0] -= moved;
+        Org.Shares[PoliticianAuthority] += moved;
     }
+
+    private const int PoliticianAuthority = 3;
+
+    #endregion
+
+    #region Brownouts on the enemy (remake rule, user 2026-11-04)
+
+    /// <summary>Game minute of this player's last brownout order.</summary>
+    private long _lastBrownout = long.MinValue / 2;
+
+    public static event Action<Team, Team, Company> BrownoutOrdered;
+
+    /// <summary>
+    /// The user saw computer players in the original keep cutting the power of the human's blocks; the EXE's AI code
+    /// (sub_461510 family) has no such call, so this is a remake rule: at most once per
+    /// <see cref="GameConfig.AiBrownoutDays"/>, in the strategy cycle, the main enemy's best-earning block that still
+    /// has power gets a brownout, bought like the player's own (<see cref="CompanyServices.Brownout"/>: politician
+    /// services 1Ch / 19h / 15h, needing their bribe money and favour points).
+    /// </summary>
+    private void TryBrownout()
+    {
+        var days = GameConfig.AiBrownoutDays;
+        var now = GameClock.Instance?.Minute ?? 0;
+        if (!GameConfig.AiBrownouts || days <= 0 || now - _lastBrownout < (long)days * GameClock.MinutesPerDay)
+            return;
+        var enemy = MainEnemy();
+        if (enemy == null)
+            return;
+        var target = BrownoutTarget(enemy, AllCompanies());
+        if (target == null || !CompanyServices.Brownout(Team, target))
+            return;
+        _lastBrownout = now;
+        GD.Print($"AI {Team.PlayerName}: brownout on {enemy.PlayerName}'s block {target.Block?.Number}");
+        BrownoutOrdered?.Invoke(Team, enemy, target);
+    }
+
+    /// <summary>The human unless allied, else the richest other hostile player still in the game.</summary>
+    private Team MainEnemy()
+    {
+        var rivals = Teams.TeamsInGame.Values
+            .Where(t => t != Team && t.Org != null && !t.Org.Eliminated && !IsAlly(t)).ToList();
+        var human = Teams.GetCurrentPlayerTeam();
+        return rivals.Contains(human) ? human : rivals.OrderByDescending(t => t.Org.NetIncome).FirstOrDefault();
+    }
+
+    /// <summary>A company in the block where <paramref name="enemy"/> earns most, among blocks that still have power.</summary>
+    public static Company BrownoutTarget(Team enemy, IEnumerable<Company> companies) =>
+        companies
+            .Where(c => c.OwnerTeam == enemy && c.IsEconomic && c.Block is { IsActive: true })
+            .GroupBy(c => c.Block)
+            .OrderByDescending(g => g.Sum(c => Math.Max(0, c.Income())))
+            .Select(g => g.First())
+            .FirstOrDefault();
 
     #endregion
 
@@ -445,6 +504,7 @@ public class ComputerPlayer
         if (p[10] != 0)
             _attackHuman = AttackHq(_attackHuman, mine - myThugs);
         StrategyDecided?.Invoke(Team, _convert, _attackHuman);
+        TryBrownout();
         if (_recruitChosen || _recruitThug || _convert || _attackIntruder || _attackHuman != wasAttacking)
             GD.Print($"AI {Team.PlayerName}: strength {mine} (thugs {myThugs}), cash {Org.Cash}, recruit {(_recruitChosen ? chosen.ToString() : _recruitThug ? "Thug" : "-")}, "
                  + $"convert {_convert}, intruder {_intruder?.UnitType.ToString() ?? "-"}, target {_target?.PlayerName ?? "-"}, attack HQ {_attackHuman}");
