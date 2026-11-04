@@ -112,7 +112,9 @@ code (base squad) get random personal names like `Unit::Unit`.
   companies (M8), the tooltip line (`PanelInfo.StatusText`). "Freezing" is not a rule: company +0C4h (thought to
   be a frozen flag) is the running job (setter vt+9Ch sub_4239A0, getter vt+0A0h sub_4239C0; the menu sub_421370 opens
   only while it is 0; event case 13 cancels a job of type 16h) — `Company.Busy`. The dead `Frozen` flag is removed.
-  Open: button hover animation (12 frames).
+  Done 2026-11-04: button icon animation. The EXE draws panel icons with frame −1 (ButtonBar sub_402070 →
+  TileSet::Draw sub_437780: shared frame counter % frame count), so they animate all the time, not only on hover;
+  most action icons have 12 frames (some 6), pressed pictures 1. `TileIcons` makes them AnimatedTextures at 5 fps.
 
 ## Recruiting — R9/M9 (2026-10-27)
 

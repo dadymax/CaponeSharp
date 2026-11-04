@@ -71,12 +71,7 @@ public partial class RecruitPanel : Control
         return new Vector2(i < 6 ? 730 : 760, 392 + 33 * (i % 6) - PanelInfo.PanelTop);
     }
 
-    private static Texture2D Icon(int tileIndex)
-    {
-        var tile = OriginalData.Instance.Tiles.GetTileByIndex(tileIndex);
-        var images = tile != null ? OriginalData.Instance.GetImageForTile(tile) : null;
-        return images is { Count: > 0 } ? ImageTexture.CreateFromImage(images[0]) : null;
-    }
+    private static Texture2D Icon(int tileIndex) => TileIcons.Get(tileIndex);
 
     public override void _Process(double delta)
     {

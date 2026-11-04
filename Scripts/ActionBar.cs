@@ -36,8 +36,6 @@ public partial class ActionBar : Control
     private readonly Action[] _actions = new Action[SlotCount];
     private readonly string[] _texts = new string[SlotCount];
     private Texture2D _gameButt;
-    private static readonly Dictionary<int, Texture2D> IconCache = new();
-
     /// <summary>Company whose type submenu is open, and the type (original dword_48029C / word_4802A0).</summary>
     private Company _submenuCompany;
     private OriginalBusinessTable.BusinessType _submenuType;
@@ -75,16 +73,8 @@ public partial class ActionBar : Control
         QueueRedraw();
     }
 
-    private static Texture2D Icon(int tileIndex)
-    {
-        if (IconCache.TryGetValue(tileIndex, out var texture))
-            return texture;
-        var tile = OriginalData.Instance.Tiles.GetTileByIndex(tileIndex);
-        var images = tile != null ? OriginalData.Instance.GetImageForTile(tile) : null;
-        texture = images is { Count: > 0 } ? ImageTexture.CreateFromImage(images[0]) : null;
-        IconCache[tileIndex] = texture;
-        return texture;
-    }
+    /// <summary>Animated like the EXE's buttons (<see cref="TileIcons"/>).</summary>
+    private static Texture2D Icon(int tileIndex) => TileIcons.Get(tileIndex);
 
     public static ActionBar Instance { get; private set; }
 
