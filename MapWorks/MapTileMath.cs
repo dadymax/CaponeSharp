@@ -8,13 +8,16 @@ public static class MapTileMath
     public enum Directions { SE, NE, NW, SW }
 
     public static readonly Vector2I StandartTile = new(40, 19);
+    /// <summary>Screen step of original x + 1: right-down (EXE sub_414A30: sx ∝ x − y, sy ∝ x + y).</summary>
     public static readonly Vector2 Right = new(StandartTile.X / 2.0f, StandartTile.Y / 2.0f);
-    public static readonly Vector2 Down = new(StandartTile.X / 2.0f, -StandartTile.Y / 2.0f);
+    /// <summary>Screen step of original y + 1: left-down (was right-up until 2026-11-04, which mirrored the map).</summary>
+    public static readonly Vector2 Down = new(-StandartTile.X / 2.0f, StandartTile.Y / 2.0f);
 
-    private static readonly Vector2 RightNormalised = Right.Normalized();
-    private static readonly Vector2 LeftNormalised = -RightNormalised;
-    private static readonly Vector2 DownNormalised = Down.Normalized();
-    private static readonly Vector2 UpNormalised = -DownNormalised;
+    // Sprite facings are screen directions, independent of the map axes.
+    private static readonly Vector2 SeNormalised = new Vector2(StandartTile.X, StandartTile.Y).Normalized();
+    private static readonly Vector2 NeNormalised = new Vector2(StandartTile.X, -StandartTile.Y).Normalized();
+    private static readonly Vector2 NwNormalised = -SeNormalised;
+    private static readonly Vector2 SwNormalised = -NeNormalised;
 
     /// <summary>Pixel distance between the centres of two neighbouring cells.</summary>
     public static readonly float TileStepLength = Right.Length();
@@ -57,15 +60,15 @@ public static class MapTileMath
     public static Directions GetDirection(Vector2 velocity)
     {
         var dir = velocity.Normalized();
-        var right = dir.Dot(RightNormalised);
-        var left = dir.Dot(LeftNormalised);
-        var down = dir.Dot(DownNormalised);
-        var up = dir.Dot(UpNormalised);
-        var max = Mathf.Max(right, Mathf.Max(left, Mathf.Max(down, up)));
-        if (max == right) return Directions.SE;
-        if (max == left) return Directions.NW;
-        if (max == down) return Directions.NE;
-        if (max == up) return Directions.SW;
+        var se = dir.Dot(SeNormalised);
+        var nw = dir.Dot(NwNormalised);
+        var ne = dir.Dot(NeNormalised);
+        var sw = dir.Dot(SwNormalised);
+        var max = Mathf.Max(se, Mathf.Max(nw, Mathf.Max(ne, sw)));
+        if (max == se) return Directions.SE;
+        if (max == nw) return Directions.NW;
+        if (max == ne) return Directions.NE;
+        if (max == sw) return Directions.SW;
         return Directions.NW;
     }
 

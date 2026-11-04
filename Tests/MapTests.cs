@@ -17,7 +17,7 @@ public static class MapTests
             var bx = x - p.X;
             var by = y - p.Y;
             if (bx >= 0 && by >= 0 && bx < b.X && by < b.Y)
-                return b.BlockLines[b.Y - 1 - by][bx];
+                return b.BlockLines[by][bx]; // row j = original y + j (fnBuildingPlacementOnMapByNumber)
         }
         return '?';
     }
@@ -37,15 +37,32 @@ public static class MapTests
             }
     }
 
+    /// <summary>With the EXE's block rows (row j = original y + j) a standard start point is the B building itself.
+    /// (The old flipped rows put it one cell off; that was the mirrored map, TODO playtest item 3.)</summary>
     [UnitTest]
-    public static void StandardStartPointsAreNextToTheirBuilding()
+    public static void StandardStartPointsAreOnTheirBuilding()
     {
         var map = OriginalData.Instance.Maps.Maps["HARLEM.MAP"];
         foreach (var sp in map.StartPoints)
-        {
-            Assert.Equal('G', Letter(map, sp.X, sp.Y), $"start point ({sp.X}, {sp.Y}) itself");
-            Assert.Equal('B', Letter(map, sp.X, sp.Y - 1), $"one cell off ({sp.X}, {sp.Y - 1})");
-        }
+            Assert.Equal('B', Letter(map, sp.X, sp.Y), $"start point ({sp.X}, {sp.Y})");
+    }
+
+    /// <summary>
+    /// fnProcessMapLoad (0x403BBF–0x403BE9) drops start points on R / F / S / G cells; the others keep their order.
+    /// </summary>
+    [UnitTest]
+    public static void StartPointsOnGroundAreDropped()
+    {
+        var map = OriginalData.Instance.Maps.Maps["SMALLNEIGHBORHOOD.MAP"];
+        var letters = new System.Collections.Generic.Dictionary<Vector2I, char>();
+        foreach (var sp in map.StartPoints)
+            letters[sp] = Letter(map, sp.X, sp.Y);
+        Assert.Equal(map.StartPoints.Count, TileMapGenerator.UsableStartPoints(map, letters).Count, "all on buildings");
+        letters[map.StartPoints[0]] = 'R';
+        letters[map.StartPoints[1]] = 'G';
+        var usable = TileMapGenerator.UsableStartPoints(map, letters);
+        Assert.Equal(map.StartPoints.Count - 2, usable.Count, "road and G start points dropped");
+        Assert.Equal(map.StartPoints[2], usable[0], "order kept");
     }
 }
 

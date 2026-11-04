@@ -88,8 +88,10 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
 
     /// <summary>
     /// vt+1ACh (sub_42E385): vision radius now — unit table +2Ch while walking (activity +0BCh 1–4), +2Ah otherwise
-    /// (the Sniper sees and so shoots 1 tile farther standing: 8 / 9). TODO: activities 12+ shrink it to
-    /// +2Ah × (27 − activity) / 15 (flt_4849E0 / flt_4849E4), at least 1.
+    /// (the Sniper sees and so shoots 1 tile farther standing: 8 / 9). The walking activity is cleared only by the
+    /// unit tick (sub_42AA86, 0x42B2EA), which runs once per step, so after the last step the walking radius stays for
+    /// one more step time (table +18h minutes; user playtest: "a second or so"). Activities 12–27 are the death
+    /// sequence (0x42BA98 / 0x42F2FF set 12, the tick counts to 27): +2Ah × (27 − activity) / 15 — not ported.
     /// </summary>
     public int CurrentVision
     {
@@ -98,8 +100,20 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
             var stats = _unitInstance?.Stats;
             if (stats == null)
                 return _unitInstance?.VisionRadius ?? 8;
-            return IsMoving ? stats.Vision : stats.VisionMax;
+            return WalkingSight ? stats.Vision : stats.VisionMax;
         }
+    }
+
+    /// <summary>Game minute until which the unit still has its walking activity (one step time after stopping).</summary>
+    private double _walkingUntil = double.MinValue;
+
+    private bool WalkingSight => IsMoving || (GameClock.Instance?.Minutes ?? double.MaxValue) < _walkingUntil;
+
+    /// <summary>Called every physics frame: while walking, keeps the walking activity one step time ahead.</summary>
+    private void TrackWalkingActivity()
+    {
+        if (IsMoving && GameClock.Instance is { } clock)
+            _walkingUntil = clock.Minutes + Mathf.Max(1, _unitInstance?.Stats?.TicksPerTile ?? GameClock.TurnMinutes);
     }
 
     private bool[] _sightGrid;
@@ -506,6 +520,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     {
         if (IsDead || IsArrested || FollowVehicle())
             return;
+        TrackWalkingActivity();
         if (_stepCell is { } next)
         {
             var target = Map.MapToLocal(next);

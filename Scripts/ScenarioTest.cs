@@ -685,13 +685,18 @@ public partial class ScenarioTest : Node
             Note("arrest check: unit not created");
             return;
         }
-        bool arrested = false, jailed = false;
-        // Jail (unit vt+1A0h) takes the arrested unit out of the game.
-        gangster.Died += _ => { jailed = gangster.IsArrested; arrested |= jailed; };
+        bool arrested = false, jailed = false, killed = false;
+        // Jail (unit vt+1A0h) takes the arrested unit out of the game. Another gang may shoot him first (episode 15).
+        gangster.Died += _ => { jailed = gangster.IsArrested; arrested |= jailed; killed = !jailed; };
         Police.Instance.Dispatch(gangster, lawyersCanHelp: false);
         _pending.Add((_hour + 48, "the police arrest and jail a gangster", () =>
         {
             arrested |= IsInstanceValid(gangster) && gangster.IsArrested;
+            if (killed && !arrested)
+            {
+                Note("arrest check: the gangster was killed before the police came");
+                return true;
+            }
             return jailed;
         }, () => $"arrested {arrested}, jailed {jailed}, gangster "
                  + (IsInstanceValid(gangster) ? $"at {gangster.Cell}, dead {gangster.IsDead}" : "gone")

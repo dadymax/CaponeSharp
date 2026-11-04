@@ -63,6 +63,8 @@ public static class TileMapGenerator
         var sand = new Godot.Collections.Array<Vector2I>();
         // Medium standalone buildings (letter B): original map cell -> map cell.
         var mediumBuildings = new Dictionary<Vector2I, Vector2I>();
+        // Block letter of every original cell (the EXE's letter grid, filled by sub_420806).
+        var letters = new Dictionary<Vector2I, char>();
         foreach (var vec in map.BlockPlacement)
         {
             var blockPosition = new Vector2I(vec.X, vec.Y);
@@ -145,13 +147,17 @@ public static class TileMapGenerator
                         td.YSortOrigin = -1; // a company (its sign) on the same cell sorts after its building
                     td.SetCustomData(TileNonWalkable, true);
 
+                    // fnBuildingPlacementOnMapByNumber: letter row j, column i → original cell (x + i, y + j); the
+                    // picture is record base + i·H + (H − 1 − j) (sub_420790), i.e. atlas (i, H − 1 − j) here.
+                    var blockCell = new Vector2I(x, yInverted);
                     var actualBlockPosition = MapTileMath.Add(tileMap, Vector2I.Zero, blockPosition);
-                    var actual = MapTileMath.Add(tileMap, actualBlockPosition, bldngTilePosition);
-                    cellOf[new Vector2I(x, yInverted)] = actual;
+                    var actual = MapTileMath.Add(tileMap, actualBlockPosition, blockCell);
+                    cellOf[blockCell] = actual;
                     if ("BCMHDGP".IndexOf(bldngChar) >= 0)
                         opaque.Add(actual);
+                    letters[blockPosition + blockCell] = bldngChar;
                     if (bldngChar == 'B')
-                        mediumBuildings[blockPosition + bldngTilePosition] = actual;
+                        mediumBuildings[blockPosition + blockCell] = actual;
 
                     switch (bldngChar)
                     {
@@ -214,7 +220,7 @@ public static class TileMapGenerator
             bldngCounter++;
         }
 
-        var bases = PlaceBases(tileMap, map, baseCount, randomBases, companyScene, mediumBuildings);
+        var bases = PlaceBases(tileMap, UsableStartPoints(map, letters), baseCount, randomBases, companyScene, mediumBuildings);
 
         var nonWalkableMap = new Godot.Collections.Array<Vector2I>();
         foreach (var coords in tileMap.GetUsedCells())
@@ -254,15 +260,14 @@ public static class TileMapGenerator
     /// point that no other HQ took; the start points of most maps are one cell off it. Returns [cell, company] pairs in
     /// that order; the caller hands them to the players that have a base.
     /// </summary>
-    private static Godot.Collections.Array PlaceBases(TileMapLayer tileMap, OriginalMaps.Map map, int baseCount,
+    private static Godot.Collections.Array PlaceBases(TileMapLayer tileMap, List<Vector2I> startPoints, int baseCount,
         bool randomBases, PackedScene companyScene, Dictionary<Vector2I, Vector2I> mediumBuildings)
     {
         // Searched in original coordinates: the isometric map cells are skewed against them.
-        var startPoints = new List<Vector2I>(map.StartPoints);
         if (randomBases)
             Shuffle(startPoints);
         if (baseCount > startPoints.Count)
-            GD.PrintErr($"TileMapGenerator: {map.FileName} has {startPoints.Count} start points, {baseCount} bases needed");
+            GD.PrintErr($"TileMapGenerator: {startPoints.Count} usable start points, {baseCount} bases needed");
 
         var bases = new Godot.Collections.Array();
         foreach (var startPoint in startPoints)
@@ -278,7 +283,7 @@ public static class TileMapGenerator
             else
             {
                 coords = MapTileMath.FromOriginal(tileMap, startPoint);
-                GD.PrintErr($"TileMapGenerator: {map.FileName}: no medium building (B) near start point {startPoint}");
+                GD.PrintErr($"TileMapGenerator: no medium building (B) near start point {startPoint}");
             }
             var td = tileMap.GetCellTileData(coords);
             if (td == null)
@@ -299,6 +304,13 @@ public static class TileMapGenerator
         }
         return bases;
     }
+
+    /// <summary>
+    /// fnProcessMapLoad (0x403BBF�0x403BE9) drops a STARTPOINTS line whose cell is a road, pavement, F or G cell, so
+    /// e.g. SmallNeighborhood's first two lines never get a base (episode 4: Big Jim's base is the third, "to the right").
+    /// </summary>
+    public static List<Vector2I> UsableStartPoints(OriginalMaps.Map map, IReadOnlyDictionary<Vector2I, char> letters) =>
+        map.StartPoints.Where(p => !letters.TryGetValue(p, out var ch) || "RFSG".IndexOf(ch) < 0).ToList();
 
     private static Vector2I? NearestFree(Dictionary<Vector2I, Vector2I> cells, Vector2I from)
     {

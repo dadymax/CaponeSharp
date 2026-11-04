@@ -14,7 +14,7 @@ namespace Capone;
 /// 9: sub_44E2EC / sub_453BF1) end by clearing the outer square ring and every cell farther than r in a straight line,
 /// so with these radii a unit sees one cell less than the generic loop (radius 5, 6, 7, …) would give it.
 /// See-through tiles (map object vt+168h): ground — roads, sidewalks, parks, 'F' — yes; buildings ('B', 'C', 'M', 'H',
-/// 'D', 'G', 'P', companies, HQs) no. The Godot map is the original grid with y flipped, so this works on Godot cells.
+/// 'D', 'G', 'P', companies, HQs) no. Godot cells are the original grid (plus an offset), so this works on Godot cells.
 /// </summary>
 public static class Vision
 {

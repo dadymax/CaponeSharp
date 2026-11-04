@@ -551,7 +551,8 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
       (sub_416780) and classes 0x475790, 0x475A90, 0x47CC3C, 0x47D3A4. Map which class is which block letter.
     - Buildings see 4 tiles (company vt+0E8h sub_4234C0, HQ building sub_415150). sub_4393C6 runs for the local
       player's buildings and marks every visible tile (tile vt+0D8h / vt+0E0h) and the objects on it.
-    - Godot map: DiamondRight isometric, original (x, y) = Godot cell (x, −y), so the grid works on Godot cells.
+    - Godot map: DiamondRight isometric, original (x, y) = Godot cell (x, y) + a fixed offset since 2026-11-04 (was
+      (x, −y), the mirrored map), so the grid works on Godot cells.
     - Plan: Scripts/Vision.cs (grid per radius with the rule above, cached per unit until its cell or radius changes),
       a per-frame visibility set for the local player and allies, `Unit.Sees` using the grid (sub_42B750 checks it),
       a dark overlay on unseen cells, enemy units hidden there, companies keeping their last seen sign.
@@ -965,7 +966,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   must be drawn over the sign. Cause: every company (with its sign) had ZIndex 999 (from the first port). Now companies
   are sorted by depth with the units, like the original's object list; tall building tiles sort 1 px earlier
   (YSortOrigin −1) so a sign still shows over its own building. MCP-checked in episode 7 (a Thug in front of a sign).
-- [ ] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
+- [x] 3. Episode 4's tip says Big Jim's base is to the right; in the remake it is down. Check the map orientation
   (map → screen projection, sub_414A30) against the original; the user will also check the original game.
   Analysis 2026-11-03 — the remake's map is the original mirrored along the y axis:
   - EXE sub_414A30 (map cell → screen): sx = C + x·W − y·W, sy = (x + y)·H + C2 — x runs right-down, y left-down
@@ -975,7 +976,14 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
     (`yInverted`), so every block looks right inside, but block positions, start points and units are mirrored.
   - Episode 4: player units ≈ (59, 35), Big Jim's base (90, 13): original screen ∝ (dx − dy, dx + dy) = (53, 9) →
     right; remake (dx + dy, dx − dy)·… = mostly down — what the playtest saw.
-  Fix plan (after the user confirms in the original): Down = (−20, 9.5); place block rows without the flip; keep
+  Confirmed 2026-11-04: the user's screenshot of the original episode 4 shows Big Jim's base to the right of the
+  player's start, as the tip says, so the remake's mirroring is a bug.
+  Done 2026-11-04 (user-confirmed in play: episode 4 boss placement, episode 7 river): `MapTileMath.Down` = (−20, 9.5);
+  block letter row j goes to original y + j (fnBuildingPlacementOnMapByNumber), its picture is record base + i·H +
+  (H − 1 − j) (sub_420790); sprite facings use fixed screen vectors. Standard start points now sit exactly on their B
+  building (the old "one row off" was the mirroring). Start points on R / F / S / G cells are dropped, as
+  fnProcessMapLoad does.
+  Fix plan: Down = (−20, 9.5); place block rows without the flip; keep
   `GetDirection` on fixed screen vectors (SE/NE/NW/SW are screen directions); re-check `MapTests` (HQ on B cells, start
   points "one row off"), the minimap, fog, vision and MoveMap tests, and the scenario test.
 - [x] 4. Describe how to tweak the attack (and other) animations by hand: playtests show some need manual tuning.
@@ -999,9 +1007,48 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   sub_42BD15 fires first (sub_438873) and stamps +0D0h afterwards. Fixed; the exposed damage is 20–30 (14h / 1Eh,
   was 30). From hiding he does his table damage 161–162: one shot kills every unit except the Terrorist (200 HP), as in
   the EXE. "Hidden" means no shot for 30 game hours; the Disguise order doesn't change his damage. Scenario check.
-- [~] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
+- [x] 8. A training center ("Тренировочный центр") makes recruiting much faster; the user thinks it should be the same
   speed. Checked 2026-11-03: the EXE does speed it up. The training job (sub_427505, event 1) ends at now + table time
   / vt+84h, and vt+84h (sub_431DF3) = 1 + the number of own class-0 companies with vt+1A8h = 4 (training centers). The
   time comes from table 0x480E18 +28h, the same data as 0x484030 +24h (the copy starts 4 bytes earlier): 600 / 1050 /
-  1200 minutes. So one center halves the time (Thug 600 → 300 min, 10 → 5 s), two make it a third. Kept; the user
-  may compare with the original game.
+  1200 minutes. So one center halves the time (Thug 600 → 300 min, 10 → 5 s), two make it a third. Kept.
+  Confirmed 2026-11-04 by the user's playtest of the original: each extra training center speeds training up.
+
+## Playtest (user, 2026-11-04)
+
+- [ ] 9. In the original, empty buildings (building cells without a company) can be selected: the selection marker
+  (green triangle) stands over the building. In the remake they can't be clicked at all.
+  EXE (checked 2026-11-04): every building cell without a company is a plain building-cell object (vtable off_47CDB0,
+  set at 0x420953 in fnSetGroundWalkabilityToNone and in sub_430280; Company::Demolish also leaves these, sub_43BCE0).
+  Class vt+0 = 3; debug name vt+14h "Empty space"; display name vt+18h = "" (empty string unk_475768); generic
+  select (vt+74h sub_4385D5, no sound, unlike Company::SetSelected's Business.wav). So the panel (sub_40A997) shows an
+  empty name line.
+  Still to check before doing it: what else the panel draws for class 3 (HP bar? owner line?), the hover label
+  (sub_40C2C2), whether units can attack it, and whether a plain building takes a whole footprint or one cell.
+  Plan: a light selectable object (or a hit test on the skipped B/C cells and the D/G/F building cells in
+  `TileMapGenerator`) that shows the selection marker and an empty panel; no orders, no sound.
+- [ ] 10. Market-share income bonus: check the remake's numbers against the original. User's screenshots of the same
+  own business in the original (Винная лавка, type Бутлегерство):
+  - market share 11 %: Доход $159 840, Не собрано $15 928;
+  - market share 100 %: Доход $324 000, Не собрано $47 710.
+  Income ratio 324 000 / 159 840 ≈ 2.03. The remake's bonus steps from ×1 to ×2.25 (market share = own income of the
+  type / max(all players' income of it, 5 000 000)). To do: find the row's base income and the multiplier at 11 % and
+  100 % in the EXE, reproduce both numbers in a unit test, and check that the panel shows the same Доход.
+- [x] 11. Maps with water and bridges: blocks are placed very wrong in the remake. Example: episode 7, map
+  RiverRunsTroughIt. User's screenshots of the original show how it should look:
+  - a straight river (diagonal on screen) with embankment blocks along both banks (sand edge, a row of trees);
+  - roads cross it on a bridge block with railings; the road lines up with the roads of the blocks on both banks;
+  - water fills the whole river width, with no gaps or overlaps between water blocks.
+  To do: compare the remake's episode 7 with these; check the water / bridge / embankment block numbers in the .map and
+  their sizes and offsets in the EXE block table (0x47C830); check whether the map mirroring (item 3) explains part of
+  it (river and bridges running the wrong diagonal) and what remains after that fix.
+  Done 2026-11-04: it was the map mirroring (item 3); episode 7's river now matches the original (user-confirmed).
+- [x] 12. A Sniper's sight (and so his shooting reach) grows from 8 to 9 when he stops, but not at once: the user's
+  playtest of the original shows walking sight for about a second after stopping. EXE: vision vt+1ACh (sub_42E385)
+  uses table +2Ch while the activity +0BCh is 1–4 (walking), +2Ah otherwise; the activity is reset to 0 only by the
+  unit tick (sub_42AA86, 0x42B2EA), which runs once per step. Done: `Unit.CurrentVision` keeps the walking radius
+  for one step time (table +18h, 60 game minutes = 1 s) after the last step. Activities 12–27 are the death
+  sequence (vision shrinks as the unit dies) — not ported.
+- [ ] 13. Scenario test flake seen once (2026-11-04, with the map-mirroring change): episode 15 Cadillac checks
+  ("boards, rides along and gets out", "destroyed Cadillac hurts its passengers") failed with the car still moving;
+  three reruns passed. Check whether the car's route on the now unmirrored map can be too long for the time allowed.

@@ -242,9 +242,9 @@ public class ComputerPlayer
     private static Vector2 OriginalCoords(Vector2 local)
     {
         var p = local - (MapTileMath.Tilemap?.MapToLocal(Vector2I.Zero) ?? Vector2.Zero);
-        var a = p.X / MapTileMath.Right.X;
-        var b = p.Y / MapTileMath.Right.Y;
-        return new Vector2((a + b) / 2f, (a - b) / 2f);
+        Vector2 r = MapTileMath.Right, d = MapTileMath.Down;
+        var det = r.X * d.Y - r.Y * d.X;
+        return new Vector2((p.X * d.Y - p.Y * d.X) / det, (r.X * p.Y - r.Y * p.X) / det);
     }
 
     #endregion
