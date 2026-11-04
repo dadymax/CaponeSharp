@@ -1138,3 +1138,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,
   uncollected money, jobs: construction, repair, training), players' finances, favour and bribes, services and
   their timers, alliances, police and FBI jobs, fog of war, computer players' state and pending clock events.
+- [ ] 21. A unit keeps attacking a dead body: when unit 1 kills unit 2, unit 1 goes on playing its attack
+  animation at unit 2's corpse. When the target dies, the attacker must drop it and stand (idle picture), or pick
+  the next enemy in range as the original does after a kill (check the EXE: target cleared on death, then the
+  idle stance logic sub_42AA86 / vt+164h chooses a new one). Look at `CanAttack` (target kept after HP 0),
+  `Unit.AnimationMoveOrAttack` / `_attackPoseUntil` and the attack orders' end conditions.
