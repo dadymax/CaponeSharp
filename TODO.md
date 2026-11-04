@@ -1114,3 +1114,27 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   it); the pick is by pixels — the frontmost tile whose picture is opaque at the click, and only a plain building
   counts. Portraits follow the block's district (block table +8, as the EXE's sub_4025F0): slum "info slum",
   middle "info hall", center "info hotel 2". MCP-checked: lawn → nothing, building base and upper part → selected.
+
+## User requests (2026-11-04) — not started
+
+- [ ] 17. Brownouts only on businesses already seen. The player's brownout button (and raids / demolition) works only
+  on a business the player has seen; a computer player must follow the same rule: it may black out (or otherwise
+  harm) only businesses it has seen while scouting with its own or its allies' units. Needs a per-player "seen"
+  record of companies (the human's fog of war already keeps one for the local player: `FogOfWar` last-seen state)
+  extended to computer players, and `ComputerPlayer.BrownoutTarget` limited to seen companies. Check what the EXE
+  does for the player's menu (a company in the fog shows its last seen state) and keep the same rule.
+- [ ] 18. Move unit and business parameters out of the code into JSON files the user can edit; the game must read
+  them from there. Units: everything in the EXE unit table (cost, HP, damage, building damage, hit chance, range,
+  speed, vision, reload, …) plus remake constants (Hit man disguise damage, fortification shot, etc.). Businesses:
+  the catalogue (price, income, HP, build time, grade, district rules), support-business effects, market-share
+  steps, legalization factors, extortion chances. Defaults = today's values from the EXE; `units.json` /
+  `companies2.json` already exist for some keys — extend or replace them, keep the keys in sync with the enums,
+  and add a smoke-test check that the JSON loads and covers every unit type and catalogue row. Document in README.
+- [ ] 19. Pause: the keyboard Pause key freezes the game (units, orders, income, training, construction, police,
+  computer players — the whole game clock) and shows the InfoWin.bmp window (as for the tips) while paused; Pause
+  again (or the window's button) resumes. Check how the EXE pauses (key handler sub_410EC3, texts for "Pause").
+- [ ] 20. Quick save / load: F5 saves, F8 loads, one save slot, no menu; an InfoWin.bmp window says "GAME SAVED" /
+  "GAME LOADED". The save holds the whole game state: episode, map and its random business placement, every unit
+  (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,
+  uncollected money, jobs: construction, repair, training), players' finances, favour and bribes, services and
+  their timers, alliances, police and FBI jobs, fog of war, computer players' state and pending clock events.
