@@ -66,6 +66,22 @@ public static class MapTests
     }
 }
 
+/// <summary>Building cells without a company (PlainBuilding, fnBuildingPlacementOnMapByNumber).</summary>
+public static class PlainBuildingTests
+{
+    [UnitTest]
+    public static void LettersGiveTheEXEObjects()
+    {
+        Assert.Equal(0, PlainBuilding.KindOf('B', 0) ?? -1, "B in a slum block: default building, slum portrait");
+        Assert.Equal(2, PlainBuilding.KindOf('C', 2) ?? -1, "C in a center block");
+        Assert.Equal(1, PlainBuilding.KindOf('D', 1) ?? -1, "D: always a default building");
+        Assert.Equal(PlainBuilding.EmptySpace, PlainBuilding.KindOf('F', 1) ?? -1, "F: empty space");
+        Assert.Equal(PlainBuilding.EmptySpace, PlainBuilding.KindOf('G', 0) ?? -1, "G: empty space");
+        foreach (var letter in "RSIMHP")
+            Assert.True(PlainBuilding.KindOf(letter, 0) == null, $"{letter}: not a plain building");
+    }
+}
+
 /// <summary>Original ↔ map cell coordinates (MapTileMath).</summary>
 public static class CoordinateTests
 {

@@ -33,6 +33,7 @@ public partial class SelectionIcon : TextureRect
         {
             Unit unit => tiles.ResolveTile(unit.UnitData?.Avatar),
             Company company => tiles.ResolveTile(CompanyPortrait(company)),
+            PlainBuilding plain => tiles.ResolveTile(plain.Portrait),
             _ => null,
         };
         if (tile == null)

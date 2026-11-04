@@ -557,7 +557,21 @@ public partial class Main : Node2D
 			else if (selectable is Company company)
 				Sound.Play(company.SelectSound());
 		}
+		else if (PlainBuilding.At(Map, globalPoint) is { } plain)
+		{
+			// A building cell without a company: selectable, no sound (PlainBuilding).
+			if (_plainBuilding == null || !IsInstanceValid(_plainBuilding))
+			{
+				_plainBuilding = new PlainBuilding { Name = "PlainBuilding" };
+				AddChild(_plainBuilding);
+			}
+			_plainBuilding.Place(Map, plain.Cell, plain.Kind);
+			Select(_plainBuilding);
+			GuiGameback.UpdateSelectionIcon(_plainBuilding);
+		}
 	}
+
+	private PlainBuilding _plainBuilding;
 
 	/// <summary>
 	/// Box selection (user): the screen rectangle picks only the player's own gangsters standing in it — never

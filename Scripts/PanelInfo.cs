@@ -138,6 +138,10 @@ public partial class PanelInfo : Control
                         Text(CFormat(T(36), player.Org.MarketShare[type] * 100), InfoX, 0x1D6, InfoWidth, 1, 0);
                 }
                 break;
+            case PlainBuilding plain:
+                // vt+18h: text (21, 0) for a default building, nothing for empty space; no owner, full HP bar.
+                Text(plain.DisplayName, InfoX, 0x18B, InfoWidth, 2, relation);
+                break;
             case Unit unit:
                 Text(unit.DisplayName, InfoX, 0x18B, InfoWidth, 2, relation);
                 Text(UnitKind(unit) + (unit.IsDisguised ? OriginalTexts.Instance.Get(5, 12) : ""), InfoX, 0x1A3, InfoWidth, 3, relation);

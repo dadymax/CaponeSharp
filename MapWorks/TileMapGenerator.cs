@@ -65,6 +65,8 @@ public static class TileMapGenerator
         var mediumBuildings = new Dictionary<Vector2I, Vector2I>();
         // Block letter of every original cell (the EXE's letter grid, filled by sub_420806).
         var letters = new Dictionary<Vector2I, char>();
+        // Building cells without a company (selectable, PlainBuilding): Godot cell → kind code.
+        var plainCells = new Godot.Collections.Dictionary<Vector2I, int>();
         foreach (var vec in map.BlockPlacement)
         {
             var blockPosition = new Vector2I(vec.X, vec.Y);
@@ -156,6 +158,8 @@ public static class TileMapGenerator
                     if ("BCMHDGP".IndexOf(bldngChar) >= 0)
                         opaque.Add(actual);
                     letters[blockPosition + blockCell] = bldngChar;
+                    if (PlainBuilding.KindOf(bldngChar, block.Category) is { } plainKind)
+                        plainCells[actual] = plainKind;
                     if (bldngChar == 'B')
                         mediumBuildings[blockPosition + blockCell] = actual;
 
@@ -245,6 +249,7 @@ public static class TileMapGenerator
         tileMap.SetMeta(MetaRoad, roads);
         tileMap.SetMeta(MetaSand, sand);
         tileMap.SetMeta(MetaNameBases, bases);
+        tileMap.SetMeta(PlainBuilding.MetaCells, plainCells);
         return tileMap;
     }
 
@@ -306,7 +311,7 @@ public static class TileMapGenerator
     }
 
     /// <summary>
-    /// fnProcessMapLoad (0x403BBF�0x403BE9) drops a STARTPOINTS line whose cell is a road, pavement, F or G cell, so
+    /// fnProcessMapLoad (0x403BBF–0x403BE9) drops a STARTPOINTS line whose cell is a road, pavement, F or G cell, so
     /// e.g. SmallNeighborhood's first two lines never get a base (episode 4: Big Jim's base is the third, "to the right").
     /// </summary>
     public static List<Vector2I> UsableStartPoints(OriginalMaps.Map map, IReadOnlyDictionary<Vector2I, char> letters) =>
@@ -342,7 +347,7 @@ public static class TileMapGenerator
         };
     }
 
-    private static Company GetCompany(TileData td) =>
+    public static Company GetCompany(TileData td) =>
         td.GetCustomData(CompanyLayerName).AsGodotObject() as Company;
 
     private static void Shuffle<T>(IList<T> list)
