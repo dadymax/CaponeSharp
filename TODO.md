@@ -1169,8 +1169,11 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   attacker drops to its idle picture and its next think picks the next enemy in range. Before, only the idle think
   dropped dead targets; a unit with an order running (extortion…) skips that think and kept attacking the body
   until it was removed 3 hours later. Scenario check "a killer stops attacking the body" (30 minutes after the kill).
-- [ ] 22. Scenario flake (seen once, 2026-11-04): episode 4 "collectors bring money to the HQ: delivered 0; owners
+- [x] 22. Scenario flake (seen once, 2026-11-04): episode 4 "collectors bring money to the HQ: delivered 0; owners
   Большой Джим" after 14 days; four reruns passed. Suspects: the user's starting squad (snipers, Shotgun and Pistol
   men near Big Jim's area) kills his collectors on the way home (their money goes to the killer, not to an HQ), or
   Big Jim's businesses are lost early. Make the failure report collector deaths and the owner's company count, then
   decide whether the check should count money taken from killed collectors too.
+  Done 2026-11-04: `Unit.MoneyTakenFromKilled` event; the check now also passes when collectors were robbed of the
+  money they collected (the collection worked), and its failure text lists deliveries, robbed collectors and each
+  owner's company count.

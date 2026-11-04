@@ -662,6 +662,9 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
     /// as a deposit (HQ vt+68h). The local killer reads "%s lost $%s." / "$%s stolen from %s." (29,16, victim's
     /// player), the local victim "%s stole $%s." (29,18, killer's player).
     /// </summary>
+    /// <summary>Raised when a killed unit's money goes to its killer (victim, killer, amount) — for tests.</summary>
+    public static event Action<Unit, Team, long> MoneyTakenFromKilled;
+
     public void LoseCarriedMoney(Team killer)
     {
         var amount = CarriedMoney;
@@ -671,6 +674,7 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity
         killer.Org.Deposit(amount);
         var victim = OwnerTeam;
         GD.Print($"Unit {DisplayName} killed: {amount} carried goes to {killer.PlayerName}");
+        MoneyTakenFromKilled?.Invoke(this, killer, amount);
         if (killer.IsCurrentPlayerColor && victim != null)
             Messages.Show(PanelInfo.CFormat(OriginalTexts.Instance.Get(29, 16), victim.PlayerName, PanelInfo.Money(amount)));
         else if (victim?.IsCurrentPlayerColor == true)

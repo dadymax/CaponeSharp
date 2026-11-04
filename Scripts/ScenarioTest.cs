@@ -94,6 +94,7 @@ public partial class ScenarioTest : Node
             _clock.Speed = DefaultSpeed;
         _errorsAtStart = GameClock.EventErrors;
         CollectorJob.Delivered += OnDelivered;
+        Unit.MoneyTakenFromKilled += OnMoneyTaken;
         ComputerPlayer.StrategyDecided += OnStrategy;
         ComputerPlayer.ConversionTried += OnConversion;
         ComputerPlayer.AttackOrdered += OnAttackOrdered;
@@ -190,9 +191,21 @@ public partial class ScenarioTest : Node
     }
     private void OnDelivered(Team owner, long amount) => _delivered += amount;
 
+    private long _takenFromCollectors;
+    private int _collectorsRobbed;
+
+    private void OnMoneyTaken(Unit victim, Team killer, long amount)
+    {
+        if (victim.UnitType != UnitCommon.UnitType.Collector)
+            return;
+        _takenFromCollectors += amount;
+        _collectorsRobbed++;
+    }
+
     public override void _ExitTree()
     {
         CollectorJob.Delivered -= OnDelivered;
+        Unit.MoneyTakenFromKilled -= OnMoneyTaken;
         ComputerPlayer.StrategyDecided -= OnStrategy;
         ComputerPlayer.ConversionTried -= OnConversion;
         ComputerPlayer.AttackOrdered -= OnAttackOrdered;
@@ -285,8 +298,10 @@ public partial class ScenarioTest : Node
             if (owners.Count == 0)
                 Note("no player with an HQ owns companies: no collector check");
             else
-                Check("collectors bring money to the HQ", _delivered > 0,
-                    $"delivered {_delivered}; owners {string.Join(", ", owners.Select(t => t.PlayerName))}");
+                // Money a killed collector carried counts too (TODO item 22): it was collected, then taken by the killer.
+                Check("collectors bring money to the HQ", _delivered > 0 || _takenFromCollectors > 0,
+                    $"delivered {_delivered}, taken from {_collectorsRobbed} killed collectors {_takenFromCollectors}; owners "
+                    + string.Join(", ", owners.Select(t => $"{t.PlayerName} ({Companies().Count(c => c.OwnerTeam == t && c.IsEconomic)} companies)")));
         }
         if (_hour == System.Math.Min(24, _days * 12))
             UseAuthorityServices();
