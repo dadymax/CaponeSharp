@@ -38,6 +38,9 @@ Campaign progress and the quick save are kept in %APPDATA%\Godot\app_userdata\Ca
 (campaign.cfg, quicksave.json). Delete campaign.cfg to start the campaign again.
 
 If the game doesn't start, run CaponeReborn.console.exe to see its messages.
+
+Capone Reborn is free software under the GNU General Public License, version 3 or later (LICENSE.txt),
+with NO WARRANTY. Its source code is published on the project's GitHub page with each release.
 Licences of the engine and libraries: THIRD_PARTY_LICENSES.txt.
 
 Capone Reborn is a fan project, not affiliated with Byte Enchanters or the publishers of Capone / Legal Crime.
@@ -81,6 +84,9 @@ Data/rules.json          прочие числа правил
 (campaign.cfg, quicksave.json). Удалите campaign.cfg, чтобы начать кампанию заново.
 
 Если игра не запускается, запустите CaponeReborn.console.exe — он покажет сообщения игры.
+
+Capone Reborn — свободная программа под лицензией GNU GPL версии 3 или более поздней (LICENSE.txt),
+БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ. Исходный код опубликован на странице проекта на GitHub вместе с каждым выпуском.
 Лицензии движка и библиотек: THIRD_PARTY_LICENSES.txt.
 
 Capone Reborn — любительский проект, не связанный с Byte Enchanters и издателями Capone / Legal Crime.

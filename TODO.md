@@ -1272,7 +1272,12 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Debug / ExportDebug / ExportRelease); the zip is written entry by entry with forward slashes (Windows PowerShell 5.1's
   Compress-Archive and ZipFile.CreateFromDirectory store backslashes). Tested on the unzipped package: smoke, unit and
   scenario checks pass; game.cfg next to the exe is read; without a folder a headless run exits 2 and a windowed run
-  shows the folder dialog, saves original.cfg next to the exe and opens the main menu (window title "Capone Reborn 1.0.0"). An exported game (feature "template") reads `game.cfg` and `Data/*.json` next to its
+  shows the folder dialog, saves original.cfg next to the exe and opens the main menu (window title "Capone Reborn 1.0.0").
+  Licence (user's choice, 2026-11-05): GPL-3.0-or-later — LICENSE (official text), README "License", LICENSE.txt in the
+  package; Godot and .NET are MIT (THIRD_PARTY_LICENSES.txt).
+  Build stall (seen once, 2026-11-05): a piped run of the script stopped after the export wrote the game; not
+  reproduced. The script now runs Godot with its output in builds/*.log (no pipe for MSBuild helpers to hold), node
+  reuse and the shared compiler off, and a 10-minute limit per Godot step. An exported game (feature "template") reads `game.cfg` and `Data/*.json` next to its
   executable (`GameFiles`; the pack leaves `Data/*` out), and original.cfg from there or user://. A new first scene
   `boot.tscn` (`Boot`) asks for the Capone folder with a folder dialog when none is set (also in the editor, which saves
   to originalData/original.cfg), checks it holds Capone.EXE and Chicago.tile, and then loads node_2d.tscn; headless

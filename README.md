@@ -12,7 +12,7 @@ setting in `game.cfg`.
 Most of the code was written by Claude, Anthropic's AI model; see [How it was made](#how-it-was-made).
 
 Current version: **1.0.0** ([CHANGELOG.md](CHANGELOG.md)). Windows builds are on the
-[Releases](../../releases) page.
+[Releases](../../releases) page. Licence: [GPL-3.0-or-later](#license).
 
 ## The game
 
@@ -235,7 +235,8 @@ The release is a Windows package that players unzip and run. They don't need God
    The script exports the game with the `Windows Desktop` preset in `export_presets.cfg`, adds the files below, and
    writes `builds/CaponeReborn-<version>/` and `builds/CaponeReborn-<version>-win64.zip`. Exporting from the
    editor's Project > Export window gives the game alone, without the editable files, readme and licences, so use
-   the script.
+   the script. It takes about 20 seconds; Godot's output goes to `builds/export.log` and `builds/licenses.log`, and
+   a Godot step that runs longer than 10 minutes is stopped with an error.
 6. **Try the package**: unzip it somewhere else, run `CaponeReborn.exe`, pick the Capone folder, play a little.
 
 The package holds:
@@ -244,8 +245,8 @@ The package holds:
   messages), `CaponeReborn.pck` and the `data_CaponeSharp_windows_x86_64` folder
 - the files players may edit, next to the executable: `game.cfg` and `Data/*.json`. An exported game reads these
   from its own folder, not from inside the pack (`Scripts/GameFiles.cs`)
-- `README.txt` for players, in English and Russian (from `tools/release/`), and `THIRD_PARTY_LICENSES.txt`, the
-  Godot engine's licence notices
+- `README.txt` for players, in English and Russian (from `tools/release/`), `LICENSE.txt` (this project's GPL)
+  and `THIRD_PARTY_LICENSES.txt`, the Godot engine's licence notices
 
 It holds no original game files and no `original.cfg`. On the first start the game asks the player for their
 Capone folder and saves it to `original.cfg` next to the executable (or to the user data folder when the game's
@@ -289,7 +290,23 @@ Or, on GitHub: Releases > Draft a new release, pick the tag, paste the version's
 | `tools/` | release build script, the players' readme, the licence notice writer |
 | `docs/` | [tuning guide](docs/TUNING.md), [notes on the port from the GDScript prototype](docs/PORTING.md) |
 
+## License
+
+Copyright (C) 2026 the Capone Reborn contributors.
+
+Capone Reborn is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any
+later version. It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See [LICENSE](LICENSE) for the full text
+(`GPL-3.0-or-later`).
+
+The licence covers this repository: the remake's code, data files and documents. The Windows package also contains
+the Godot Engine and the .NET runtime, both under the MIT licence; their notices are in its
+`THIRD_PARTY_LICENSES.txt`.
+
 ## Legal
 
 Capone Reborn is a fan project. It isn't affiliated with or endorsed by Byte Enchanters or the publishers of Capone
-and *Legal Crime*. This repository contains no files from the original game; to play, you need your own copy.
+and *Legal Crime*. Capone, *Legal Crime* and their files, texts, pictures and sounds belong to their owners and are
+not covered by this project's licence. This repository contains no files from the original game; to play, you need
+your own copy.

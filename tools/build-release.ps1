@@ -4,8 +4,9 @@ builds\CaponeReborn-<version>-win64.zip. The version is application/config/versi
 
 Needs the Godot 4.7.2 .NET editor (-Godot, or the GODOT environment variable) with its .NET export templates
 installed (Godot editor: Editor > Manage Export Templates). The package holds the game, the files players may edit
-(game.cfg, Data\*.json, original.cfg.example), a readme and the licence notices. It holds no original game files and
-no original.cfg: each player picks their Capone folder on the first start.
+(game.cfg, Data\*.json, original.cfg.example), a readme, the licence (LICENSE.txt, GPL-3.0-or-later) and the
+engine's licence notices. It holds no original game files and no original.cfg: each player picks their Capone
+folder on the first start.
 
     powershell -ExecutionPolicy Bypass -File tools\build-release.ps1 [-Godot <path to the Godot .NET editor>]
 #>
@@ -35,10 +36,32 @@ $zip = Join-Path $builds "CaponeReborn-$version-win64.zip"
 if (Test-Path $out) { Remove-Item $out -Recurse -Force }
 New-Item -ItemType Directory -Force $out | Out-Null
 
+# Godot's .NET build runs MSBuild, whose helper processes may stay alive for minutes and keep an inherited output
+# pipe open, so a caller reading the script's output waits for them. They are told not to stay, and Godot's output
+# goes to log files in builds\ instead of a pipe; a Godot run that takes over $Minutes minutes is stopped.
+$env:MSBUILDDISABLENODEREUSE = '1'
+$env:UseSharedCompilation = 'false'
+function Invoke-Godot([string]$Name, [string]$Arguments, [int]$Minutes = 10) {
+    $log = Join-Path $builds "$Name.log"
+    $p = Start-Process -FilePath $Godot -ArgumentList $Arguments -NoNewWindow -PassThru `
+        -RedirectStandardOutput $log -RedirectStandardError "$log.err"
+    $null = $p.Handle  # keeps ExitCode readable after the wait (Windows PowerShell)
+    if (-not $p.WaitForExit($Minutes * 60000)) {
+        & taskkill.exe /T /F /PID $p.Id | Out-Null
+        Write-Error "Godot ($Name) didn't finish in $Minutes minutes and was stopped; see $log"
+        exit 1
+    }
+    if ($p.ExitCode -ne 0) {
+        Get-Content $log, "$log.err" -Tail 15 -ErrorAction SilentlyContinue | Write-Host
+    }
+    return $p.ExitCode
+}
+
 Write-Host "Exporting Capone Reborn $version to $out ..."
-& $Godot --headless --path $project --export-release 'Windows Desktop' (Join-Path $out 'CaponeReborn.exe')
-if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $out 'CaponeReborn.exe'))) {
-    Write-Error "Godot export failed (exit code $LASTEXITCODE). Are the 4.7.2 .NET export templates installed?"
+$exe = Join-Path $out 'CaponeReborn.exe'
+$code = Invoke-Godot 'export' "--headless --path `"$project`" --export-release `"Windows Desktop`" `"$exe`""
+if ($code -ne 0 -or -not (Test-Path $exe)) {
+    Write-Error "Godot export failed (exit code $code; log builds\export.log). Are the 4.7.2 .NET export templates installed?"
     exit 1
 }
 
@@ -47,12 +70,14 @@ Copy-Item (Join-Path $project 'game.cfg') $out
 New-Item -ItemType Directory -Force (Join-Path $out 'Data') | Out-Null
 Copy-Item (Join-Path $project 'Data\*.json') (Join-Path $out 'Data')
 Copy-Item (Join-Path $project 'originalData\original.cfg.example') (Join-Path $out 'original.cfg.example')
+Copy-Item (Join-Path $project 'LICENSE') (Join-Path $out 'LICENSE.txt')
 $readme = [IO.File]::ReadAllText((Join-Path $PSScriptRoot 'release\README.txt'), [Text.Encoding]::UTF8)
 [IO.File]::WriteAllText((Join-Path $out 'README.txt'), $readme.Replace('{VERSION}', $version), (New-Object Text.UTF8Encoding $true))
 
-& $Godot --headless --path $project --script res://tools/licenses.gd -- (Join-Path $out 'THIRD_PARTY_LICENSES.txt')
-if (-not (Test-Path (Join-Path $out 'THIRD_PARTY_LICENSES.txt'))) {
-    Write-Error 'Writing THIRD_PARTY_LICENSES.txt failed'
+$notices = Join-Path $out 'THIRD_PARTY_LICENSES.txt'
+$code = Invoke-Godot 'licenses' "--headless --path `"$project`" --script res://tools/licenses.gd -- `"$notices`""
+if (-not (Test-Path $notices)) {
+    Write-Error "Writing THIRD_PARTY_LICENSES.txt failed (exit code $code; log builds\licenses.log)"
     exit 1
 }
 

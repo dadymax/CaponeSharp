@@ -5,6 +5,7 @@ Versions follow [semantic versioning](https://semver.org). Each release is tagge
 ## 1.0.0 — 2026-11-05
 
 First public release: the 21-episode campaign of Capone (1997) is playable on the original game's files.
+Licensed under GPL-3.0-or-later.
 
 - Main menu, mission briefings, win and defeat screens, campaign progress.
 - Maps built from the original city blocks; fog of war, minimap, the original cursors, sounds and voices.
