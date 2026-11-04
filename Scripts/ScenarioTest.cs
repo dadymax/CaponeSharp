@@ -723,7 +723,15 @@ public partial class ScenarioTest : Node
         var full = target.CanBeAttacked.HP;
         _pending.Add((_hour + 6, "a fortification shoots enemy units", () =>
             !IsInstanceValid(target) || target.IsDead || target.CanBeAttacked.HP < full,
-            () => $"{company} fortification {company.IsFortification}, target at {target.Cell} HP {target.CanBeAttacked.HP}/{full}"));
+            () =>
+            {
+                var detail = $"{company} fortification {company.IsFortification}, target at "
+                             + (IsInstanceValid(target) ? $"{target.Cell} HP {target.CanBeAttacked.HP}/{full}" : "gone");
+                // Done: back to an unowned legal company, so it doesn't shoot other checks' units (collectors).
+                if (IsInstanceValid(company) && company.OwnerTeam != null)
+                    company.ReleaseToNeutral();
+                return detail;
+            }));
     }
 
     private void KillACollector()
