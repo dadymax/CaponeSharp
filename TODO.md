@@ -1195,3 +1195,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   `aspect="keep"`, `resizable=true` — the game draws at 800×600 and the picture is scaled to the window with black
   bars. MCP-checked at 1500×900: the menu, briefing and episode (panel, tip window) keep their layout and clicks map
   correctly. Note for MCP tests: game_click takes window coordinates, so with a resized window they must be scaled.
+- [ ] 24. Mouse capture and edge scrolling (user request 2026-11-04): during an episode the mouse stays inside the
+  game window (Godot `Input.MouseMode = Confined`, released in menus, windows and on pause / focus loss), and a
+  cursor at the edge of the screen scrolls the map that way (all four edges and the corners). With the scaled
+  window (item 23) the edge is the edge of the window, including the black bars. Check what the EXE does (scroll
+  speed, edge width in pixels, whether the bottom panel area counts) in its mouse-move / timer code, and how
+  `CameraController` scrolls with the arrow keys today; keep the camera limits.
