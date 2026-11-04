@@ -983,6 +983,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   (H − 1 − j) (sub_420790); sprite facings use fixed screen vectors. Standard start points now sit exactly on their B
   building (the old "one row off" was the mirroring). Start points on R / F / S / G cells are dropped, as
   fnProcessMapLoad does.
+  Episode 4 base placement confirmed by the user's playtest of the original (2026-11-04): Big Jim's HQ is on the
+  LEFT (the first start point, first free in list order, sub_43BDB7) while his snipers and he himself (.epi UNIT
+  lines) stand on the right, as the tip says. The remake does the same; no change to the HQ placement.
   Fix plan: Down = (−20, 9.5); place block rows without the flip; keep
   `GetDirection` on fixed screen vectors (SE/NE/NW/SW are screen directions); re-check `MapTests` (HQ on B cells, start
   points "one row off"), the minimap, fog, vision and MoveMap tests, and the scenario test.
