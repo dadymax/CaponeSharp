@@ -166,7 +166,11 @@ public partial class BoardOrder : Node
         Name = "BoardOrder";
     }
 
-    public override void _Ready() => Walk();
+    public override void _Ready()
+    {
+        if (!SaveGame.Restoring)
+            Walk();
+    }
 
     private void Walk()
     {

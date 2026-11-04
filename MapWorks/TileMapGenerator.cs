@@ -21,6 +21,13 @@ public static class TileMapGenerator
 
     private const string CompanyScenePath = "res://Buildings/Company.tscn";
 
+    /// <summary>
+    /// Loading a save: the businesses as saved (map cell → catalogue row and name) instead of the random placement,
+    /// and the HQ cells in the order the players with a base get them. Null for a new episode.
+    /// </summary>
+    public static Dictionary<Vector2I, (int Row, string Name)> LayoutBusinesses { get; set; }
+    public static List<Vector2I> LayoutHqCells { get; set; }
+
     public static TileMapLayer CreateTileMap(string mapName, int baseCount = 8, Node2D parent = null, bool randomBases = false)
     {
         GD.Randomize();
@@ -125,11 +132,17 @@ public static class TileMapGenerator
 
             void PlaceBusiness(int grade, TileData data, Vector2I at)
             {
-                var entry = businesses.RandomLegal(grade, block.Category);
+                (int Row, string Name) saved = default;
+                var fromSave = LayoutBusinesses != null && LayoutBusinesses.TryGetValue(at, out saved);
+                if (LayoutBusinesses != null && !fromSave)
+                    return; // not a business in the save (a plain building, or demolished)
+                var entry = fromSave ? businesses.Get(saved.Row) : businesses.RandomLegal(grade, block.Category);
                 if (entry == null)
                     return;
                 var c = companyScene.Instantiate<Company>();
                 c.InitBusiness(entry, cityBlock, at);
+                if (fromSave)
+                    c.CompanyName = saved.Name;
                 cityBlock.AddCompany(at, c);
                 data.SetCustomData(CompanyLayerName, c);
             }
@@ -191,7 +204,7 @@ public static class TileMapGenerator
                             // otherwise a plain building); M, H: always grade 3. The kind is a random legal catalogue
                             // row of that grade (fnSelectBuildingRandomly; every legal row allows any district).
                             var grade = bldngChar switch { 'B' => 1, 'C' => 2, _ => 3 };
-                            if (grade < 3 && GD.Randf() >= GameConfig.CompanyChance)
+                            if (LayoutBusinesses == null && grade < 3 && GD.Randf() >= GameConfig.CompanyChance)
                             {
                                 skipped.Add((grade, td, actual));
                                 break;
@@ -213,7 +226,7 @@ public static class TileMapGenerator
                 }
 
             // User's rule: middle-class and center blocks always have a business (a C cell first, then a B).
-            if (GameConfig.MinOneCompanyInRichBlocks && block.Category is 1 or 2 && cityBlock.Companies.Count(c => c.IsEconomic) == 0
+            if (LayoutBusinesses == null && GameConfig.MinOneCompanyInRichBlocks && block.Category is 1 or 2 && cityBlock.Companies.Count(c => c.IsEconomic) == 0
                 && skipped.Count > 0)
             {
                 var pick = skipped.OrderByDescending(x => x.Grade).ThenBy(_ => GD.Randi()).First();
@@ -280,6 +293,25 @@ public static class TileMapGenerator
             GD.PrintErr($"TileMapGenerator: {startPoints.Count} usable start points, {baseCount} bases needed");
 
         var bases = new Godot.Collections.Array();
+        if (LayoutHqCells != null)
+        {
+            // Loading a save: the HQs stand where they stood.
+            foreach (var cell in LayoutHqCells)
+            {
+                var data = tileMap.GetCellTileData(cell);
+                if (data == null)
+                    continue;
+                var hq = GetCompany(data);
+                if (hq == null)
+                {
+                    hq = companyScene.Instantiate<Company>();
+                    hq.InitBuilding(CompanyCommon.CompanyType.HQ, cell);
+                    data.SetCustomData(CompanyLayerName, hq);
+                }
+                bases.Add(new Godot.Collections.Array { cell, hq });
+            }
+            return bases;
+        }
         foreach (var startPoint in startPoints)
         {
             if (bases.Count >= baseCount)

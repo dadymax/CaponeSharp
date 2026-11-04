@@ -39,6 +39,8 @@ public partial class StealOrder : Node
 
     public override void _Ready()
     {
+        if (SaveGame.Restoring)
+            return;
         _thief.WalkTo(_target);
         _walking = true;
     }

@@ -108,6 +108,8 @@ public partial class CityBlock : IScheduled
     /// <summary>vt+178h: a company of this block got a new owner.</summary>
     public void OnCompanyAcquired(Company company)
     {
+        if (SaveGame.Restoring)
+            return; // owner entries and collectors come back from the save
         var owner = company.OwnerTeam;
         if (owner == null || owner.HqCompany == null || Owners.ContainsKey(owner))
             return;

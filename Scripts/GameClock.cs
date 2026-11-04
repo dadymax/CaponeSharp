@@ -203,6 +203,13 @@ public partial class GameClock : Node
 
     private static bool TargetAlive(IScheduled target) => target is not GodotObject o || IsInstanceValid(o);
 
+    /// <summary>Loading a save: the game time (the events are scheduled again by the loader).</summary>
+    public void RestoreTime(double minutes)
+    {
+        Minutes = minutes;
+        _lastTurn = Turn;
+    }
+
     /// <summary>Real seconds (at the current speed) that <paramref name="minutes"/> game minutes take.</summary>
     public double RealSecondsFor(double minutes) => minutes / MinutesPerRealSecond / _speed;
 

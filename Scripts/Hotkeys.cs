@@ -38,6 +38,13 @@ public partial class Hotkeys : Node
                 GetViewport().SetInputAsHandled();
             return;
         }
+        // F8: quick load.
+        if (key.Keycode == Key.F8)
+        {
+            if (Main.Instance?.QuickLoad() == true)
+                GetViewport().SetInputAsHandled();
+            return;
+        }
         // F5: quick save (TODO item 20; one slot, no menu).
         if (key.Keycode == Key.F5)
         {

@@ -132,6 +132,14 @@ A computer player then blacks out the block where its main enemy (you, unless al
 like you would (politician favour points and bribe money). Like you, it can only target businesses it has seen with
 its own or its allies' units and buildings.
 
+## Quick save and load
+
+F5 saves the running episode, F8 loads it (one slot, `user://quicksave.json`; on Windows
+`%APPDATA%\Godotpp_userdata\CaponeSharp\quicksave.json`). The save holds the whole game: the map's business
+layout, every unit with its order, every company and business with its jobs, the players' money, favour and services,
+the computer players, training, victory progress, statistics, the fog of war and the pending timed events. To check
+the round trip: `godot --headless --fixed-fps 60 --path . -- --save-load-test=7 [--hours=200]`.
+
 ## Path search
 
 By default units find their way like the 1997 game: step by step toward the target, with a detour when blocked

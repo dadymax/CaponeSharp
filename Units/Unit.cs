@@ -635,6 +635,8 @@ public partial class Unit : CharacterBody2D, ISelectable, IGameEntity, ISchedule
 
     private void StartPayroll()
     {
+        if (SaveGame.Restoring)
+            return; // a loaded unit gets its payday back from the saved events
         var clock = GameClock.Instance;
         clock?.ScheduleIn(GameClock.MinutesPerDay, this, "payday");
     }

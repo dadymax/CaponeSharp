@@ -19,7 +19,7 @@ namespace Capone;
 /// </summary>
 public partial class CollectorJob : Node, IScheduled
 {
-    public string SaveId { get; } = SaveIds.Next("collector");
+    public string SaveId { get; private set; } = SaveIds.Next("collector");
 
     public void OnClockEvent(string kind, long arg)
     {

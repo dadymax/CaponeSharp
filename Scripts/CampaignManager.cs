@@ -214,20 +214,22 @@ public partial class CampaignManager : Node
     /// Starts the timed events once the map, the bases and the units exist: the players' hourly statistics and
     /// debt interest, the blocks' weekly collector dispatch, the companies' income, healing and weekly reset.
     /// </summary>
-    public void StartEconomy()
+    /// <param name="scheduleEvents">False when a save is loaded: its events are scheduled from the file.</param>
+    public void StartEconomy(bool scheduleEvents = true)
     {
         var clock = GameClock.Instance;
         if (clock == null || MainScene == null)
             return;
         if (Police.Instance == null)
             MainScene.AddChild(new Police { Name = "Police" });
+        foreach (var team in Teams.TeamsInGame.Values.Where(t => t.Kind != 0 && !t.IsCurrentPlayerColor && t.Org != null))
+            team.Ai = new ComputerPlayer(team);
+        if (!scheduleEvents)
+            return;
         foreach (var team in Teams.TeamsInGame.Values)
             team.Org?.Start(clock);
-        foreach (var team in Teams.TeamsInGame.Values.Where(t => t.Kind != 0 && !t.IsCurrentPlayerColor && t.Org != null))
-        {
-            team.Ai = new ComputerPlayer(team);
+        foreach (var team in Teams.TeamsInGame.Values.Where(t => t.Ai != null))
             team.Ai.Start(clock);
-        }
         foreach (var block in CityBlock.All)
             block.Start(clock);
         var companies = MainScene.GetTree().GetNodesInGroup(Company.GroupName).OfType<Company>().ToList();

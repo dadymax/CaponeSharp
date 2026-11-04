@@ -100,6 +100,8 @@ public partial class PoliceJob : Node
 
     public override void _Ready()
     {
+        if (SaveGame.Restoring)
+            return;
         Sound.Play("Police_s.wav");
         _car.WalkToCell(_gangster.Cell);
         _walking = true;

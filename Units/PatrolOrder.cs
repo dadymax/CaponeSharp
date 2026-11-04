@@ -11,7 +11,7 @@ namespace Capone;
 /// </summary>
 public partial class PatrolOrder : Node, IScheduled
 {
-    public string SaveId { get; } = SaveIds.Next("patrol");
+    public string SaveId { get; private set; } = SaveIds.Next("patrol");
 
     public void OnClockEvent(string kind, long arg)
     {
@@ -42,7 +42,11 @@ public partial class PatrolOrder : Node, IScheduled
 
     public Vector2I Target => _target;
 
-    public override void _Ready() => Walk();
+    public override void _Ready()
+    {
+        if (!SaveGame.Restoring)
+            Walk();
+    }
 
     private void Walk()
     {

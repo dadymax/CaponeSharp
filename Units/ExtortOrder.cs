@@ -10,7 +10,7 @@ namespace Capone;
 /// </summary>
 public partial class ExtortOrder : Node, IScheduled
 {
-    public string SaveId { get; } = SaveIds.Next("extort");
+    public string SaveId { get; private set; } = SaveIds.Next("extort");
 
     public void OnClockEvent(string kind, long arg)
     {
@@ -60,6 +60,8 @@ public partial class ExtortOrder : Node, IScheduled
 
     public override void _Ready()
     {
+        if (SaveGame.Restoring)
+            return;
         _unit.WalkTo(_company);
         _walking = true;
     }

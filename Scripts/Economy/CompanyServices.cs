@@ -132,7 +132,7 @@ public static class CompanyServices
 /// <summary>The raid car's job (sub_445D72): drive to the business, raid it after 15 minutes, drive back and leave.</summary>
 public partial class PoliceRaid : Node, IScheduled
 {
-    public string SaveId { get; } = SaveIds.Next("raid");
+    public string SaveId { get; private set; } = SaveIds.Next("raid");
 
     /// <summary>15 minutes after arriving the business is closed, then the car drives back.</summary>
     public void OnClockEvent(string kind, long arg)

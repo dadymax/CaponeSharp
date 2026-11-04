@@ -1158,7 +1158,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Fix 2026-11-04 (user: "pause not work at all"): `Hotkeys` matched keys by physical code only, and the real Pause
   key has no usable physical code on Windows (the MCP test event had both). Pause is now matched by key code
   (`Hotkeys.IsPauseKey`, also used by the window to resume); re-checked with a key-code-only event.
-- [ ] 20. Quick save / load: F5 saves, F8 loads, one save slot, no menu; an InfoWin.bmp window says "GAME SAVED" /
+- [x] 20. Quick save / load: F5 saves, F8 loads, one save slot, no menu; an InfoWin.bmp window says "GAME SAVED" /
   "GAME LOADED". The save holds the whole game state: episode, map and its random business placement, every unit
   (type, owner, position, HP, orders, carried money, disguise, salary), every company / business (owner, row, HP,
   uncollected money, jobs: construction, repair, training), players' finances, favour and bribes, services and
@@ -1180,6 +1180,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   PoliceJob, PoliceRaid); training jobs; victory progress; statistics; fog; pending events (dead units' left out).
   Scenario check "the game state can be captured for a save" (daily: serializes, all orders saveable, every event's
   target is in the save). MCP-checked in episode 7. Next: step 3 (F8 rebuilds the episode from the file).
+  Step 3 done 2026-11-04 — F8 (`Main.QuickLoad`): the scene reloads, `StartEpisode` builds the map from the saved
+  layout (`SaveGame.PrepareMap` → `TileMapGenerator.LayoutBusinesses / LayoutHqCells`: the same business row and name
+  on each cell, HQs on their cells, an HQ's former business kept), skips the starting units and the fresh events
+  (`StartEconomy(scheduleEvents: false)`), and `SaveGame.Apply` puts the state back (`Scripts/Save/LoadStates.cs`:
+  clock, world, alliances, HQs, companies, units created with their saved ids, then cars / targets / orders, finances,
+  computer players, blocks, training, victory, statistics, fog) and schedules the saved events again. While restoring
+  (`SaveGame.Restoring`) orders don't start walking, units don't start a payday and blocks don't send collectors.
+  "Игра загружена." / "Нет сохранённой игры." in the info window. Round-trip check `-- --save-load-test[=ep]
+  [--hours=N]` (save, load through F8, compare the two captures field by field, play two more days): no
+  differences in episodes 1, 4, 6, 7, 8, 13, 15 (60 and 200 hours in). MCP-checked F5 / F8 in episode 7.
 - [x] 21. A unit keeps attacking a dead body: when unit 1 kills unit 2, unit 1 goes on playing its attack
   animation at unit 2's corpse. When the target dies, the attacker must drop it and stand (idle picture), or pick
   the next enemy in range as the original does after a kill (check the EXE: target cleared on death, then the

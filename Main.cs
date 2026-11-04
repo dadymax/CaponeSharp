@@ -133,6 +133,13 @@ public partial class Main : Node2D
 			skipBriefing = true;
 		}
 
+		var saveLoadTest = SaveLoadTest.Requested(args);
+		if (saveLoadTest)
+		{
+			episode = SaveLoadTest.Episode(args);
+			skipBriefing = true;
+		}
+
 		YSortEnabled = true;
 		_selectionBox = new SelectionBox { Name = "SelectionBox" };
 		AddChild(_selectionBox);
@@ -148,6 +155,8 @@ public partial class Main : Node2D
 			StartEpisode(episode);
 			if (scenarioTest)
 				AddChild(new ScenarioTest(episode));
+			if (saveLoadTest)
+				AddChild(new SaveLoadTest { Name = "SaveLoadTest" });
 		}
 		else if (afterEndScreen)
 			ShowBriefing(episode);
@@ -243,6 +252,11 @@ public partial class Main : Node2D
 		var scenario = campaignManager.StartScenario(this, episode - 1);
 		if (scenario == null)
 			return;
+		// F8: a saved game is rebuilt on its own map layout, without starting units or fresh events.
+		var load = SaveGame.PendingLoad;
+		SaveGame.PendingLoad = null;
+		if (load != null)
+			SaveGame.PrepareMap(load);
 
 		Map = TileMapGenerator.CreateTileMap(scenario.MapFile, campaignManager.BaseCount(), this, scenario.RandomBases);
 		if (Map == null)
@@ -264,8 +278,11 @@ public partial class Main : Node2D
 			MoveChild(_orderMarker, -1); // above the new map
 
 		campaignManager.TileMap = Map;
-		campaignManager.AssignBases();
-		campaignManager.SpawnStartingUnits();
+		if (load == null)
+		{
+			campaignManager.AssignBases();
+			campaignManager.SpawnStartingUnits();
+		}
 		// sub_40A160: the view starts on the local player's headquarters, or (no base, e.g. episode 4) on one of the
 		// player's units (sub_409FE7).
 		var player = Teams.GetCurrentPlayerTeam();
@@ -273,11 +290,27 @@ public partial class Main : Node2D
 		start ??= GetTree().GetNodesInGroup(Unit.GroupName).OfType<Unit>().FirstOrDefault(u => u.OwnerTeam == player && !u.IsDead);
 		if (start != null)
 			Minimap.CenterView(start.GlobalPosition);
-		campaignManager.StartEconomy();
+		campaignManager.StartEconomy(scheduleEvents: load == null);
+		if (load != null)
+		{
+			SaveGame.Apply(load, GetTree());
+			var loadedStart = (Node2D)player?.HqCompany ?? GetTree().GetNodesInGroup(Unit.GroupName).OfType<Unit>()
+				.FirstOrDefault(u => u.OwnerTeam == player && !u.IsDead);
+			if (loadedStart != null)
+				Minimap.CenterView(loadedStart.GlobalPosition);
+		}
 		AddChild(new DebugCommands { Name = "Debug" });
 		GD.Print($"Main: episode {scenario.EpisodeNumber} loaded — map: {scenario.MapFile}, funds: {scenario.Funds}, players: {scenario.Players.Count}");
 		// sub_40A160 → sub_414760(1): in a single-player game the episode's tips open in the info window.
-		if (ScenarioTest.Instance == null && DisplayServer.GetName() != "headless" && !string.IsNullOrWhiteSpace(scenario.TipText))
+		if (load != null)
+		{
+			if (DisplayServer.GetName() != "headless")
+			{
+				var ru = OriginalData.TextLanguage == OriginalExe.Language.Russian;
+				ShowInfoWindow(ru ? "Загрузка" : "Load", ru ? "Игра загружена." : "GAME LOADED", null);
+			}
+		}
+		else if (ScenarioTest.Instance == null && DisplayServer.GetName() != "headless" && !string.IsNullOrWhiteSpace(scenario.TipText))
 			ShowInfoWindow(OriginalTexts.Instance.Get(5, 85), scenario.TipText, null);
 	}
 
@@ -310,6 +343,29 @@ public partial class Main : Node2D
 	}
 
 	public bool IsPausedByPlayer => _pauseWindow != null && IsInstanceValid(_pauseWindow);
+
+	/// <summary>
+	/// F8 (TODO item 20): loads the quick save — the scene starts again and the saved episode is rebuilt from the file
+	/// (StartEpisode → SaveGame.PrepareMap / Apply). Without a save the info window says so.
+	/// </summary>
+	public bool QuickLoad()
+	{
+		if (GetTree().Root.FindChild("InfoWindow", true, false) != null)
+			return false;
+		var state = SaveGame.Read();
+		if (state == null)
+		{
+			var ru = OriginalData.TextLanguage == OriginalExe.Language.Russian;
+			ShowInfoWindow(ru ? "Загрузка" : "Load", ru ? "Нет сохранённой игры." : "There is no saved game.", null);
+			return true;
+		}
+		SaveGame.PendingLoad = state;
+		PendingEpisode = 0;
+		_restartEpisode = (int)state["episode"];
+		GetTree().Paused = false;
+		GetTree().CallDeferred(SceneTree.MethodName.ReloadCurrentScene);
+		return true;
+	}
 
 	/// <summary>F5 (TODO item 20): writes the quick save and says so in the info window.</summary>
 	public bool QuickSave()

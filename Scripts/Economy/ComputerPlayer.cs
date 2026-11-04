@@ -68,7 +68,7 @@ public partial class ComputerPlayer : IScheduled
     private Unit _intruder;
     private Team _target;
     /// <summary>+1F8h: business type 1–3 (bootlegging, entertainment, gambling) this AI converts to, chosen at random.</summary>
-    private readonly OriginalBusinessTable.BusinessType _style;
+    private OriginalBusinessTable.BusinessType _style;
 
     public ComputerPlayer(Team team)
     {
