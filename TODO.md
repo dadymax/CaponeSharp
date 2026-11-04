@@ -1177,7 +1177,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Done 2026-11-04: `Unit.MoneyTakenFromKilled` event; the check now also passes when collectors were robbed of the
   money they collected (the collection worked), and its failure text lists deliveries, robbed collectors and each
   owner's company count.
-- [ ] 23. Resizable / maximized game window (user playtest 2026-11-04, screenshots of a maximized 2548×1428 window):
+- [x] 23. Resizable / maximized game window (user playtest 2026-11-04, screenshots of a maximized 2548×1428 window):
   everything is laid out for 800×600 and breaks when the window is bigger:
   - main menu: the 800×600 picture stays in the top-left corner; the rest is grey, and the in-game bottom panel
     (normally below y 600, off screen) shows at the bottom of the window behind the menu;
@@ -1191,3 +1191,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   and minimap frame from the viewport size. Ask the user which; (a) first is cheap. Check the menus, briefing, end
   screens, info / alliance / money / rank windows, the panel, minimap clicks, map clicks (canvas transform) and
   the MCP click coordinates afterwards.
+  Done 2026-11-04, option (a) chosen by the user: project.godot `window/stretch/mode="viewport"`,
+  `aspect="keep"`, `resizable=true` — the game draws at 800×600 and the picture is scaled to the window with black
+  bars. MCP-checked at 1500×900: the menu, briefing and episode (panel, tip window) keep their layout and clicks map
+  correctly. Note for MCP tests: game_click takes window coordinates, so with a resized window they must be scaled.
