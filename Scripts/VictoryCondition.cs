@@ -8,7 +8,7 @@ namespace Capone;
 /// One victory condition for one player, from a VCOND line. Field layouts follow the EXE's per-type readers
 /// (sub_4670A5, 0x4678EA…0x467BFA); the meaning of some values is still a guess and marked so.
 /// </summary>
-public class VictoryCondition
+public partial class VictoryCondition
 {
     public enum ConditionType
     {

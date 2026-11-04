@@ -38,6 +38,13 @@ public partial class Hotkeys : Node
                 GetViewport().SetInputAsHandled();
             return;
         }
+        // F5: quick save (TODO item 20; one slot, no menu).
+        if (key.Keycode == Key.F5)
+        {
+            if (Main.Instance?.QuickSave() == true)
+                GetViewport().SetInputAsHandled();
+            return;
+        }
         // Physical keys: the same places on a Russian layout.
         var code = key.PhysicalKeycode;
         if (code is >= Key.Key0 and <= Key.Key9)

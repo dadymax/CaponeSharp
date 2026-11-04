@@ -12,7 +12,7 @@ namespace Capone;
 /// slot takes the running average of its samples; a slot holds <see cref="Period"/> samples. When all 31 slots are
 /// full, neighbouring pairs are averaged into 15, the last slot moves to slot 15 and the period doubles.
 /// </summary>
-public class Statistics : IScheduled
+public partial class Statistics : IScheduled
 {
     public string SaveId => "stats";
 

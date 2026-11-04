@@ -19,7 +19,7 @@ namespace Capone;
 /// pickup (vt+184h). Job finished without companies (vt+17Ch): the owner entry is removed.</item>
 /// </list>
 /// </summary>
-public class CityBlock : IScheduled
+public partial class CityBlock : IScheduled
 {
     public string SaveId => $"block:{Number}";
 

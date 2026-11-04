@@ -11,7 +11,7 @@ namespace Capone;
 /// training centers (vt+84h); when it ends the player pays the price and the army service, and the unit appears next
 /// to the center. If either can't be paid, nothing appears.
 /// </summary>
-public static class Training
+public static partial class Training
 {
     public class Recruit
     {

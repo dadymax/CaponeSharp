@@ -179,11 +179,11 @@ public partial class GameClock : Node
     }
 
     /// <summary>The pending named events in time order, for a save file (targets that are gone are left out).</summary>
-    public List<(long Minute, long Seq, string Target, string Kind, long Arg)> SnapshotEvents()
+    public List<(long Minute, long Seq, string Target, string Kind, long Arg)> SnapshotEvents(Func<IScheduled, bool> keep = null)
     {
         var list = new List<(long, long, string, string, long)>();
         foreach (var (pending, when) in _events.UnorderedItems)
-            if (pending.Target != null && TargetAlive(pending.Target))
+            if (pending.Target != null && TargetAlive(pending.Target) && (keep == null || keep(pending.Target)))
                 list.Add((when.minute, when.seq, pending.Target.SaveId, pending.Kind, pending.Arg));
         list.Sort((a, b) => a.Item1 != b.Item1 ? a.Item1.CompareTo(b.Item1) : a.Item2.CompareTo(b.Item2));
         return list;

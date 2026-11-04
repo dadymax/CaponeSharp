@@ -132,6 +132,54 @@ public partial class ScenarioTest : Node
     private void OnAttackOrdered(Team team, Company center) => _aiAttackOrders++;
 
     /// <summary>
+    /// Save / load step 2: the whole state can be captured and written as JSON; every unit's order is saveable and
+    /// every pending clock event points at an object in the save (or a fixed target: stats, victory, training).
+    /// </summary>
+    private void CheckSaveCapture()
+    {
+        System.Text.Json.Nodes.JsonObject state;
+        string text;
+        try
+        {
+            state = SaveGame.Capture();
+            text = state?.ToJsonString();
+        }
+        catch (System.Exception e)
+        {
+            Check("the game state can be captured for a save", false, e.ToString());
+            return;
+        }
+        if (state == null)
+        {
+            Note("no save capture (no episode)");
+            return;
+        }
+        var ids = new System.Collections.Generic.HashSet<string> { "stats", "victory", "training" };
+        foreach (var c in state["companies"]!.AsArray())
+            ids.Add((string)c!["id"]);
+        foreach (var b in state["blocks"]!.AsArray())
+            ids.Add($"block:{(int)b!["number"]}");
+        foreach (var t in state["teams"]!.AsArray())
+        {
+            ids.Add($"org:{(string)t!["color"]}");
+            ids.Add($"ai:{(string)t["color"]}");
+        }
+        var unsaveableOrders = 0;
+        foreach (var u in state["units"]!.AsArray())
+        {
+            ids.Add((string)u!["id"]);
+            if (u["order"]?["id"] is { } orderId)
+                ids.Add((string)orderId);
+        }
+        foreach (var u in Units().Where(u => !u.IsDead && u.CurrentOrder != null && IsInstanceValid(u.CurrentOrder)))
+            if (u.CurrentOrder is not ISaveableOrder)
+                unsaveableOrders++;
+        var missing = state["events"]!.AsArray().Select(e => (string)e!["target"]).Where(t => !ids.Contains(t)).Distinct().ToList();
+        Check("the game state can be captured for a save", text.Length > 0 && unsaveableOrders == 0 && missing.Count == 0,
+            $"{text.Length} chars, unsaveable orders {unsaveableOrders}, events for objects not in the save: {string.Join(", ", missing.Take(8))}");
+    }
+
+    /// <summary>
     /// Playtest 2026-11-04: the player's units couldn't attack an enemy HQ. Units of the local player placed near an
     /// enemy HQ and given the Attack order on it must hurt it (or destroy it) within a game day.
     /// </summary>
@@ -301,6 +349,8 @@ public partial class ScenarioTest : Node
                     Check("the money objective follows the weekly net income", vc.CurrentProgress == team.Org.NetIncome,
                         $"progress {vc.CurrentProgress}, net income {team.Org.NetIncome}, target {vc.MoneyTarget}");
             }
+        if (_hour % 24 == 13)
+            CheckSaveCapture();
         // Save / load step 1: every pending event of the game is a named, saveable one.
         if (_hour % 24 == 12 && _clock.ClosureEvents > _testClosures)
             Check("every scheduled game event can be saved", false,

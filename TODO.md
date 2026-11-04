@@ -1170,6 +1170,16 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   `extort:n`, `patrol:n`, `raid:n` (`SaveIds.Next`, reset per episode). Conversion owner kept in a field. Closures
   remain only for tests / debug commands (`ClosureEvents`); scenario check "every scheduled game event can be
   saved", unit test `SaveableClockTests`. Next: step 2 (write the state on F5), step 3 (rebuild it on F8).
+  Step 2 done 2026-11-04 — F5 writes user://quicksave.json (`Scripts/Save/SaveGame.cs`, per-class `SaveState` in
+  `Scripts/Save/SaveStates.cs`) and shows "Игра сохранена." in the info window. Contents: version, episode, game
+  minute, speed, id counter, map; world (legalization, flags); teams (id, kind, name, local, base, HQ, relations, org
+  finances / shares / bribes / favour / services, computer player's parameters, decisions, seen companies, last
+  brownout); every company (cell, kind, block, row, name, owner, HP, uncollected, percent, conversion / repair, fog
+  memory); blocks (power, owners, collectors); living units (type, owner, position, HP, money, flags, disguise,
+  movement, targets, car seats, attack state, order — ExtortOrder, PatrolOrder, StealOrder, BoardOrder, CollectorJob,
+  PoliceJob, PoliceRaid); training jobs; victory progress; statistics; fog; pending events (dead units' left out).
+  Scenario check "the game state can be captured for a save" (daily: serializes, all orders saveable, every event's
+  target is in the save). MCP-checked in episode 7. Next: step 3 (F8 rebuilds the episode from the file).
 - [x] 21. A unit keeps attacking a dead body: when unit 1 kills unit 2, unit 1 goes on playing its attack
   animation at unit 2's corpse. When the target dies, the attacker must drop it and stand (idle picture), or pick
   the next enemy in range as the original does after a kill (check the EXE: target cleared on death, then the

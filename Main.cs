@@ -55,6 +55,8 @@ public partial class Main : Node2D
 	/// <summary>Menu "Переиграть": the episode to start again at once (no briefing).</summary>
 	private static int _restartEpisode;
 	private int _episode;
+	/// <summary>The running episode's number (for the save file).</summary>
+	public int Episode => _episode;
 
 	/// <summary>
 	/// Command line (after "--"): --episode=N starts episode N (default: the saved campaign progress);
@@ -308,6 +310,19 @@ public partial class Main : Node2D
 	}
 
 	public bool IsPausedByPlayer => _pauseWindow != null && IsInstanceValid(_pauseWindow);
+
+	/// <summary>F5 (TODO item 20): writes the quick save and says so in the info window.</summary>
+	public bool QuickSave()
+	{
+		if (Map == null || GetTree().Root.FindChild("InfoWindow", true, false) != null)
+			return false;
+		var russian = OriginalData.TextLanguage == OriginalExe.Language.Russian;
+		var ok = SaveGame.Save();
+		ShowInfoWindow(russian ? "Сохранение" : "Save",
+			ok ? (russian ? "Игра сохранена." : "GAME SAVED") : (russian ? "Не удалось сохранить игру." : "The game could not be saved."),
+			null);
+		return true;
+	}
 
 	/// <summary>The info window (InfoWindow, sub_447CB0) over the game, on the GUI layer.</summary>
 	public InfoWindow ShowInfoWindow(string title, string text, System.Action closed) =>

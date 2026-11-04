@@ -13,7 +13,7 @@ namespace Capone;
 /// The personality is a 13-value parameter table (+210h, setter vt+15Ch) filled by the constructor and by the PLAYER
 /// kind (vt+160h, sub_4626B5); see <see cref="Parameters"/>.
 /// </summary>
-public class ComputerPlayer : IScheduled
+public partial class ComputerPlayer : IScheduled
 {
     public string SaveId => $"ai:{Team.TeamColor.ToHtml()}";
 
