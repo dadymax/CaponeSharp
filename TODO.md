@@ -1083,7 +1083,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   cells per search), used by `Unit.NextMoveDirection` every step; no path → the original walk. Tests
   `PathSearchTests` (wall, building target, car off pavement, no path, costs); the scenario test passes with
   `astar` (about 13 % slower run). README "Path search".
-- [ ] 15. Console error on starting an episode (user, 2026-11-04):
+- [x] 15. Console error on starting an episode (user, 2026-11-04):
   `ERROR: ConfigFile parse error at res://game.cfg:21: Unexpected identifier 'original'.` (from `GameConfig.Load`).
   Cause: item 14 added `pathfinding=original` unquoted; Godot's ConfigFile values are Variant literals, so a string
   must be quoted (`pathfinding="original"`). The parse error makes `ConfigFile.Load` fail, so the whole game.cfg is
@@ -1091,6 +1091,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   The tests didn't catch it (the A* scenario run used the command-line override). Fix: quote the value in game.cfg
   and the README example; accept it unquoted is impossible with ConfigFile, so also log a clear error when the file
   fails to load; add a smoke-test check that game.cfg parses.
+  Done 2026-11-04: `pathfinding="original"` (and the README example) quoted; `GameConfig` logs a clear error when
+  the file can't be read; the smoke test fails when game.cfg doesn't load.
 - [x] 16. Building selection (user playtest 2026-11-04): a click on trees selected a building, and on a tall building
   in a high block it showed a middle-class picture. Causes: the 20 px pick radius reached a building next to the
   clicked tree, and F / G cells (lawns, edge trees, park squares) were selectable "Empty space" with the portrait

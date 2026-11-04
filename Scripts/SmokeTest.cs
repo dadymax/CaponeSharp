@@ -27,12 +27,24 @@ public static class SmokeTest
     private static int _failures;
     private static int _warnings;
 
+    /// <summary>res://game.cfg must parse; a syntax error makes Godot drop the whole file (TODO playtest item 15).</summary>
+    private static void CheckGameConfig()
+    {
+        var cfg = new ConfigFile();
+        var error = cfg.Load(GameConfig.Path);
+        if (error != Error.Ok)
+            Fail($"game.cfg doesn't load: {error}");
+        else
+            GD.Print($"  game.cfg ok: pathfinding {GameConfig.Pathfinding}, company_chance {GameConfig.CompanyChance}");
+    }
+
     /// <summary>Returns the number of failures.</summary>
     public static int Run()
     {
         _failures = 0;
         _warnings = 0;
         GD.Print("=== Smoke test: original data ===");
+        CheckGameConfig();
         CheckExe();
         CheckUnits();
         CheckBusinessesAndTexts();

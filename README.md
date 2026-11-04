@@ -110,7 +110,7 @@ By default units find their way like the 1997 game: step by step toward the targ
 
 ```ini
 [movement]
-pathfinding=astar   ; or original (the default)
+pathfinding="astar"   ; or "original" (the default); text values need quotes
 ```
 
 `astar` (`MapWorks/PathSearch.cs`) plans the cheapest whole path around buildings each step, with the same walking

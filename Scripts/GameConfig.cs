@@ -40,6 +40,9 @@ public static class GameConfig
         return 5f;
     }
 
+    /// <summary>Result of loading game.cfg (the smoke test checks it is Ok).</summary>
+    public static Error LoadError { get; private set; } = Error.Ok;
+
     public enum PathfindingMode { Original, AStar }
 
     /// <summary>
@@ -53,8 +56,12 @@ public static class GameConfig
     public static void Load()
     {
         var cfg = new ConfigFile();
-        if (cfg.Load(Path) == Error.Ok)
+        LoadError = cfg.Load(Path);
+        if (LoadError == Error.Ok)
             Read(cfg);
+        else if (LoadError != Error.FileNotFound)
+            GD.PrintErr($"GameConfig: {Path} can't be read ({LoadError}) — every setting uses its default. "
+                        + "Check the line in the error above; text values need quotes, e.g. pathfinding=\"astar\".");
         // Command-line override for test runs: -- --pathfinding=astar|original
         foreach (var arg in OS.GetCmdlineUserArgs())
             if (arg.StartsWith("--pathfinding="))
