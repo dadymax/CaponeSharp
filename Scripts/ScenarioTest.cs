@@ -596,7 +596,11 @@ public partial class ScenarioTest : Node
             {
                 case 0 when thug.Vehicle == car && car.HasPassengers && !thug.Visible:
                     stage = 1;
-                    car.GoTo(car.Map.MapToLocal(cm.FreeCellNear(start + new Vector2I(3, 3))), false);
+                    // A road cell: a Cadillac can't drive on pavement, so a free cell there may be out of its reach
+                    // (seen once in episode 15 after the map was unmirrored: the car never arrived).
+                    var goal = MoveMap.NearestRoad(start + new Vector2I(3, 3)) is { } road && road != start
+                        ? road : cm.FreeCellNear(start + new Vector2I(3, 3));
+                    car.GoTo(car.Map.MapToLocal(goal), false);
                     return false;
                 case 1 when !car.IsMoving && car.Cell != start:
                     if (thug.Position != car.Position)

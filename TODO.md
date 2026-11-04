@@ -1061,9 +1061,12 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   unit tick (sub_42AA86, 0x42B2EA), which runs once per step. Done: `Unit.CurrentVision` keeps the walking radius
   for one step time (table +18h, 60 game minutes = 1 s) after the last step. Activities 12–27 are the death
   sequence (vision shrinks as the unit dies) — not ported.
-- [ ] 13. Scenario test flake seen once (2026-11-04, with the map-mirroring change): episode 15 Cadillac checks
+- [x] 13. Scenario test flake seen once (2026-11-04, with the map-mirroring change): episode 15 Cadillac checks
   ("boards, rides along and gets out", "destroyed Cadillac hurts its passengers") failed with the car still moving;
   three reruns passed. Check whether the car's route on the now unmirrored map can be too long for the time allowed.
+  Likely cause: the ride's goal was any free cell 3 cells off, which can be pavement a Cadillac may not enter, so the
+  car never arrived. Fixed 2026-11-04: the goal is the nearest road cell (`MoveMap.NearestRoad`); six episode-15 runs
+  and a full run passed (the flake was rare, so watch for it).
 - [ ] 14. Optional advanced path search (user request 2026-11-04). Add a `game.cfg` flag, e.g. `[movement]
   pathfinding=original|astar` (default `original`), and support both in code:
   - `original`: today's `MoveMap` — the EXE's greedy step-by-step walk (sub_4279E7 / 427EF5 / 427CC0 / 428244: cell
