@@ -617,7 +617,9 @@ These replace the open questions Q2–Q7 in `godottry/projectinfo/aithoughts.md`
   Found and fixed with it: the game clock stayed paused after the end screen reloaded the scene (`GameClock.Reset`);
   a hit with no (or a freed) attacker left an object at 0 HP alive (`CanBeAttacked` now always raises HPisZERO);
   a player eliminated by bankruptcy kept the HQ building (now removed, `Company.RemoveHq`).
-- [ ] Scenario checks still to add: the computer player converting and attacking. Done 2026-11-04: the money objective (VCOND 1) follows the weekly net income. Done 2026-11-03: a scripted fight (Thompson man vs an enemy Pistol man at
+- [x] Scenario checks for the remaining rules, done 2026-11-04: the money objective (VCOND 1) follows the weekly net income;
+  a computer player's conversion ends as that business; a computer player that decides to attack the human HQ sends
+  units at the human's center (`ComputerPlayer.StrategyDecided / ConversionTried / AttackOrdered`). Done 2026-11-03: a scripted fight (Thompson man vs an enemy Pistol man at
   the company farthest from the player's units; shots must land and someone must die within a day); collectors bring money
   to the HQ (`CollectorJob.Delivered`); the police arrest and jail a gangster called in by a station. That check found a
   bug: a road-only police car sent back to its station (and the raid car on its way home) circled the pavement ring

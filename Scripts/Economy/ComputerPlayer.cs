@@ -195,11 +195,17 @@ public class ComputerPlayer
     }
 
     /// <summary>Order 4284B0 mode 3 on the other player's training center (vt+8Ch).</summary>
+    /// <summary>For tests: a computer player's strategy (convert, attack the human HQ), conversions and HQ attacks.</summary>
+    public static event Action<Team, bool, bool> StrategyDecided;
+    public static event Action<Team, Company, Company.ConversionResult?> ConversionTried;
+    public static event Action<Team, Company> AttackOrdered;
+
     private static void AttackCenter(Unit unit, Team enemy)
     {
         var center = Training.PrimaryCenter(enemy);
         if (center == null || unit.CanAttack == null)
             return;
+        AttackOrdered?.Invoke(unit.OwnerTeam, center);
         unit.CancelOrder();
         unit.CanAttack.Target = center.CanBeAttacked;
         unit.WalkTo(center);
@@ -306,7 +312,8 @@ public class ComputerPlayer
             bestRow = row;
             bestDist = d;
         }
-        best?.StartConversion(bestRow);
+        var result = best?.StartConversion(bestRow);
+        ConversionTried?.Invoke(Team, best, result);
     }
 
     /// <summary>
@@ -437,6 +444,7 @@ public class ComputerPlayer
         var wasAttacking = _attackHuman;
         if (p[10] != 0)
             _attackHuman = AttackHq(_attackHuman, mine - myThugs);
+        StrategyDecided?.Invoke(Team, _convert, _attackHuman);
         if (_recruitChosen || _recruitThug || _convert || _attackIntruder || _attackHuman != wasAttacking)
             GD.Print($"AI {Team.PlayerName}: strength {mine} (thugs {myThugs}), cash {Org.Cash}, recruit {(_recruitChosen ? chosen.ToString() : _recruitThug ? "Thug" : "-")}, "
                  + $"convert {_convert}, intruder {_intruder?.UnitType.ToString() ?? "-"}, target {_target?.PlayerName ?? "-"}, attack HQ {_attackHuman}");

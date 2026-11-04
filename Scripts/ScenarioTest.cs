@@ -94,6 +94,9 @@ public partial class ScenarioTest : Node
             _clock.Speed = DefaultSpeed;
         _errorsAtStart = GameClock.EventErrors;
         CollectorJob.Delivered += OnDelivered;
+        ComputerPlayer.StrategyDecided += OnStrategy;
+        ComputerPlayer.ConversionTried += OnConversion;
+        ComputerPlayer.AttackOrdered += OnAttackOrdered;
         foreach (var c in Companies())
         {
             if (c.IsHq)
@@ -117,11 +120,33 @@ public partial class ScenarioTest : Node
     }
 
     private long _delivered;
+    private bool _aiAttackDecided;
+    private int _aiAttackOrders;
+
+    private void OnStrategy(Team team, bool convert, bool attackHq) => _aiAttackDecided |= attackHq;
+
+    private void OnAttackOrdered(Team team, Company center) => _aiAttackOrders++;
+
+    /// <summary>A conversion a computer player starts (sub_461F24 → job sub_427050) must end as that business.</summary>
+    private void OnConversion(Team team, Company company, Company.ConversionResult? result)
+    {
+        if (result != Company.ConversionResult.Started || company == null)
+            return;
+        var row = company.Building;
+        var hours = (row?.Value1C ?? 0) / GameClock.MinutesPerHour + 2;
+        _pending.Add((_hour + hours, "a computer player's conversion becomes a business", () =>
+                !IsInstanceValid(company) || company.OwnerTeam != team || row == null || company.Entry == row
+                || (row.Flag2C != 0 && company.Building == null), // +2Ch rows also need the politician at the end
+            () => $"{team.PlayerName}: {company} (row {row?.Name})"));
+    }
     private void OnDelivered(Team owner, long amount) => _delivered += amount;
 
     public override void _ExitTree()
     {
         CollectorJob.Delivered -= OnDelivered;
+        ComputerPlayer.StrategyDecided -= OnStrategy;
+        ComputerPlayer.ConversionTried -= OnConversion;
+        ComputerPlayer.AttackOrdered -= OnAttackOrdered;
         if (_clock != null && IsInstanceValid(_clock))
             _clock.TurnPassed -= OnTurn;
         if (Instance == this)
@@ -197,6 +222,9 @@ public partial class ScenarioTest : Node
             TestHitman();
         if (_hour == 20)
             TestFortification();
+        if (_hour == _days * 24 - 7 && _aiAttackDecided)
+            Check("a computer player that decides to attack sends units at the human's center", _aiAttackOrders > 0,
+                $"{_aiAttackOrders} attack orders");
         if (_hour == _days * 24 - 7)
         {
             // Collectors (sub_428D62) bring the uncollected money of their block home once a week of company income
