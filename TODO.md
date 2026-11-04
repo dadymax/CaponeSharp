@@ -1067,7 +1067,7 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   Likely cause: the ride's goal was any free cell 3 cells off, which can be pavement a Cadillac may not enter, so the
   car never arrived. Fixed 2026-11-04: the goal is the nearest road cell (`MoveMap.NearestRoad`); six episode-15 runs
   and a full run passed (the flake was rare, so watch for it).
-- [ ] 14. Optional advanced path search (user request 2026-11-04). Add a `game.cfg` flag, e.g. `[movement]
+- [x] 14. Optional advanced path search (user request 2026-11-04). Add a `game.cfg` flag, e.g. `[movement]
   pathfinding=original|astar` (default `original`), and support both in code:
   - `original`: today's `MoveMap` — the EXE's greedy step-by-step walk (sub_4279E7 / 427EF5 / 427CC0 / 428244: cell
     scores, ties to the start–end line, detour rays when stuck);
@@ -1078,3 +1078,8 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   check the callers that rely on MoveMap results (`NearestRoad`, Police, collectors, AI tasks, DriveTo) and add unit
   tests for both modes (reaches the goal around a block, no path → stops like Stuck), plus a scenario run with
   `astar`. Document the flag in README with the other game.cfg settings.
+  Done 2026-11-04: `GameConfig.Pathfinding` (`[movement] pathfinding`, command line `-- --pathfinding=astar`),
+  `MapWorks/PathSearch.cs` (A*, 4 steps, `MoveMap.WalkableNow`, step costs from the original's cell scores, ≤ 20 000
+  cells per search), used by `Unit.NextMoveDirection` every step; no path → the original walk. Tests
+  `PathSearchTests` (wall, building target, car off pavement, no path, costs); the scenario test passes with
+  `astar` (about 13 % slower run). README "Path search".

@@ -102,3 +102,18 @@ The playtests show that some animations need hand tuning. Three places control t
    (`MapTileMath.GetDirection`). Death pictures play once and hold the last frame.
 
 `game.cfg` and `units.json` are read when the game starts; restart it after a change.
+
+## Path search
+
+By default units find their way like the 1997 game: step by step toward the target, with a detour when blocked
+(`MapWorks/MoveMap.cs`, from the EXE). `game.cfg` can switch to a planned route instead:
+
+```ini
+[movement]
+pathfinding=astar   ; or original (the default)
+```
+
+`astar` (`MapWorks/PathSearch.cs`) plans the cheapest whole path around buildings each step, with the same walking
+rules (cars stay on roads, units may share cells, a building target is reached by standing next to it) and the same
+speeds. With no path at all the unit falls back to the original walk. For a test run without editing the file, pass
+`-- --pathfinding=astar` (e.g. with `--scenario-test`).

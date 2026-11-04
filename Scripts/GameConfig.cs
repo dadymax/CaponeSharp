@@ -40,13 +40,34 @@ public static class GameConfig
         return 5f;
     }
 
+    public enum PathfindingMode { Original, AStar }
+
+    /// <summary>
+    /// "[movement] pathfinding": original (default) — the EXE's greedy walk with detours (<see cref="MoveMap"/>);
+    /// astar — <see cref="PathSearch"/> picks each step from the cheapest whole path (not in the original).
+    /// </summary>
+    public static PathfindingMode Pathfinding { get; set; } = PathfindingMode.Original;
+
     static GameConfig() => Load();
 
     public static void Load()
     {
         var cfg = new ConfigFile();
-        if (cfg.Load(Path) != Error.Ok)
-            return;
+        if (cfg.Load(Path) == Error.Ok)
+            Read(cfg);
+        // Command-line override for test runs: -- --pathfinding=astar|original
+        foreach (var arg in OS.GetCmdlineUserArgs())
+            if (arg.StartsWith("--pathfinding="))
+                Pathfinding = ParsePathfinding(arg["--pathfinding=".Length..]);
+        if (Pathfinding == PathfindingMode.AStar)
+            GD.Print("GameConfig: path search A*");
+    }
+
+    private static PathfindingMode ParsePathfinding(string value) =>
+        value.Trim().ToLowerInvariant() is "astar" or "a*" or "a-star" ? PathfindingMode.AStar : PathfindingMode.Original;
+
+    private static void Read(ConfigFile cfg)
+    {
         CompanyChance = Mathf.Clamp((float)cfg.GetValue("map", "company_chance", CompanyChance).AsDouble(), 0f, 1f);
         MinOneCompanyInRichBlocks = cfg.GetValue("map", "min_one_company_in_rich_blocks", MinOneCompanyInRichBlocks).AsBool();
         AnimationFpsByKey.Clear();
@@ -55,5 +76,6 @@ public static class GameConfig
                 if (key.EndsWith("_fps"))
                     AnimationFpsByKey[key] = Mathf.Max(0.1f, (float)cfg.GetValue("animation", key).AsDouble());
         AttackHoldMinutes = Mathf.Max(0, (int)cfg.GetValue("animation", "attack_hold_minutes", AttackHoldMinutes));
+        Pathfinding = ParsePathfinding(cfg.GetValue("movement", "pathfinding", "original").AsString());
     }
 }

@@ -66,6 +66,11 @@ public partial class Unit
     {
         var here = Cell;
         var destination = Target;
+        // Optional A* (game.cfg [movement] pathfinding=astar): replanned every step, so a moving target or a cell that
+        // fills up is handled; with no path at all the original walk below gets as close as it can.
+        if (GameConfig.Pathfinding == GameConfig.PathfindingMode.AStar
+            && PathSearch.FirstStep(here, destination, RoadOnly, this) is { } planned)
+            return planned;
         var goal = _detour ?? destination;
         var direction = MoveMap.NextDirection(here, goal, _lineStart, destination, RoadOnly, this);
         if (direction == MoveMap.Arrived)

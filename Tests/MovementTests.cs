@@ -122,3 +122,94 @@ public static class MovementTests
         Assert.True(MoveMap.Walkable(new Vector2I(0, 0), true), "car on open ground");
     }
 }
+
+/// <summary>The optional A* search (game.cfg [movement] pathfinding=astar, PathSearch) on hand-made maps.</summary>
+public static class PathSearchTests
+{
+    private static List<Vector2I> Square(int r)
+    {
+        var cells = new List<Vector2I>();
+        for (var y = -r; y <= r; y++)
+            for (var x = -r; x <= r; x++)
+                cells.Add(new Vector2I(x, y));
+        return cells;
+    }
+
+    private static void Map(IEnumerable<Vector2I> blocked = null, IEnumerable<Vector2I> sand = null, IEnumerable<Vector2I> roads = null)
+    {
+        MoveMap.InitForTest(Square(10), blocked ?? new Vector2I[0], sand ?? new Vector2I[0], roads ?? new Vector2I[0]);
+        MoveMap.Occupancy = (_, _) => (0, false, false);
+    }
+
+    /// <summary>Follows PathSearch.FirstStep step by step; the last cell is where the unit ends.</summary>
+    private static List<Vector2I> Walk(Vector2I from, Vector2I to, bool car = false, int limit = 80)
+    {
+        var path = new List<Vector2I> { from };
+        var here = from;
+        for (var i = 0; i < limit; i++)
+        {
+            var d = PathSearch.FirstStep(here, to, car, null);
+            if (d is null or MoveMap.Arrived or MoveMap.Stuck)
+                break;
+            here = MoveMap.Step(here, d.Value);
+            path.Add(here);
+        }
+        return path;
+    }
+
+    /// <summary>A wall from y −8 to 8 at x 0: the greedy walk needs a detour, A* goes round the end at once.</summary>
+    [UnitTest]
+    public static void GoesAroundAWall()
+    {
+        var wall = new List<Vector2I>();
+        for (var y = -8; y <= 8; y++)
+            wall.Add(new Vector2I(0, y));
+        Map(blocked: wall);
+        var path = Walk(new Vector2I(-3, 0), new Vector2I(3, 0));
+        Assert.Equal(new Vector2I(3, 0), path[^1], "reached");
+        Assert.Equal(6 + 2 * 9, path.Count - 1, "shortest way round the wall end (6 across, 9 up and 9 down)");
+    }
+
+    [UnitTest]
+    public static void StopsNextToABuilding()
+    {
+        Map(blocked: new[] { new Vector2I(4, 0) });
+        var path = Walk(new Vector2I(0, 0), new Vector2I(4, 0));
+        Assert.Equal(new Vector2I(3, 0), path[^1], "next to the building");
+    }
+
+    [UnitTest]
+    public static void CarsKeepOffThePavement()
+    {
+        var sand = new List<Vector2I>();
+        for (var y = -10; y <= 8; y++)
+            sand.Add(new Vector2I(0, y));
+        Map(sand: sand);
+        var path = Walk(new Vector2I(-3, 0), new Vector2I(3, 0), car: true);
+        Assert.Equal(new Vector2I(3, 0), path[^1], "reached");
+        Assert.True(!path.Exists(sand.Contains), "never on pavement");
+        Assert.Equal(new Vector2I(-3, 0), Walk(new Vector2I(-3, 0), new Vector2I(3, 0))[0], "start");
+        Assert.Equal(7, Walk(new Vector2I(-3, 0), new Vector2I(3, 0)).Count, "on foot straight across the pavement");
+    }
+
+    [UnitTest]
+    public static void NoPathGivesNull()
+    {
+        var wall = new List<Vector2I>();
+        for (var y = -10; y <= 10; y++)
+            wall.Add(new Vector2I(0, y));
+        Map(blocked: wall);
+        Assert.True(PathSearch.FirstStep(new Vector2I(-3, 0), new Vector2I(3, 0), false, null) == null, "walled off");
+        Assert.Equal(MoveMap.Arrived, PathSearch.FirstStep(new Vector2I(2, 2), new Vector2I(2, 2), false, null) ?? -1, "already there");
+    }
+
+    [UnitTest]
+    public static void PrefersRoads()
+    {
+        Map(roads: new[] { new Vector2I(1, 0) });
+        Assert.True(PathSearch.StepCost(new Vector2I(1, 0), null) < PathSearch.StepCost(new Vector2I(2, 0), null), "road cheaper than open ground");
+        MoveMap.Occupancy = (c, _) => c == new Vector2I(2, 0) ? (1, false, false) : (0, false, false);
+        Assert.True(PathSearch.StepCost(new Vector2I(2, 0), null) > 1.2f, "a standing unit costs more but doesn't block");
+        MoveMap.Occupancy = (_, _) => (0, false, false);
+    }
+}
