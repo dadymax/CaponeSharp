@@ -911,7 +911,9 @@ Source: `godottry/disassembled/Capone.EXE.commented.lst` (search the address).
   y 329). "Изменить" posts event sub_432AA0 per player (left column 1, right 2) → vt+0DCh sets only the local
   stance. Here the unit pictures (own / ally / enemy sets) and company signs of that player are refreshed at once
   (`Unit.RefreshOwnerRelation`, `Company.RefreshOwnerRelation`; the original reads the relation when drawing).
-  `AllianceWindow`, unit test `AllianceSquaresFollowTheExe`. Open: whether computer players react to it.
+  `AllianceWindow`, unit test `AllianceSquaresFollowTheExe`. Computer players don't react (checked 2026-11-04): the AI
+  code (0x461000–0x463000) never calls vt+0DCh; it only reads its own stance (e.g. sub_4618D0 at 0x461922: no attack on
+  the human's center while its relation to the human is 2), which only the episode's ALLIANCE lines set.
 
 ## Playtest (user, 2026-11-02)
 
